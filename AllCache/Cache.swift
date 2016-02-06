@@ -31,7 +31,7 @@ public class Cache<T: AnyObject> {
     
     required public init(identifier: String, persistentStoreManager: PersistentStoreManager<T>) throws {
         self.identifier = identifier
-        self.diskCache = DiskCache<T>(persistentStoreManager: persistentStoreManager)
+        self.diskCache = DiskCache<T>(identifier: identifier, persistentStoreManager: persistentStoreManager)
     }
     
     func getObjectForKey(key: String, objectFetcher: ObjectFetcher<T>, completion: (getObject: () throws -> T) -> Void) -> Request<T>? {
@@ -69,7 +69,7 @@ public class Cache<T: AnyObject> {
                             request.completeWithObject(object)
                             self.memoryCache?.setObject(object, forKey: key)
                         }
-                        self.diskCache?.setObject(object, forKey: key)
+                        _ = try? self.diskCache?.setObject(object, forKey: key)
                     } catch {
                         dispatch_async(self.queue ?? dispatch_get_main_queue()) {
                             request.completeWithError(error)
@@ -155,7 +155,7 @@ public class Cache<T: AnyObject> {
                                         }
                                     }
                                     if self.moveOriginalToDiskCache {
-                                        self.diskCache?.setObject(rawObject, forKey: descriptor.originalKey)
+                                        _ = try? self.diskCache?.setObject(rawObject, forKey: descriptor.originalKey)
                                     }
                                 } catch {
                                     dispatch_async(self.queue ?? dispatch_get_main_queue()) {
@@ -182,7 +182,7 @@ public class Cache<T: AnyObject> {
                     request.completeWithObject(object)
                     self.memoryCache?.setObject(object, forKey: descriptor.key)
                     dispatch_async(diskQueue) {
-                        self.diskCache?.setObject(object, forKey: descriptor.key)
+                        _ = try? self.diskCache?.setObject(object, forKey: descriptor.key)
                     }
                 } catch {
                     request.completeWithError(error)
