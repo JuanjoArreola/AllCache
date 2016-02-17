@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class MemoryCache<T: AnyObject> {
+public final class MemoryCache<T: AnyObject> {
     
     private var imageCache = NSCache()
     

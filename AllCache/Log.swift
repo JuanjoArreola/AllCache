@@ -8,12 +8,11 @@
 
 import Foundation
 
-
 enum LogLevel: Int {
     case DEBUG = 1, WARNING, ERROR, SEVERE
 }
 
-class Log: NSObject {
+final class Log {
     static var logLevel = LogLevel(rawValue: Configuration.logLevel)!
     static var showDate = true
     static var showFile = Configuration.showFile

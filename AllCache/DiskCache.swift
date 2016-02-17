@@ -6,37 +6,66 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
-import Foundation
+import UIKit
 import CoreData
 
-public class DiskCache<T: AnyObject> {
+private let shrinkQueue: dispatch_queue_t = dispatch_queue_create("com.crayon.allcache.FetchQueue", DISPATCH_QUEUE_SERIAL)
+
+enum DiskCacheError: ErrorType {
+    case InvalidPath
+    case InvalidData
+}
+
+public final class DiskCache<T: AnyObject> {
     
     public let identifier: String
-    private let persistentStoreManager: PersistentStoreManager<T>
-    private let dataStack: DataStack
-    private let objectInfoRepository: ManagedObjectRepository<ObjectInfo>
+    public internal(set) var size = 0
+    public var maxCapacity = 0
+    private var shrinking = false
     
-    required public init(identifier: String, persistentStoreManager: PersistentStoreManager<T>) {
+    let fileManager = NSFileManager.defaultManager()
+    public var cacheDirectory: NSURL
+    var dataSerializer: DataSerializer<T>!
+    
+    required public init(identifier: String, dataSerializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
         self.identifier = identifier
-        self.persistentStoreManager = persistentStoreManager
+        self.dataSerializer = dataSerializer
+        self.maxCapacity = maxCapacity
+        let cache = try! fileManager.URLForDirectory(.CachesDirectory, inDomain: .UserDomainMask, appropriateForURL: nil, create: false)
+        cacheDirectory = cache.URLByAppendingPathComponent(identifier, isDirectory: true)
         
-        let bundle = NSBundle(forClass: DiskCache.self)
-        let modelURL = bundle.URLForResource("AllCache", withExtension: "momd")!
-        let fileManager = NSFileManager.defaultManager()
-        let documents = try! fileManager.URLForDirectory(.DocumentDirectory, inDomain: .UserDomainMask, appropriateForURL: nil, create: false)
-        let dataStoreURL = documents.URLByAppendingPathComponent("AllCache.sqlite")
-        
-        self.dataStack = try! DataStack(managedObjectModelURL: modelURL, dataStoreURL: dataStoreURL, options: nil, concurrencyType: .PrivateQueueConcurrencyType)
-        objectInfoRepository = ManagedObjectRepository<ObjectInfo>(entityName: "ObjectInfo", managedObjectContext: dataStack.managedObjectContext)!
+        guard let path = cacheDirectory.path else {
+            throw DiskCacheError.InvalidPath
+        }
+        if !fileManager.fileExistsAtPath(path) {
+            try fileManager.createDirectoryAtURL(cacheDirectory, withIntermediateDirectories: false, attributes: nil)
+        }
+        size = getCacheSize()
+        restrictSize()
+    }
+    
+    func getCacheSize() -> Int {
+        let resourceKeys = [NSURLTotalFileAllocatedSizeKey]
+        guard let enumerator = fileManager.enumeratorAtURL(cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [], errorHandler: nil) else {
+            return 0
+        }
+        var total = 0
+        for case let fileURL as NSURL in enumerator {
+            guard let resourceValues = try? fileURL.resourceValuesForKeys(resourceKeys) else { continue }
+            guard let size = resourceValues[NSURLTotalFileAllocatedSizeKey] as? NSNumber else { continue }
+            total += size.integerValue
+        }
+        return total
     }
     
     func objectForKey(key: String) -> T? {
-        guard let objectInfo = getObjectInfoWithKey(key) else {
-            return nil
-        }
+        let fileName = String(abs(key.hash))
+        let path = cacheDirectory.URLByAppendingPathComponent(fileName)
         do {
-            objectInfo.lastAccess = NSDate()
-            return try persistentStoreManager.retrieve(path: objectInfo.path)
+            guard let data = NSData(contentsOfURL: path) else {
+                throw DiskCacheError.InvalidData
+            }
+            return try dataSerializer.deserializeData(data)
         } catch {
             Log.error(error)
             return nil
@@ -44,69 +73,118 @@ public class DiskCache<T: AnyObject> {
     }
     
     func setObject(object: T, forKey key: String) throws {
-        var objectInfo: ObjectInfo! = getObjectInfoWithKey(key)
-        if objectInfo == nil {
-            objectInfo = objectInfoRepository.create()
-            objectInfo.cache = identifier
-            objectInfo.key = key
-        }
-        let result = try persistentStoreManager.persist(object, fileName: "\(identifier)-\(key.hash)")
-        objectInfo?.path = result.path
-        objectInfo?.size = result.size
-        objectInfo?.lastAccess = NSDate()
+        let data = try dataSerializer.serializeObject(object)
+        let fileName = String(abs(key.hash))
+        let url = cacheDirectory.URLByAppendingPathComponent(fileName)
+        try data.writeToURL(url, options: .AtomicWrite)
+        size += data.length
+        restrictSize()
     }
     
     func updateLastAccessOfKey(key: String) {
-        if let objectInfo = getObjectInfoWithKey(key) {
-            objectInfo.lastAccess = NSDate()
+        let fileName = String(abs(key.hash))
+        guard let path = cacheDirectory.URLByAppendingPathComponent(fileName).path else {
+            return
         }
+        _ = try? fileManager.setAttributes([NSURLContentAccessDateKey: NSDate()], ofItemAtPath: path)
     }
     
     func deleteObjectForKey(key: String) throws {
-        guard let objectInfo = getObjectInfoWithKey(key) else {
-            return
+        let fileName = String(abs(key.hash))
+        let url = cacheDirectory.URLByAppendingPathComponent(fileName)
+        if let path = url.path {
+            let attributes = try? fileManager.attributesOfItemAtPath(path)
+            if let fileSize = attributes?[NSFileSize] as? NSNumber {
+                size -= fileSize.integerValue
+            }
         }
-        try persistentStoreManager.delete(objectInfo.path)
+        try fileManager.removeItemAtURL(url)
+    }
+    
+    func deleteOlderThan(date: NSDate) {
+        dispatch_async(shrinkQueue) {
+            let resourceKeys = [NSURLContentAccessDateKey, NSURLTotalFileAllocatedSizeKey]
+            guard let enumerator = self.fileManager.enumeratorAtURL(self.cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [], errorHandler: nil) else {
+                return
+            }
+            for case let url as NSURL in enumerator {
+                guard let resourceValues = try? url.resourceValuesForKeys(resourceKeys) else { continue }
+                guard let accessDate = resourceValues[NSURLContentAccessDateKey] as? NSDate else { continue }
+                if date.compare(accessDate) == .OrderedDescending {
+                    guard let size = resourceValues[NSURLTotalFileAllocatedSizeKey] as? NSNumber else { continue }
+                    _ = try? self.fileManager.removeItemAtURL(url)
+                    self.size -= size.integerValue
+                }
+            }
+        }
     }
     
     func clear() {
-        
-    }
-    
-    private func getObjectInfoWithKey(key: String) -> ObjectInfo? {
-        do {
-            let predicate = NSPredicate(format: "cache == %@ AND key == %@", identifier, key)
-            let infoArray = try objectInfoRepository.getWithPredicate(predicate)
-            return infoArray.first
-        } catch {
-            Log.error(error)
+        guard let enumerator = fileManager.enumeratorAtURL(cacheDirectory, includingPropertiesForKeys: [], options: [], errorHandler: nil) else {
+            return
         }
-        return nil
+        for case let fileURL as NSURL in enumerator {
+            _ = try? fileManager.removeItemAtURL(fileURL)
+        }
+        size = 0
+    }
+    
+    func restrictSize() {
+        if maxCapacity <= 0 { return }
+        if size < maxCapacity { return }
+        dispatch_async(shrinkQueue) {
+            if self.shrinking { return }
+            self.shrinking = true
+            do {
+                Log.debug("original size: \(self.size)")
+                let sizeTarget = Int(Double(self.maxCapacity) * 0.8)
+                let resourceKeys = [NSURLContentAccessDateKey, NSURLTotalFileAllocatedSizeKey]
+                let dateKeys = [NSURLContentAccessDateKey]
+                var urls = try self.fileManager.contentsOfDirectoryAtURL(self.cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [])
+                urls.sortInPlace({ (first, second) -> Bool in
+                    guard let firstResourceValues = try? first.resourceValuesForKeys(dateKeys) else { return false }
+                    guard let firstDate = firstResourceValues[NSURLContentAccessDateKey] as? NSDate else { return false }
+                    guard let secondResourceValues = try? second.resourceValuesForKeys(dateKeys) else { return false }
+                    guard let secondDate = secondResourceValues[NSURLContentAccessDateKey] as? NSDate else { return false }
+                    return firstDate.compare(secondDate) == .OrderedAscending
+                })
+                for url in urls {
+                    do {
+                        guard let resourceValues = try? url.resourceValuesForKeys(resourceKeys) else { continue }
+                        guard let size = resourceValues[NSURLTotalFileAllocatedSizeKey] as? NSNumber else { continue }
+                        try self.fileManager.removeItemAtURL(url)
+                        self.size -= size.integerValue
+                        if self.size <= sizeTarget {
+                            break
+                        }
+                    } catch {
+                        Log.error(error)
+                    }
+                }
+                Log.debug("final size: \(self.size)")
+                self.shrinking = false
+            } catch {
+                Log.error(error)
+                self.shrinking = false
+            }
+        }
     }
 }
 
-public enum PersistentStoreError: ErrorType {
+
+public enum DataSerializerError: ErrorType {
     case NotImplemented
-    case InvalidPath
-    case InvalidData
+    case SerializationError
 }
 
-public class PersistentStoreManager<T> {
-    var storeURL: NSURL!
+/// Abstract class that converts cachable objects of type T into NSData and NSData into objects of type T
+public class DataSerializer<T: AnyObject> {
     
-    internal init(storeURL: NSURL) {
-        self.storeURL = storeURL
+    func deserializeData(data: NSData) throws -> T {
+        throw DataSerializerError.NotImplemented
     }
     
-    func persist(object: T, fileName: String) throws -> (path: String, size: Int) {
-        throw PersistentStoreError.NotImplemented
-    }
-    
-    func retrieve(path path: String) throws -> T {
-        throw PersistentStoreError.NotImplemented
-    }
-    
-    func delete(path: String) throws {
-        throw PersistentStoreError.NotImplemented
+    func serializeObject(object: T) throws -> NSData {
+        throw DataSerializerError.NotImplemented
     }
 }

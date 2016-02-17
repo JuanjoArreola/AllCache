@@ -11,5 +11,7 @@ import Foundation
 
 public class ObjectProcessor<T: AnyObject> {
     
+    var identifier: String?
+    
     func processObject(object: T, respondInQueue queue: dispatch_queue_t, completion: (getObject: () throws -> T) -> Void) {}
 }

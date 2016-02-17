@@ -7,12 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		810D29371C65CB580022AC57 /* AllCache.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 810D29351C65CB580022AC57 /* AllCache.xcdatamodeld */; };
-		810D293A1C65CBC70022AC57 /* ObjectInfo+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810D29381C65CBC70022AC57 /* ObjectInfo+CoreDataProperties.swift */; };
-		810D293B1C65CBC70022AC57 /* ObjectInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810D29391C65CBC70022AC57 /* ObjectInfo.swift */; };
-		810D293D1C66546C0022AC57 /* ManagedObjectRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810D293C1C66546C0022AC57 /* ManagedObjectRepository.swift */; };
-		810D29411C6678DA0022AC57 /* PNGImagePersistentStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810D29401C6678DA0022AC57 /* PNGImagePersistentStoreManager.swift */; };
+		810B5A5B1C6FC76E00E64D24 /* ImageSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810B5A5A1C6FC76E00E64D24 /* ImageSerializer.swift */; };
 		810D29431C6685310022AC57 /* allcache_properties.plist in Resources */ = {isa = PBXBuildFile; fileRef = 810D29421C6685310022AC57 /* allcache_properties.plist */; };
+		810D29451C66DB3A0022AC57 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810D29441C66DB3A0022AC57 /* ImageCache.swift */; };
 		8143A8A01C6565C400F9C4F8 /* AllCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 8143A89F1C6565C400F9C4F8 /* AllCache.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8143A8A71C6565C400F9C4F8 /* AllCache.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8143A89C1C6565C400F9C4F8 /* AllCache.framework */; };
 		8143A8AC1C6565C400F9C4F8 /* AllCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8AB1C6565C400F9C4F8 /* AllCacheTests.swift */; };
@@ -25,9 +22,11 @@
 		8143A8C41C656ABE00F9C4F8 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8C31C656ABE00F9C4F8 /* Configuration.swift */; };
 		8143A8C61C656B3300F9C4F8 /* CachableDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8C51C656B3300F9C4F8 /* CachableDescriptor.swift */; };
 		8143A8C81C656B5500F9C4F8 /* ObjectProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8C71C656B5500F9C4F8 /* ObjectProcessor.swift */; };
-		8143A8CB1C656BA600F9C4F8 /* DataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8CA1C656BA600F9C4F8 /* DataStack.swift */; };
 		8143A8CE1C656C4500F9C4F8 /* Networking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8CD1C656C4500F9C4F8 /* Networking.swift */; };
 		8143A8D11C6575E400F9C4F8 /* ImageFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8D01C6575E400F9C4F8 /* ImageFetcher.swift */; };
+		81513C901C69209A003B095B /* UIImageView+ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81513C8F1C69209A003B095B /* UIImageView+ImageCache.swift */; };
+		81A5F8491C695281007B47CE /* ImageCachableDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A5F8481C695281007B47CE /* ImageCachableDescriptor.swift */; };
+		81A5F84B1C69546F007B47CE /* ImageResizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A5F84A1C69546F007B47CE /* ImageResizer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,12 +40,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		810D29361C65CB580022AC57 /* AllCache.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = AllCache.xcdatamodel; sourceTree = "<group>"; };
-		810D29381C65CBC70022AC57 /* ObjectInfo+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ObjectInfo+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		810D29391C65CBC70022AC57 /* ObjectInfo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjectInfo.swift; sourceTree = "<group>"; };
-		810D293C1C66546C0022AC57 /* ManagedObjectRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ManagedObjectRepository.swift; sourceTree = "<group>"; };
-		810D29401C6678DA0022AC57 /* PNGImagePersistentStoreManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PNGImagePersistentStoreManager.swift; sourceTree = "<group>"; };
+		810B5A5A1C6FC76E00E64D24 /* ImageSerializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageSerializer.swift; sourceTree = "<group>"; };
 		810D29421C6685310022AC57 /* allcache_properties.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = allcache_properties.plist; sourceTree = "<group>"; };
+		810D29441C66DB3A0022AC57 /* ImageCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
 		8143A89C1C6565C400F9C4F8 /* AllCache.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AllCache.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8143A89F1C6565C400F9C4F8 /* AllCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AllCache.h; sourceTree = "<group>"; };
 		8143A8A11C6565C400F9C4F8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -62,9 +58,11 @@
 		8143A8C31C656ABE00F9C4F8 /* Configuration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
 		8143A8C51C656B3300F9C4F8 /* CachableDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CachableDescriptor.swift; sourceTree = "<group>"; };
 		8143A8C71C656B5500F9C4F8 /* ObjectProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjectProcessor.swift; sourceTree = "<group>"; };
-		8143A8CA1C656BA600F9C4F8 /* DataStack.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataStack.swift; sourceTree = "<group>"; };
 		8143A8CD1C656C4500F9C4F8 /* Networking.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Networking.swift; sourceTree = "<group>"; };
 		8143A8D01C6575E400F9C4F8 /* ImageFetcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageFetcher.swift; sourceTree = "<group>"; };
+		81513C8F1C69209A003B095B /* UIImageView+ImageCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIImageView+ImageCache.swift"; sourceTree = "<group>"; };
+		81A5F8481C695281007B47CE /* ImageCachableDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageCachableDescriptor.swift; sourceTree = "<group>"; };
+		81A5F84A1C69546F007B47CE /* ImageResizer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageResizer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,7 +116,6 @@
 				8143A8C11C656A9F00F9C4F8 /* Log.swift */,
 				8143A8BA1C6567BA00F9C4F8 /* MemoryCache.swift */,
 				8143A8C71C656B5500F9C4F8 /* ObjectProcessor.swift */,
-				810D29351C65CB580022AC57 /* AllCache.xcdatamodeld */,
 				810D29421C6685310022AC57 /* allcache_properties.plist */,
 			);
 			path = AllCache;
@@ -146,11 +143,7 @@
 		8143A8C91C656B8800F9C4F8 /* Disk */ = {
 			isa = PBXGroup;
 			children = (
-				8143A8CA1C656BA600F9C4F8 /* DataStack.swift */,
 				8143A8BC1C6567FD00F9C4F8 /* DiskCache.swift */,
-				810D29391C65CBC70022AC57 /* ObjectInfo.swift */,
-				810D29381C65CBC70022AC57 /* ObjectInfo+CoreDataProperties.swift */,
-				810D293C1C66546C0022AC57 /* ManagedObjectRepository.swift */,
 			);
 			name = Disk;
 			sourceTree = "<group>";
@@ -159,7 +152,11 @@
 			isa = PBXGroup;
 			children = (
 				8143A8D01C6575E400F9C4F8 /* ImageFetcher.swift */,
-				810D29401C6678DA0022AC57 /* PNGImagePersistentStoreManager.swift */,
+				810D29441C66DB3A0022AC57 /* ImageCache.swift */,
+				81513C8F1C69209A003B095B /* UIImageView+ImageCache.swift */,
+				81A5F8481C695281007B47CE /* ImageCachableDescriptor.swift */,
+				81A5F84A1C69546F007B47CE /* ImageResizer.swift */,
+				810B5A5A1C6FC76E00E64D24 /* ImageSerializer.swift */,
 			);
 			name = Image;
 			sourceTree = "<group>";
@@ -273,20 +270,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8143A8CB1C656BA600F9C4F8 /* DataStack.swift in Sources */,
-				810D29371C65CB580022AC57 /* AllCache.xcdatamodeld in Sources */,
 				8143A8CE1C656C4500F9C4F8 /* Networking.swift in Sources */,
 				8143A8BB1C6567BA00F9C4F8 /* MemoryCache.swift in Sources */,
 				8143A8BD1C6567FD00F9C4F8 /* DiskCache.swift in Sources */,
-				810D29411C6678DA0022AC57 /* PNGImagePersistentStoreManager.swift in Sources */,
+				81513C901C69209A003B095B /* UIImageView+ImageCache.swift in Sources */,
 				8143A8C41C656ABE00F9C4F8 /* Configuration.swift in Sources */,
 				8143A8C21C656A9F00F9C4F8 /* Log.swift in Sources */,
+				810B5A5B1C6FC76E00E64D24 /* ImageSerializer.swift in Sources */,
+				81A5F8491C695281007B47CE /* ImageCachableDescriptor.swift in Sources */,
 				8143A8B71C65677C00F9C4F8 /* Cache.swift in Sources */,
 				8143A8C81C656B5500F9C4F8 /* ObjectProcessor.swift in Sources */,
-				810D293B1C65CBC70022AC57 /* ObjectInfo.swift in Sources */,
 				8143A8C61C656B3300F9C4F8 /* CachableDescriptor.swift in Sources */,
-				810D293A1C65CBC70022AC57 /* ObjectInfo+CoreDataProperties.swift in Sources */,
-				810D293D1C66546C0022AC57 /* ManagedObjectRepository.swift in Sources */,
+				810D29451C66DB3A0022AC57 /* ImageCache.swift in Sources */,
+				81A5F84B1C69546F007B47CE /* ImageResizer.swift in Sources */,
 				8143A8D11C6575E400F9C4F8 /* ImageFetcher.swift in Sources */,
 				8143A8B91C65679C00F9C4F8 /* Request.swift in Sources */,
 				8143A8C01C656A7000F9C4F8 /* ObjectFetcher.swift in Sources */,
@@ -413,6 +409,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.juanjo.AllCache;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -432,6 +429,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.juanjo.AllCache;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -489,19 +487,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCVersionGroup section */
-		810D29351C65CB580022AC57 /* AllCache.xcdatamodeld */ = {
-			isa = XCVersionGroup;
-			children = (
-				810D29361C65CB580022AC57 /* AllCache.xcdatamodel */,
-			);
-			currentVersion = 810D29361C65CB580022AC57 /* AllCache.xcdatamodel */;
-			path = AllCache.xcdatamodeld;
-			sourceTree = "<group>";
-			versionGroupType = wrapper.xcdatamodel;
-		};
-/* End XCVersionGroup section */
 	};
 	rootObject = 8143A8931C6565C400F9C4F8 /* Project object */;
 }

@@ -12,10 +12,20 @@ enum RequestError: ErrorType {
     case Canceled
 }
 
+private let syncQueue: dispatch_queue_t = dispatch_queue_create("com.crayon.allcache.SyncQueue", DISPATCH_QUEUE_SERIAL)
+
 public class Request<T: AnyObject> {
     
-    private var completionHandlers: [(getObject: () throws -> T) -> Void] = []
+    private var completionHandlers: [(getObject: () throws -> T) -> Void]? = []
     private var result: (() throws -> T)?
+    
+    var subrequest: Request? {
+        didSet {
+            if canceled {
+                subrequest?.cancel()
+            }
+        }
+    }
     
     public var completed: Bool {
         return result != nil
@@ -27,11 +37,12 @@ public class Request<T: AnyObject> {
     
     convenience init(completionHandler: (getObject: () throws -> T) -> Void) {
         self.init()
-        completionHandlers.append(completionHandler)
+        completionHandlers!.append(completionHandler)
     }
     
-    func cancel() {
-        canceled = true
+    public func cancel() {
+        sync() { self.canceled = true }
+        subrequest?.cancel()
         completeWithError(RequestError.Canceled)
     }
     
@@ -51,18 +62,23 @@ public class Request<T: AnyObject> {
     
     func callHandlers() {
         guard let getClosure = result else { return }
-        for handler in completionHandlers {
+        for handler in completionHandlers! {
             handler(getObject: getClosure)
         }
+        sync() { self.completionHandlers = nil }
     }
     
-    func addCompletionHandler(completion: (getObject: () throws -> T) -> Void) {
+    public func addCompletionHandler(completion: (getObject: () throws -> T) -> Void) {
         if let getClosure = result {
             completion(getObject: getClosure)
         } else {
-            completionHandlers.append(completion)
+            sync() { self.completionHandlers?.append(completion) }
         }
     }
+}
+
+private func sync(closure: () -> Void) {
+    dispatch_async(syncQueue, closure)
 }
 
 
@@ -72,7 +88,7 @@ public class URLRequest<T: AnyObject>: Request<T> {
     
     required public init() {}
     
-    override func cancel() {
+    override public func cancel() {
         dataTask?.cancel()
         super.cancel()
     }
