@@ -16,7 +16,11 @@ enum FetchError: ErrorType {
 /// Abstract class intended to be subclassed to fetch an object of a concrete type
 public class ObjectFetcher<T: AnyObject> {
     
-    var identifier: String!
+    public var identifier: String!
+    
+    public required init(identifier: String) {
+        self.identifier = identifier
+    }
     
     func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> T) -> Void)? = nil) -> Request<T>? { return nil }
 }

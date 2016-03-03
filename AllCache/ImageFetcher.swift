@@ -8,21 +8,28 @@
 
 import Foundation
 
+#if os(OSX)
+    import AppKit
+#else
+    import UIKit
+#endif
+
 
 enum ImageFetcherError: ErrorType {
     case FilterError
 }
 
 
-public final class ImageFetcher: ObjectFetcher<UIImage> {
+public final class ImageFetcher: ObjectFetcher<Image> {
     let url: NSURL
     
-    init(url: NSURL) {
+    public init(url: NSURL) {
         self.url = url
+        super.init(identifier: String(url.hash))
     }
     
-    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> UIImage) -> Void)?) -> Request<UIImage>? {
-        let request = completion != nil ? URLRequest<UIImage>(completionHandler: completion!) : URLRequest<UIImage>()
+    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> Image) -> Void)?) -> Request<Image>? {
+        let request = completion != nil ? URLRequest<Image>(completionHandler: completion!) : URLRequest<Image>()
         do {
             request.dataTask = try requestURL(url) { (data: NSData?, response: NSURLResponse?, error: NSError?) -> Void in
                 do {
@@ -32,7 +39,7 @@ public final class ImageFetcher: ObjectFetcher<UIImage> {
                     guard let validData = data else {
                         throw FetchError.InvalidData
                     }
-                    guard let image = UIImage(data: validData) else {
+                    guard let image = Image(data: validData) else {
                         throw FetchError.ParseError
                     }
                     dispatch_async(queue) {

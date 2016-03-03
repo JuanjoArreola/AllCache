@@ -6,9 +6,15 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
-import UIKit
+#if os(OSX)
+    import AppKit
+    public typealias Image = NSImage
+#else
+    import UIKit
+    public typealias Image = UIImage
+#endif
 
-public final class ImageCache: Cache<UIImage> {
+public final class ImageCache: Cache<Image> {
     
     public static let sharedInstance = try! ImageCache(identifier: "sharedImage")
     

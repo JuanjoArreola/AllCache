@@ -12,9 +12,9 @@ enum RequestError: ErrorType {
     case Canceled
 }
 
-private let syncQueue: dispatch_queue_t = dispatch_queue_create("com.crayon.allcache.SyncQueue", DISPATCH_QUEUE_SERIAL)
+//private let syncQueue: dispatch_queue_t = dispatch_queue_create("com.allcache.SyncQueue", DISPATCH_QUEUE_SERIAL)
 
-public class Request<T: AnyObject> {
+public class Request<T: AnyObject>: CustomDebugStringConvertible {
     
     private var completionHandlers: [(getObject: () throws -> T) -> Void]? = []
     private var result: (() throws -> T)?
@@ -75,10 +75,14 @@ public class Request<T: AnyObject> {
             sync() { self.completionHandlers?.append(completion) }
         }
     }
+    
+    public var debugDescription: String {
+        return String(self)
+    }
 }
 
 private func sync(closure: () -> Void) {
-    dispatch_async(syncQueue, closure)
+    dispatch_barrier_async(syncQueue, closure)
 }
 
 
@@ -91,5 +95,13 @@ public class URLRequest<T: AnyObject>: Request<T> {
     override public func cancel() {
         dataTask?.cancel()
         super.cancel()
+    }
+    
+    override public var debugDescription: String {
+        var desc = "URLRequest<\(T.self)>"
+        if let url = dataTask?.originalRequest?.URL {
+            desc += "(\(url))"
+        }
+        return desc
     }
 }

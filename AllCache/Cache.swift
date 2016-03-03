@@ -11,14 +11,16 @@ import Foundation
 internal let diskQueue: dispatch_queue_t = dispatch_queue_create("com.allcache.DiskQueue", DISPATCH_QUEUE_CONCURRENT)
 private let fetchQueue: dispatch_queue_t = dispatch_queue_create("com.allcache.FetchQueue", DISPATCH_QUEUE_SERIAL)
 private let processQueue: dispatch_queue_t = dispatch_queue_create("com.allcache.ProcessQueue", DISPATCH_QUEUE_CONCURRENT)
+internal let syncQueue: dispatch_queue_t = dispatch_queue_create("com.allcache.SyncQueue", DISPATCH_QUEUE_CONCURRENT)
 
 /// The Cache class is a generic container that stores key-value pairs, internally has a memory cache and a disk cache
 public class Cache<T: AnyObject> {
     
     private var fetching: [String: Request<T>] = [:]
+    private var requesting: [String: Request<T>] = [:]
     
-    public let memoryCache: MemoryCache<T>? = MemoryCache<T>()
-    public internal(set) var diskCache: DiskCache<T>?
+    public let memoryCache = MemoryCache<T>()
+    public internal(set) var diskCache: DiskCache<T>!
     public let identifier: String
     public var queue: dispatch_queue_t?
     public var moveOriginalToMemoryCache = false
@@ -38,13 +40,14 @@ public class Cache<T: AnyObject> {
     /// - parameter objectFetcher: The object that fetches the object if is not currently in the cache
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
-    func getObjectForKey(key: String, objectFetcher: ObjectFetcher<T>, completion: (getObject: () throws -> T) -> Void) -> Request<T>? {
-        if let object = memoryCache?.objectForKey(key) {
+    public func getObjectForKey(key: String, objectFetcher: ObjectFetcher<T>, completion: (getObject: () throws -> T) -> Void) -> Request<T>? {
+        if let object = memoryCache.objectForKey(key) {
             Log.debug("\(key) found in memory")
             completion(getObject: { return object })
             return nil
         }
         Log.debug("\(key) NOT found in memory")
+        
         
         let request = Request(completionHandler: completion)
         
@@ -53,17 +56,19 @@ public class Cache<T: AnyObject> {
                 Log.debug("\(key) found in disk")
                 dispatch_async(self.queue ?? dispatch_get_main_queue()) {
                     request.completeWithObject(object)
-                    self.memoryCache?.setObject(object, forKey: key)
+                    self.memoryCache.setObject(object, forKey: key)
                 }
                 self.diskCache?.updateLastAccessOfKey(key)
             } else {
                 Log.debug("\(key) NOT found in disk")
                 
-                var fetcherRequest = self.fetching[objectFetcher.identifier]
+                var fetcherRequest = self.getCachedFetchingRequestWithIdentifier(objectFetcher.identifier)
                 if fetcherRequest == nil {
-                    Log.debug("NO fetching request found for \(objectFetcher.identifier)")
-                    fetcherRequest = objectFetcher.fetchAndRespondInQueue(diskQueue)
-                    self.fetching[objectFetcher.identifier] = request
+                    dispatch_barrier_async(syncQueue) {
+                        self.fetching[objectFetcher.identifier] = objectFetcher.fetchAndRespondInQueue(diskQueue)
+                    }
+                    fetcherRequest = self.getCachedFetchingRequestWithIdentifier(objectFetcher.identifier)
+                    Log.debug("cached request: \(fetcherRequest)")
                 }
                 fetcherRequest?.addCompletionHandler({ (getObject) -> Void in
                     do {
@@ -71,7 +76,7 @@ public class Cache<T: AnyObject> {
                         Log.debug("\(key) fetched")
                         dispatch_async(self.queue ?? dispatch_get_main_queue()) {
                             request.completeWithObject(object)
-                            self.memoryCache?.setObject(object, forKey: key)
+                            self.memoryCache.setObject(object, forKey: key)
                         }
                         _ = try? self.diskCache?.setObject(object, forKey: key)
                     } catch {
@@ -79,9 +84,27 @@ public class Cache<T: AnyObject> {
                             request.completeWithError(error)
                         }
                     }
-                    self.fetching[objectFetcher.identifier] = nil
+                    dispatch_barrier_async(syncQueue) {
+                        self.fetching[objectFetcher.identifier] = nil
+                    }
                 })
             }
+        }
+        return request
+    }
+    
+    private func getCachedFetchingRequestWithIdentifier(identifier: String) -> Request<T>? {
+        var request: Request<T>?
+        dispatch_sync(syncQueue) {
+            request = self.fetching[identifier]
+        }
+        return request
+    }
+    
+    private func getCachedRequestWithIdentifier(identifier: String) -> Request<T>? {
+        var request: Request<T>?
+        dispatch_sync(syncQueue) {
+            request = self.requesting[identifier]
         }
         return request
     }
@@ -105,7 +128,7 @@ public class Cache<T: AnyObject> {
     func getObjectForDescriptor(descriptor: CachableDescriptor<T>, completion: (getObject: () throws -> T) -> Void) -> Request<T>? {
         
         //      MARK: - Search in Memory o'
-        if let object = memoryCache?.objectForKey(descriptor.key) {
+        if let object = memoryCache.objectForKey(descriptor.key) {
             Log.debug("\(descriptor.key) found in memory")
             completion(getObject: { return object })
             return nil
@@ -119,7 +142,7 @@ public class Cache<T: AnyObject> {
                 Log.debug("\(descriptor.key) found in disk")
                 dispatch_async(self.queue ?? dispatch_get_main_queue()) {
                     request.completeWithObject(object)
-                    self.memoryCache?.setObject(object, forKey: descriptor.key)
+                    self.memoryCache.setObject(object, forKey: descriptor.key)
                 }
                 self.diskCache?.updateLastAccessOfKey(descriptor.key)
                 return
@@ -129,7 +152,7 @@ public class Cache<T: AnyObject> {
             
             //          MARK: - Search in Memory o
             dispatch_async(self.queue ?? dispatch_get_main_queue()) {
-                if let rawObject = self.memoryCache?.objectForKey(descriptor.originalKey) {
+                if let rawObject = self.memoryCache.objectForKey(descriptor.originalKey) {
                     Log.debug("\(descriptor.originalKey) found in memory")
                     self.processRawObject(rawObject, withDescriptor: descriptor, request: request)
                 }
@@ -144,7 +167,7 @@ public class Cache<T: AnyObject> {
                             self.processRawObject(rawObject, withDescriptor: descriptor, request: request)
                             if self.moveOriginalToMemoryCache {
                                 dispatch_async(self.queue ?? dispatch_get_main_queue()) {
-                                    self.memoryCache?.setObject(rawObject, forKey: descriptor.originalKey)
+                                    self.memoryCache.setObject(rawObject, forKey: descriptor.originalKey)
                                 }
                             }
                             self.diskCache?.updateLastAccessOfKey(descriptor.originalKey)
@@ -160,7 +183,9 @@ public class Cache<T: AnyObject> {
                                 Log.debug("NO fetching request found for \(descriptor.originalKey)")
                                 fetcherRequest = descriptor.fetchAndRespondInQueue(diskQueue)
                                 request.subrequest = fetcherRequest
-                                self.fetching[descriptor.originalKey] = request
+                                dispatch_barrier_async(diskQueue) {
+                                    self.fetching[descriptor.originalKey] = request
+                                }
                             }
                             fetcherRequest?.addCompletionHandler({ (getObject) in
                                 do {
@@ -170,7 +195,7 @@ public class Cache<T: AnyObject> {
                                     self.processRawObject(rawObject, withDescriptor: descriptor, request: request)
                                     if self.moveOriginalToMemoryCache {
                                         dispatch_async(self.queue ?? dispatch_get_main_queue()) {
-                                            self.memoryCache?.setObject(rawObject, forKey: descriptor.originalKey)
+                                            self.memoryCache.setObject(rawObject, forKey: descriptor.originalKey)
                                         }
                                     }
                                     if self.moveOriginalToDiskCache {
@@ -200,7 +225,7 @@ public class Cache<T: AnyObject> {
                 do {
                     let object = try getObject()
                     request.completeWithObject(object)
-                    self.memoryCache?.setObject(object, forKey: descriptor.key)
+                    self.memoryCache.setObject(object, forKey: descriptor.key)
                     dispatch_async(diskQueue) {
                         _ = try? self.diskCache?.setObject(object, forKey: descriptor.key)
                     }

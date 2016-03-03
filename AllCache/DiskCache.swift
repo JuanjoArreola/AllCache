@@ -6,10 +6,9 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
-import UIKit
-import CoreData
+import Foundation
 
-private let shrinkQueue: dispatch_queue_t = dispatch_queue_create("com.crayon.allcache.FetchQueue", DISPATCH_QUEUE_SERIAL)
+//private let shrinkQueue: dispatch_queue_t = dispatch_queue_create("com.crayon.allcache.FetchQueue", DISPATCH_QUEUE_SERIAL)
 
 enum DiskCacheError: ErrorType {
     case InvalidPath
@@ -59,10 +58,13 @@ public final class DiskCache<T: AnyObject> {
     }
     
     func objectForKey(key: String) -> T? {
-        let fileName = String(abs(key.hash))
-        let path = cacheDirectory.URLByAppendingPathComponent(fileName)
+        let fileName = "c" + String(key.hash)
+        let url = cacheDirectory.URLByAppendingPathComponent(fileName)
+        if !objectExistsAtURL(url) {
+            return nil
+        }
         do {
-            guard let data = NSData(contentsOfURL: path) else {
+            guard let data = NSData(contentsOfURL: url) else {
                 throw DiskCacheError.InvalidData
             }
             return try dataSerializer.deserializeData(data)
@@ -72,9 +74,16 @@ public final class DiskCache<T: AnyObject> {
         }
     }
     
+    @inline(__always) private func objectExistsAtURL(url: NSURL) -> Bool {
+        if let path = url.path {
+            return fileManager.fileExistsAtPath(path)
+        }
+        return false
+    }
+    
     func setObject(object: T, forKey key: String) throws {
         let data = try dataSerializer.serializeObject(object)
-        let fileName = String(abs(key.hash))
+        let fileName = "c" + String(key.hash)
         let url = cacheDirectory.URLByAppendingPathComponent(fileName)
         try data.writeToURL(url, options: .AtomicWrite)
         size += data.length
@@ -90,7 +99,7 @@ public final class DiskCache<T: AnyObject> {
     }
     
     func deleteObjectForKey(key: String) throws {
-        let fileName = String(abs(key.hash))
+        let fileName = "c" + String(key.hash)
         let url = cacheDirectory.URLByAppendingPathComponent(fileName)
         if let path = url.path {
             let attributes = try? fileManager.attributesOfItemAtPath(path)
@@ -102,7 +111,7 @@ public final class DiskCache<T: AnyObject> {
     }
     
     func deleteOlderThan(date: NSDate) {
-        dispatch_async(shrinkQueue) {
+        dispatch_async(diskQueue) {
             let resourceKeys = [NSURLContentAccessDateKey, NSURLTotalFileAllocatedSizeKey]
             guard let enumerator = self.fileManager.enumeratorAtURL(self.cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [], errorHandler: nil) else {
                 return
@@ -119,7 +128,7 @@ public final class DiskCache<T: AnyObject> {
         }
     }
     
-    func clear() {
+    public func clear() {
         guard let enumerator = fileManager.enumeratorAtURL(cacheDirectory, includingPropertiesForKeys: [], options: [], errorHandler: nil) else {
             return
         }
@@ -132,7 +141,7 @@ public final class DiskCache<T: AnyObject> {
     func restrictSize() {
         if maxCapacity <= 0 { return }
         if size < maxCapacity { return }
-        dispatch_async(shrinkQueue) {
+        dispatch_async(diskQueue) {
             if self.shrinking { return }
             self.shrinking = true
             do {
