@@ -41,6 +41,9 @@
 		8143A8CE1C656C4500F9C4F8 /* Networking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8CD1C656C4500F9C4F8 /* Networking.swift */; };
 		8143A8D11C6575E400F9C4F8 /* ImageFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8D01C6575E400F9C4F8 /* ImageFetcher.swift */; };
 		81513C901C69209A003B095B /* UIImageView+ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81513C8F1C69209A003B095B /* UIImageView+ImageCache.swift */; };
+		81847CD61C8CC9160012811B /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8C11C656A9F00F9C4F8 /* Log.swift */; };
+		81847CD71C8CC91C0012811B /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8143A8C31C656ABE00F9C4F8 /* Configuration.swift */; };
+		81847CD81C8CC9230012811B /* allcache_properties.plist in Resources */ = {isa = PBXBuildFile; fileRef = 810D29421C6685310022AC57 /* allcache_properties.plist */; };
 		81A5F8491C695281007B47CE /* ImageCachableDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A5F8481C695281007B47CE /* ImageCachableDescriptor.swift */; };
 		81A5F84B1C69546F007B47CE /* ImageResizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A5F84A1C69546F007B47CE /* ImageResizer.swift */; };
 /* End PBXBuildFile section */
@@ -337,6 +340,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				81847CD81C8CC9230012811B /* allcache_properties.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -392,6 +396,8 @@
 			files = (
 				8134265F1C7BB56F00C31557 /* ImageCacheTests.swift in Sources */,
 				8143A8AC1C6565C400F9C4F8 /* AllCacheTests.swift in Sources */,
+				81847CD71C8CC91C0012811B /* Configuration.swift in Sources */,
+				81847CD61C8CC9160012811B /* Log.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import AllCache
+import AllCache
 
 class AllCacheTests: XCTestCase {
     
