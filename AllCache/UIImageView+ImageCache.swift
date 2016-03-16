@@ -24,7 +24,7 @@ public extension UIImageView {
             color = UIColor.blackColor()
         }
         let descriptor = ImageCachableDescriptor(url: url!, size: self.bounds.size, scale: UIScreen.mainScreen().scale, backgroundColor: color, mode: self.contentMode, imageProcessor: imageProcessor)
-        return ImageCache.sharedInstance.getObjectForDescriptor(descriptor) { (getObject) -> Void in
+        return ImageCache.sharedInstance.objectForDescriptor(descriptor) { (getObject) -> Void in
             do {
                 self.image = try getObject()
             } catch {

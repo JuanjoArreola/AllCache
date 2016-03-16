@@ -11,6 +11,7 @@ import Foundation
 enum FetchError: ErrorType {
     case InvalidData
     case ParseError
+    case NotFound
 }
 
 /// Abstract class intended to be subclassed to fetch an object of a concrete type
@@ -22,5 +23,10 @@ public class ObjectFetcher<T: AnyObject> {
         self.identifier = identifier
     }
     
-    func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> T) -> Void)? = nil) -> Request<T>? { return nil }
+    func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> T) -> Void)? = nil) -> Request<T>? {
+        dispatch_async(queue) {
+            completion?(getObject: { throw FetchError.NotFound })
+        }
+        return nil
+    }
 }

@@ -22,7 +22,7 @@ public final class ImageSerializer: DataSerializer<Image> {
         throw DataSerializerError.SerializationError
     }
     #else
-    override func serializeObject(object: Image) throws -> NSData {
+    override public func serializeObject(object: Image) throws -> NSData {
         if let data = UIImagePNGRepresentation(object) {
             return data
         }
@@ -30,7 +30,7 @@ public final class ImageSerializer: DataSerializer<Image> {
     }
     #endif
     
-    override func deserializeData(data: NSData) throws -> Image {
+    override public func deserializeData(data: NSData) throws -> Image {
         if let image = Image(data: data) {
             return image
         }
