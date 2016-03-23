@@ -12,6 +12,7 @@ enum FetchError: ErrorType {
     case InvalidData
     case ParseError
     case NotFound
+    case NotImplemented
 }
 
 /// Abstract class intended to be subclassed to fetch an object of a concrete type
@@ -23,10 +24,11 @@ public class ObjectFetcher<T: AnyObject> {
         self.identifier = identifier
     }
     
-    func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> T) -> Void)? = nil) -> Request<T>? {
+    public func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getObject: () throws -> T) -> Void) -> Request<T> {
+        let request = Request<T>(completionHandler: completion)
         dispatch_async(queue) {
-            completion?(getObject: { throw FetchError.NotFound })
+            request.completeWithError(FetchError.NotImplemented)
         }
-        return nil
+        return request
     }
 }

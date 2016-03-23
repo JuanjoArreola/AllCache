@@ -37,3 +37,4 @@ playground.xcworkspace
 # Packages/
 .build/
 
+Pods/

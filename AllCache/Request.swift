@@ -12,14 +12,16 @@ enum RequestError: ErrorType {
     case Canceled
 }
 
-//private let syncQueue: dispatch_queue_t = dispatch_queue_create("com.allcache.SyncQueue", DISPATCH_QUEUE_SERIAL)
+public protocol Cancellable {
+    func cancel()
+}
 
-public class Request<T: AnyObject>: CustomDebugStringConvertible {
+public class Request<T: AnyObject>: Cancellable, CustomDebugStringConvertible {
     
     private var completionHandlers: [(getObject: () throws -> T) -> Void]? = []
     private var result: (() throws -> T)?
     
-    var subrequest: Request? {
+    public var subrequest: Cancellable? {
         didSet {
             if canceled {
                 subrequest?.cancel()
@@ -35,7 +37,7 @@ public class Request<T: AnyObject>: CustomDebugStringConvertible {
     
     required public init() {}
     
-    convenience init(completionHandler: (getObject: () throws -> T) -> Void) {
+    public convenience init(completionHandler: (getObject: () throws -> T) -> Void) {
         self.init()
         completionHandlers!.append(completionHandler)
     }
@@ -46,14 +48,14 @@ public class Request<T: AnyObject>: CustomDebugStringConvertible {
         completeWithError(RequestError.Canceled)
     }
     
-    func completeWithObject(object: T) {
+    public func completeWithObject(object: T) {
         if result == nil {
             result = { return object }
             callHandlers()
         }
     }
     
-    func completeWithError(error: ErrorType) {
+    public func completeWithError(error: ErrorType) {
         if result == nil {
             result = { throw error }
             callHandlers()

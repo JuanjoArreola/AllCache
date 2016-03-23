@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import AllCache
+import AllCache
 
 class CustomClassTests: XCTestCase {
     
@@ -53,17 +53,31 @@ class CustomClassTests: XCTestCase {
     
     func testDeleteObject() {
         let userInfo = UserInfo(id: "1", name: "Juanjo")
-        userCache.setObject(userInfo, forKey: "user_1")
-        userCache.removeObjectForKey("user_1")
+        userCache.setObject(userInfo, forKey: "user_2")
+        userCache.removeObjectForKey("user_2")
         
         let expectation: XCTestExpectation = expectationWithDescription("get user")
         
-        userCache.objectForKey("user_1", objectFetcher: ObjectFetcher<UserInfo>(identifier: "user_1")) { (getObject) -> Void in
+        userCache.objectForKey("user_2", objectFetcher: ObjectFetcher<UserInfo>(identifier: "user_2")) { (getObject) -> Void in
             do {
                 try getObject()
                 XCTFail()
             } catch {
                 expectation.fulfill()
+            }
+        }
+        
+        waitForExpectationsWithTimeout(2.0, handler: nil)
+    }
+    
+    func testFetchObject() {
+        let expectation: XCTestExpectation = expectationWithDescription("get user")
+        userCache.objectForKey("user_1", objectFetcher: UserFetcher(userName: "Juanjo")) { (getObject) -> Void in
+            do {
+                try getObject()
+                expectation.fulfill()
+            } catch {
+                XCTFail()
             }
         }
         
@@ -90,5 +104,24 @@ class UserInfo: NSObject, NSCoding {
     func encodeWithCoder(aCoder: NSCoder) {
         aCoder.encodeObject(id, forKey: "id")
         aCoder.encodeObject(name, forKey: "name")
+    }
+}
+
+class UserFetcher: ObjectFetcher<UserInfo> {
+    
+    var name: String
+    
+    init(userName: String) {
+        self.name = userName
+        super.init(identifier: userName)
+    }
+    
+    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getObject: () throws -> UserInfo) -> Void) -> Request<UserInfo> {
+        let request = Request<UserInfo>(completionHandler: completion)
+        let userInfo = UserInfo(id: "1", name: self.name)
+        dispatch_async(queue) {
+            request.completeWithObject(userInfo)
+        }
+        return request
     }
 }

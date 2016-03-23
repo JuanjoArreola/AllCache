@@ -28,8 +28,8 @@ public final class ImageFetcher: ObjectFetcher<Image> {
         super.init(identifier: String(url.hash))
     }
     
-    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> Image) -> Void)?) -> Request<Image>? {
-        let request = completion != nil ? URLRequest<Image>(completionHandler: completion!) : URLRequest<Image>()
+    override public func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getObject: () throws -> Image) -> Void) -> Request<Image> {
+        let request = URLRequest<Image>(completionHandler: completion)
         do {
             request.dataTask = try requestURL(url) { (data: NSData?, response: NSURLResponse?, error: NSError?) -> Void in
                 do {

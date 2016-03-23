@@ -69,17 +69,7 @@ public class Cache<T: AnyObject> {
                 Log.debug("\(key) NOT found in disk")
                 if request.canceled { return }
                 
-                var fetcherRequest = self.getCachedFetchingRequestWithIdentifier(objectFetcher.identifier)
-                if fetcherRequest == nil {
-                    dispatch_barrier_async(syncQueue) {
-                        self.fetching[objectFetcher.identifier] = objectFetcher.fetchAndRespondInQueue(diskQueue)
-                    }
-                    fetcherRequest = self.getCachedFetchingRequestWithIdentifier(objectFetcher.identifier)
-                    if fetcherRequest == nil {
-                        request.completeWithError(FetchError.NotFound)
-                    }
-                }
-                fetcherRequest?.addCompletionHandler({ (getObject) -> Void in
+                let completionHandler: (getObject: () throws -> T) -> Void = {getObject in
                     do {
                         let object = try getObject()
                         Log.debug("\(key) fetched")
@@ -96,7 +86,20 @@ public class Cache<T: AnyObject> {
                     dispatch_barrier_async(syncQueue) {
                         self.fetching[objectFetcher.identifier] = nil
                     }
-                })
+                }
+                
+                var fetcherRequest = self.getCachedFetchingRequestWithIdentifier(objectFetcher.identifier)
+                if let fetcherRequest = fetcherRequest {
+                    fetcherRequest.addCompletionHandler(completionHandler)
+                } else {
+                    dispatch_barrier_async(syncQueue) {
+                        self.fetching[objectFetcher.identifier] = objectFetcher.fetchAndRespondInQueue(diskQueue, completion: completionHandler)
+                    }
+                    fetcherRequest = self.getCachedFetchingRequestWithIdentifier(objectFetcher.identifier)
+                    if fetcherRequest == nil {
+                        request.completeWithError(FetchError.NotFound)
+                    }
+                }
             }
         }
         return request
@@ -186,19 +189,7 @@ public class Cache<T: AnyObject> {
                             
                             if request.canceled { return }
                             
-//                          MARK: - Fetch Object
-                            var fetcherRequest = self.getCachedFetchingRequestWithIdentifier(descriptor.originalKey)
-                            if fetcherRequest == nil {
-                                dispatch_barrier_async(syncQueue) {
-                                    self.fetching[descriptor.originalKey] = descriptor.fetchAndRespondInQueue(diskQueue)
-                                }
-                                fetcherRequest = self.getCachedFetchingRequestWithIdentifier(descriptor.originalKey)
-                                request.subrequest = fetcherRequest
-                                if fetcherRequest == nil {
-                                    request.completeWithError(FetchError.NotFound)
-                                }
-                            }
-                            fetcherRequest?.addCompletionHandler({ (getObject) in
+                            let completionHandler: (getObject: () throws -> T) -> Void = {getObject in
                                 do {
                                     let rawObject = try getObject()
                                     Log.debug("\(descriptor.originalKey) fetched")
@@ -220,8 +211,22 @@ public class Cache<T: AnyObject> {
                                 dispatch_barrier_async(syncQueue) {
                                     self.fetching[descriptor.originalKey] = nil
                                 }
-                            })
+                            }
                             
+//                          MARK: - Fetch Object
+                            var fetcherRequest = self.getCachedFetchingRequestWithIdentifier(descriptor.originalKey)
+                            if let fetcherRequest = fetcherRequest {
+                                fetcherRequest.addCompletionHandler(completionHandler)
+                            } else {
+                                dispatch_barrier_async(syncQueue) {
+                                    self.fetching[descriptor.originalKey] = descriptor.fetchAndRespondInQueue(diskQueue, completion: completionHandler)
+                                }
+                                fetcherRequest = self.getCachedFetchingRequestWithIdentifier(descriptor.originalKey)
+                                request.subrequest = fetcherRequest
+                                if fetcherRequest == nil {
+                                    request.completeWithError(FetchError.NotFound)
+                                }
+                            }
                         }
                     }
                 }

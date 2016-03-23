@@ -28,7 +28,7 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
         super.init(key: key, originalKey: url.absoluteString)
     }
     
-    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> UIImage) -> Void)?) -> Request<UIImage>? {
+    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getObject: () throws -> UIImage) -> Void) -> Request<UIImage>? {
         return imageFetcher.fetchAndRespondInQueue(queue, completion: completion)
     }
     

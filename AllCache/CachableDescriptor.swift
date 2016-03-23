@@ -18,7 +18,7 @@ public class CachableDescriptor<T: AnyObject> {
         self.originalKey = originalKey
     }
     
-    func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> T) -> Void)? = nil) -> Request<T>? { return nil }
+    func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getObject: () throws -> T) -> Void) -> Request<T>? { return nil }
     
     func processObject(object: T, respondInQueue queue: dispatch_queue_t, completion: (getObject: () throws -> T) -> Void) {}
 }
@@ -36,7 +36,7 @@ public final class CachableDescriptorWrapper<T: AnyObject>: CachableDescriptor<T
         super.init(key: key, originalKey: originalKey)
     }
     
-    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: ((getObject: () throws -> T) -> Void)?) -> Request<T>? {
+    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getObject: () throws -> T) -> Void) -> Request<T>? {
         return objectFetcher.fetchAndRespondInQueue(queue, completion: completion)
     }
     
