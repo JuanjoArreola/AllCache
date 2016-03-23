@@ -25,25 +25,25 @@ final class Log {
         return f
     }()
     
-    class func debug(@autoclosure message: () -> Any, file: String = __FILE__, function: StaticString = __FUNCTION__, line: Int = __LINE__) {
+    class func debug(@autoclosure message: () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.DEBUG.rawValue >= logLevel.rawValue {
             log("Debug", message: String(message()), file: file, function: function, line: line)
         }
     }
     
-    class func warn(@autoclosure message: () -> Any, file: String = __FILE__, function: StaticString = __FUNCTION__, line: Int = __LINE__) {
+    class func warn(@autoclosure message: () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.WARNING.rawValue >= logLevel.rawValue {
             log("Warning", message: String(message()), file: file, function: function, line: line)
         }
     }
     
-    class func error(@autoclosure message: () -> Any, file: String = __FILE__, function: StaticString = __FUNCTION__, line: Int = __LINE__) {
+    class func error(@autoclosure message: () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.ERROR.rawValue >= logLevel.rawValue {
             log("Error", message: String(message()), file: file, function: function, line: line)
         }
     }
     
-    class func severe(@autoclosure message: () -> Any, file: String = __FILE__, function: StaticString = __FUNCTION__, line: Int = __LINE__) {
+    class func severe(@autoclosure message: () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.SEVERE.rawValue >= logLevel.rawValue {
             log("Severe", message: String(message()), file: file, function: function, line: line)
         }
