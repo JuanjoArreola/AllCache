@@ -138,17 +138,24 @@ public class Cache<T: AnyObject> {
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
     func objectForDescriptor(descriptor: CachableDescriptor<T>, completion: (getObject: () throws -> T) -> Void) -> Request<T>? {
+        if let request = requesting[descriptor.key] {
+            request.addCompletionHandler(completion)
+            return request
+        }
+        dispatch_barrier_async(syncQueue) {
+            self.requesting[descriptor.key] = Request(completionHandler: completion)
+        }
+        let request = getCachedRequestWithIdentifier(descriptor.key)!
         
         //      MARK: - Search in Memory o'
         if let object = memoryCache.objectForKey(descriptor.key) {
             Log.debug("\(descriptor.key) found in memory")
-            completion(getObject: { return object })
+            request.completeWithObject(object)
             return nil
         }
         Log.debug("\(descriptor.key) NOT found in memory")
         
         //      MARK: - Search in Disk o'
-        let request = Request(completionHandler: completion)
         dispatch_async(diskQueue) {
             if let object = self.diskCache?.objectForKey(descriptor.key) {
                 Log.debug("\(descriptor.key) found in disk")
