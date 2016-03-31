@@ -82,7 +82,17 @@ public final class DiskCache<T: AnyObject> {
     }
     
     public func setObject(object: T, forKey key: String) throws {
+        Log.debug("Serializing (\(key))")
         let data = try dataSerializer.serializeObject(object)
+        Log.debug("Serialized (\(key)): \(data.length / 1024) Kb")
+        let fileName = "c" + String(key.hash)
+        let url = cacheDirectory.URLByAppendingPathComponent(fileName)
+        try data.writeToURL(url, options: .AtomicWrite)
+        size += data.length
+        restrictSize()
+    }
+    
+    public func setData(data: NSData, forKey key: String) throws {
         let fileName = "c" + String(key.hash)
         let url = cacheDirectory.URLByAppendingPathComponent(fileName)
         try data.writeToURL(url, options: .AtomicWrite)

@@ -12,28 +12,56 @@
     import UIKit
 #endif
 
-public final class ImageSerializer: DataSerializer<Image> {
+#if os(OSX)
     
-    #if os(OSX)
-    override func serializeObject(object: Image) throws -> NSData {
-        if let data = object.TIFFRepresentation {
-            return data
+    public final class ImageSerializer: DataSerializer<Image> {
+        
+        
+        override func serializeObject(object: Image) throws -> NSData {
+            if let data = object.TIFFRepresentation {
+                return data
+            }
+            throw DataSerializerError.SerializationError
         }
-        throw DataSerializerError.SerializationError
-    }
-    #else
-    override public func serializeObject(object: Image) throws -> NSData {
-        if let data = UIImagePNGRepresentation(object) {
-            return data
+        
+        override public func deserializeData(data: NSData) throws -> Image {
+            if let image = Image(data: data) {
+                return image
+            }
+            throw DataSerializerError.SerializationError
         }
-        throw DataSerializerError.SerializationError
     }
-    #endif
     
-    override public func deserializeData(data: NSData) throws -> Image {
-        if let image = Image(data: data) {
-            return image
+#else
+    
+    public class AbstractImageSerializer: DataSerializer<UIImage> {
+        
+        override public func deserializeData(data: NSData) throws -> Image {
+            if let image = Image(data: data) {
+                return image
+            }
+            throw DataSerializerError.SerializationError
         }
-        throw DataSerializerError.SerializationError
     }
-}
+    
+    public final class PNGImageSerializer: AbstractImageSerializer {
+        
+        override public func serializeObject(object: Image) throws -> NSData {
+            if let data = UIImagePNGRepresentation(object) {
+                return data
+            }
+            throw DataSerializerError.SerializationError
+        }
+    }
+    
+    public final class JPEGImageSerializer: AbstractImageSerializer {
+        
+        override public func serializeObject(object: UIImage) throws -> NSData {
+            if let data = UIImagePNGRepresentation(object) {
+                return data
+            }
+            throw DataSerializerError.SerializationError
+        }
+    }
+    
+#endif

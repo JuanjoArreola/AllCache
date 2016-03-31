@@ -16,7 +16,7 @@ public protocol Cancellable {
     func cancel()
 }
 
-public class Request<T: AnyObject>: Cancellable, CustomDebugStringConvertible {
+public class Request<T: Any>: Cancellable, CustomDebugStringConvertible {
     
     private var completionHandlers: [(getObject: () throws -> T) -> Void]? = []
     private var result: (() throws -> T)?
@@ -95,6 +95,7 @@ public class URLRequest<T: AnyObject>: Request<T> {
     required public init() {}
     
     override public func cancel() {
+        Log.debug("Cancelling: \(dataTask?.originalRequest?.URL)")
         dataTask?.cancel()
         super.cancel()
     }

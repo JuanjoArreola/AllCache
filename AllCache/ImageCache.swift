@@ -14,11 +14,32 @@
     public typealias Image = UIImage
 #endif
 
-public final class ImageCache: Cache<Image> {
+
+
+public class ImageCache: Cache<Image> {
     
-    public static let sharedInstance = try! ImageCache(identifier: "sharedImage")
+    public static let sharedInstance = try! PNGImageCache(identifier: "sharedImage")
     
-    public required init(identifier: String, maxCapacity: Int = 0) throws {
-        try super.init(identifier: identifier, dataSerializer: ImageSerializer(), maxCapacity: maxCapacity)
+    public init(identifier: String, serializer: DataSerializer<Image>, maxCapacity: Int = 0) throws {
+        try super.init(identifier: identifier, dataSerializer: serializer, maxCapacity: maxCapacity)
+    }
+    
+    public func imageForURL(url: NSURL, completion: (getImage: () throws -> Image) -> Void) -> Request<UIImage>? {
+        let fetcher = ImageFetcher(url: url)
+        return objectForKey(url.absoluteString, objectFetcher: fetcher, completion: completion)
+    }
+}
+
+public final class PNGImageCache: ImageCache {
+    
+    public init(identifier: String, maxCapacity: Int = 0) throws {
+        try super.init(identifier: identifier, serializer: PNGImageSerializer(), maxCapacity: maxCapacity)
+    }
+}
+
+public final class JPEGImageCache: ImageCache {
+    
+    public init(identifier: String, maxCapacity: Int = 0) throws {
+        try super.init(identifier: identifier, serializer: JPEGImageSerializer(), maxCapacity: maxCapacity)
     }
 }

@@ -15,20 +15,28 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     var imageResizer: ImageResizer
     var imageProcessor: ImageProcessor?
     
-    required public init(url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
-        imageFetcher = ImageFetcher(url: url)
-        imageResizer = ImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
-        self.imageProcessor = imageProcessor
+    required convenience public init(url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
         var key = url.absoluteString + "#\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)"
         if let identifier = imageProcessor?.identifier {
             key += identifier
+        }
+        self.init(key: key, url: url, size: size, scale: scale, backgroundColor: backgroundColor, mode: mode, imageProcessor: imageProcessor)
+    }
+    
+    required public init(key: String, url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
+        imageFetcher = ImageFetcher(url: url)
+        imageResizer = ImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
+        self.imageProcessor = imageProcessor
+        var newKey = key + "#\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)"
+        if let identifier = imageProcessor?.identifier {
+            newKey += identifier
         } else if imageProcessor != nil {
             Log.warn("You should specify an identifier for the imageProcessor: \(imageProcessor)")
         }
-        super.init(key: key, originalKey: url.absoluteString)
+        super.init(key: newKey, originalKey: key)
     }
     
-    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getObject: () throws -> UIImage) -> Void) -> Request<UIImage>? {
+    public override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getFetcherResult: () throws -> FetcherResult<UIImage>) -> Void) -> Request<FetcherResult<UIImage>> {
         return imageFetcher.fetchAndRespondInQueue(queue, completion: completion)
     }
     
