@@ -25,7 +25,7 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     
     required public init(key: String, url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
         imageFetcher = ImageFetcher(url: url)
-        imageResizer = ImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
+        imageResizer = DefaultImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
         self.imageProcessor = imageProcessor
         var newKey = key + "#\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)"
         if let identifier = imageProcessor?.identifier {

@@ -8,7 +8,11 @@
 
 import Foundation
 
-public final class ImageResizer {
+public protocol ImageResizer {
+    func scaleImage(image: UIImage) -> UIImage
+}
+
+public final class DefaultImageResizer: ImageResizer {
     
     var size: CGSize
     var scale: CGFloat
@@ -72,5 +76,40 @@ public final class ImageResizer {
         let origin = CGPointMake((size.width - newSize.width) / 2.0, (size.height - newSize.height) / 2.0)
         
         return CGRect(origin: origin, size: newSize)
+    }
+}
+
+public final class AdaptiveImageResizer: ImageResizer {
+    
+    var width: CGFloat?
+    var height: CGFloat?
+    var scale: CGFloat
+    
+    public required init(width: CGFloat, scale: CGFloat) {
+        self.width = width
+        self.scale = scale
+    }
+    
+    public required init(height: CGFloat, scale: CGFloat) {
+        self.height = height
+        self.scale = scale
+    }
+    
+    public func scaleImage(image: UIImage) -> UIImage {
+        let rect = CGRect(origin: CGPointZero, size: getSizeForImageSize(image.size))
+        UIGraphicsBeginImageContextWithOptions(rect.size, true, scale)
+        
+        image.drawInRect(rect)
+        
+        let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return scaledImage
+    }
+    
+    private func getSizeForImageSize(imageSize: CGSize) -> CGSize {
+        if let width = width {
+            return CGSize(width: width, height: (width * imageSize.height) / imageSize.width)
+        }
+        return CGSize(width: (height! * imageSize.width) / imageSize.height, height: height!)
     }
 }
