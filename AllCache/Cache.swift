@@ -36,6 +36,7 @@ public class Cache<T: AnyObject> {
     required public init(identifier: String, dataSerializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
         self.identifier = identifier
         self.diskCache = try! DiskCache<T>(identifier: identifier, dataSerializer: dataSerializer, maxCapacity: maxCapacity)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(self.handleMemoryWarningNotification(_:)), name: UIApplicationDidReceiveMemoryWarningNotification, object: nil)
     }
     
     /// Search an object in the caches, if the object is found the completion closure is called, if not it uses the objectFetcher to try to get it.
@@ -58,7 +59,8 @@ public class Cache<T: AnyObject> {
         if let object = memoryCache.objectForKey(key) {
             Log.debug("\(key) found in memory")
             request.completeWithObject(object)
-            return nil
+            setCachedRequest(nil, forIdentifier: key)
+            return request
         }
         Log.debug("\(key) NOT found in memory")
         
@@ -68,11 +70,15 @@ public class Cache<T: AnyObject> {
                 dispatch_async(self.responseQueue) {
                     request.completeWithObject(object)
                     self.memoryCache.setObject(object, forKey: key)
+                    self.setCachedRequest(nil, forIdentifier: key)
                 }
                 self.diskCache?.updateLastAccessOfKey(key)
             } else {
                 Log.debug("\(key) NOT found in disk")
-                if request.canceled { return }
+                if request.canceled {
+                    self.setCachedRequest(nil, forIdentifier: key)
+                    return
+                }
                 
                 let completionHandler: (getObject: () throws -> FetcherResult<T>) -> Void = { getFetcherResult in
                     do {
@@ -81,15 +87,17 @@ public class Cache<T: AnyObject> {
                         dispatch_async(self.responseQueue) {
                             request.completeWithObject(result.object)
                             self.memoryCache.setObject(result.object, forKey: key)
+                            self.setCachedRequest(nil, forIdentifier: key)
                         }
                         if self.saveRawData, let data = result.data {
-                            try? self.diskCache.setData(data, forKey: key)
+                            _ = try? self.diskCache.setData(data, forKey: key)
                         } else {
-                            try? self.diskCache?.setObject(result.object, forKey: key)
+                            _ = try? self.diskCache?.setObject(result.object, forKey: key)
                         }
                     } catch {
                         dispatch_async(self.responseQueue) {
                             request.completeWithError(error)
+                            self.setCachedRequest(nil, forIdentifier: key)
                         }
                     }
                     dispatch_barrier_async(syncQueue) {
@@ -168,7 +176,7 @@ public class Cache<T: AnyObject> {
         if let object = memoryCache.objectForKey(descriptor.key) {
             Log.debug("\(descriptor.key) found in memory")
             request.completeWithObject(object)
-            return nil
+            return request
         }
         Log.debug("\(descriptor.key) NOT found in memory")
         
@@ -238,11 +246,11 @@ public class Cache<T: AnyObject> {
                                     if self.moveOriginalToDiskCache {
                                         if self.saveRawData, let data = result.data {
                                             dispatch_async(diskWriteQueue) {
-                                                try? self.diskCache?.setData(data, forKey: descriptor.originalKey)
+                                                _ = try? self.diskCache?.setData(data, forKey: descriptor.originalKey)
                                             }
                                         } else {
                                             dispatch_async(diskWriteQueue) {
-                                                try? self.diskCache?.setObject(rawObject, forKey: descriptor.originalKey)
+                                                _ = try? self.diskCache?.setObject(rawObject, forKey: descriptor.originalKey)
                                             }
                                         }
                                     }
@@ -334,9 +342,17 @@ public class Cache<T: AnyObject> {
         }
     }
     
+    @objc func handleMemoryWarningNotification(notification: NSNotification) {
+        memoryCache.clear()
+    }
+    
     var description: String {
         let disk: String = diskCache?.identifier ?? "-"
         return "Cache<\(T.self)>(\(identifier)) disk cache: \(disk)"
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
     }
     
 }

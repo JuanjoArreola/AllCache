@@ -116,12 +116,13 @@ class UserFetcher: ObjectFetcher<UserInfo> {
         super.init(identifier: userName)
     }
     
-    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getObject: () throws -> UserInfo) -> Void) -> Request<UserInfo> {
-        let request = Request<UserInfo>(completionHandler: completion)
+    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getFetcherResult: () throws -> FetcherResult<UserInfo>) -> Void) -> Request<FetcherResult<UserInfo>> {
+        let request = Request<FetcherResult<UserInfo>>(completionHandler: completion)
         let userInfo = UserInfo(id: "1", name: self.name)
         dispatch_async(queue) {
-            request.completeWithObject(userInfo)
+            request.completeWithObject(FetcherResult(object: userInfo, data: nil))
         }
         return request
     }
+
 }
