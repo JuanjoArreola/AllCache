@@ -16,11 +16,7 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     var imageProcessor: ImageProcessor?
     
     required convenience public init(url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
-        var key = url.absoluteString + "#\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)"
-        if let identifier = imageProcessor?.identifier {
-            key += identifier
-        }
-        self.init(key: key, url: url, size: size, scale: scale, backgroundColor: backgroundColor, mode: mode, imageProcessor: imageProcessor)
+        self.init(key: url.absoluteString, url: url, size: size, scale: scale, backgroundColor: backgroundColor, mode: mode, imageProcessor: imageProcessor)
     }
     
     required public init(key: String, url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {

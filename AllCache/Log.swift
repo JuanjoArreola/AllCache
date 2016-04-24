@@ -8,12 +8,12 @@
 
 import Foundation
 
-enum LogLevel: Int {
+public enum LogLevel: Int {
     case DEBUG = 1, WARNING, ERROR, SEVERE
 }
 
-final class Log {
-    static var logLevel = LogLevel(rawValue: Configuration.logLevel)!
+public final class Log {
+    public static var logLevel = LogLevel(rawValue: Configuration.logLevel)!
     static var showDate = true
     static var showFile = Configuration.showFile
     static var showFunc = Configuration.showFunc
