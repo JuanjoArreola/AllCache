@@ -324,7 +324,7 @@ public class Cache<T: AnyObject> {
     private func processRawObject(rawObject: T, withDescriptor descriptor: CachableDescriptor<T>, request: Request<T>) {
         if request.canceled { return }
         dispatch_async(processQueue) {
-            Log.debug("processing \(descriptor.originalKey)")
+            Log.debug("processing \(descriptor.key)")
             descriptor.processObject(rawObject, respondInQueue: self.responseQueue) { (getObject) in
                 do {
                     let object = try getObject()

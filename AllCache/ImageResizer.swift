@@ -72,7 +72,7 @@ public final class DefaultImageResizer: ImageResizer {
         let imageRatio = imageSize.width / imageSize.height
         
         let newSize = ratio > imageRatio ? CGSizeMake(size.width, imageSize.height * (size.width / imageSize.width)) :
-            CGSizeMake(imageSize.width * (size.height / imageSize.height), size.width)
+            CGSizeMake(imageSize.width * (size.height / imageSize.height), size.height)
         let origin = CGPointMake((size.width - newSize.width) / 2.0, (size.height - newSize.height) / 2.0)
         
         return CGRect(origin: origin, size: newSize)
