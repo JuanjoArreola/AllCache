@@ -51,5 +51,13 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
 
 public class ImageProcessor {
     var identifier: String?
-    func processImage(image: UIImage) throws -> UIImage { return image }
+    public func processImage(image: UIImage) throws -> UIImage { return image }
+    
+    public init(identifier: String?) {
+        self.identifier = identifier
+    }
+    
+    public var description: String {
+        return "Processor: \(identifier)"
+    }
 }

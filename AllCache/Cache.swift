@@ -160,7 +160,7 @@ public class Cache<T: AnyObject> {
     /// - parameter descriptor: An object that encapsulates the key, origianlKey, objectFetcher and objectProcessor
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
-    func objectForDescriptor(descriptor: CachableDescriptor<T>, completion: (getObject: () throws -> T) -> Void) -> Request<T>? {
+    public func objectForDescriptor(descriptor: CachableDescriptor<T>, completion: (getObject: () throws -> T) -> Void) -> Request<T>? {
         if let request = getCachedRequestWithIdentifier(descriptor.key) {
             if request.canceled {
                 setCachedRequest(nil, forIdentifier: descriptor.key)
