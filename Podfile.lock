@@ -1,14 +1,10 @@
 PODS:
-  - Apic (2.0.2)
+  - Apic (2.0.5)
 
 DEPENDENCIES:
-  - Apic (from `../apic`)
-
-EXTERNAL SOURCES:
-  Apic:
-    :path: ../apic
+  - Apic
 
 SPEC CHECKSUMS:
-  Apic: dd8f4f113610c82f7ab6b5bb78e59cc9712d9b2c
+  Apic: cc9e193dfb3bde0ae7ca65e9805fa940481a4c85
 
 COCOAPODS: 0.39.0

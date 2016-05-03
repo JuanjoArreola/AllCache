@@ -18,11 +18,12 @@ public extension UIButton {
         if let image = placeholder {
             self.setImage(image, forState: .Normal)
         }
+        let mode = imageView?.contentMode ?? contentMode
         var color = self.backgroundColor ?? UIColor.clearColor()
-        if color != UIColor.clearColor() && (self.contentMode == .ScaleAspectFill || self.contentMode == .ScaleToFill) {
+        if color != UIColor.clearColor() && (mode == .ScaleAspectFill || mode == .ScaleToFill) {
             color = UIColor.blackColor()
         }
-        let descriptor = ImageCachableDescriptor(url: url!, size: self.bounds.size, scale: UIScreen.mainScreen().scale, backgroundColor: color, mode: self.contentMode, imageProcessor: imageProcessor)
+        let descriptor = ImageCachableDescriptor(url: url!, size: bounds.size, scale: UIScreen.mainScreen().scale, backgroundColor: color, mode: mode, imageProcessor: imageProcessor)
         return requestImageWithDesciptor(descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
     }
     
