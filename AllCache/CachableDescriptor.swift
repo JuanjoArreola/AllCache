@@ -10,8 +10,8 @@ import Foundation
 
 /// Abstract class that provides all the information that a cache requires to search, fetch and process an object
 public class CachableDescriptor<T: AnyObject> {
-    let key: String
-    let originalKey: String
+    public let key: String
+    public let originalKey: String
     
     required public init(key: String, originalKey: String) {
         self.key = key

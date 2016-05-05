@@ -39,6 +39,23 @@ public class Cache<T: AnyObject> {
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(self.handleMemoryWarningNotification(_:)), name: UIApplicationDidReceiveMemoryWarningNotification, object: nil)
     }
     
+    public func objectForKey(key: String) -> T? {
+        if let object = memoryCache.objectForKey(key) {
+            Log.debug("-\(key) found in memory")
+            return object
+        }
+        Log.debug("-\(key) NOT found in memory")
+        
+        if let object = self.diskCache?.objectForKey(key) {
+            Log.debug("-\(key) found in disk")
+            return object
+            memoryCache.setObject(object, forKey: key)
+            self.diskCache?.updateLastAccessOfKey(key)
+        }
+        Log.debug("-\(key) NOT found in disk")
+        return nil
+    }
+    
     /// Search an object in the caches, if the object is found the completion closure is called, if not it uses the objectFetcher to try to get it.
     /// - parameter key: the key of the object to search
     /// - parameter objectFetcher: The object that fetches the object if is not currently in the cache
