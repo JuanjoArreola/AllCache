@@ -48,9 +48,11 @@ public class Cache<T: AnyObject> {
         
         if let object = self.diskCache?.objectForKey(key) {
             Log.debug("-\(key) found in disk")
-            return object
             memoryCache.setObject(object, forKey: key)
-            self.diskCache?.updateLastAccessOfKey(key)
+            dispatch_async(diskQueue) {
+                self.diskCache?.updateLastAccessOfKey(key)
+            }
+            return object
         }
         Log.debug("-\(key) NOT found in disk")
         return nil
