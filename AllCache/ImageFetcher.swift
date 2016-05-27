@@ -39,7 +39,7 @@ public final class ImageFetcher: ObjectFetcher<Image> {
                     guard let validData = data else {
                         throw FetchError.InvalidData
                     }
-                    guard let image = Image(data: validData) else {
+                    guard let image = Image(data: validData, scale: UIScreen.mainScreen().scale) else {
                         throw FetchError.ParseError
                     }
                     dispatch_async(queue) {

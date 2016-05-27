@@ -10,12 +10,14 @@ import Foundation
 
 public protocol ImageResizer {
     func scaleImage(image: UIImage) -> UIImage
+    var size: CGSize { get }
+    var scale: CGFloat { get }
 }
 
 public final class DefaultImageResizer: ImageResizer {
     
-    var size: CGSize
-    var scale: CGFloat
+    public var size: CGSize
+    public var scale: CGFloat
     var backgroundColor: UIColor
     var mode: UIViewContentMode
     
@@ -83,7 +85,10 @@ public final class AdaptiveImageResizer: ImageResizer {
     
     var width: CGFloat?
     var height: CGFloat?
-    var scale: CGFloat
+    public var size: CGSize {
+        return CGSize(width: width ?? 0, height: height ?? 0)
+    }
+    public var scale: CGFloat
     
     public required init(width: CGFloat, scale: CGFloat) {
         self.width = width

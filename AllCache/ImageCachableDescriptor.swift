@@ -38,7 +38,11 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     
     override func processObject(object: UIImage, respondInQueue queue: dispatch_queue_t, completion: (getObject: () throws -> UIImage) -> Void) {
         do {
-            var image = imageResizer.scaleImage(object)
+            var image = object
+            let scale = imageResizer.scale != 0.0 ? imageResizer.scale : UIScreen.mainScreen().scale
+            if !CGSizeEqualToSize(image.size, imageResizer.size) || image.scale != scale {
+                image = imageResizer.scaleImage(object)
+            }
             if let processor = imageProcessor {
                 image = try processor.processImage(image)
             }
