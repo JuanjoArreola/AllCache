@@ -16,7 +16,7 @@ public extension UIImageView {
         if url == nil {
             return nil
         }
-        let descriptor = ImageCachableDescriptor(url: url!, size: self.bounds.size, scale: UIScreen.mainScreen().scale, backgroundColor: hintColor, mode: self.contentMode, imageProcessor: imageProcessor)
+        let descriptor = ImageCachableDescriptor(url: url!, size: self.bounds.size, scale: UIScreen.mainScreen().scale, backgroundColor: hintColor, mode: contentMode, imageProcessor: imageProcessor)
         return requestImageWithDesciptor(descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
     }
     

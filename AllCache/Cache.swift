@@ -352,11 +352,10 @@ public class Cache<T: AnyObject> {
                     dispatch_async(diskQueue) {
                         _ = try? self.diskCache?.setObject(object, forKey: descriptor.key)
                     }
-                    self.setCachedRequest(nil, forIdentifier: descriptor.key)
                 } catch {
                     request.completeWithError(error)
-                    self.setCachedRequest(nil, forIdentifier: descriptor.key)
                 }
+                self.setCachedRequest(nil, forIdentifier: descriptor.key)
             }
         }
     }

@@ -1,10 +1,12 @@
 PODS:
-  - Apic (2.0.5)
+  - Apic (2.1.1)
 
 DEPENDENCIES:
   - Apic
 
 SPEC CHECKSUMS:
-  Apic: cc9e193dfb3bde0ae7ca65e9805fa940481a4c85
+  Apic: f556f6695cdb35a3cfddadd5ce7f34a28ba8217c
 
-COCOAPODS: 0.39.0
+PODFILE CHECKSUM: 0232fe5c019156dd24398e15bd4085213acdcb0b
+
+COCOAPODS: 1.0.0
