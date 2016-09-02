@@ -6,10 +6,10 @@ target 'AllCache' do
 end
 
 target 'AllCacheTests' do
-   pod 'Apic'
+   pod 'Apic', :path => '../Apic'
 end
 
-target 'AllCache OSX' do
+#target 'AllCache OSX' do
 
-end
+#end
 

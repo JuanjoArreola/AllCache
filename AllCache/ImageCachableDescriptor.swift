@@ -9,18 +9,18 @@
 import UIKit
 
 /// Convenience class to encapsulate the steps 
-public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
+open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     
     var imageFetcher: ImageFetcher
     var imageResizer: ImageResizer
     var imageProcessor: ImageProcessor?
     
-    required convenience public init(url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
+    required convenience public init(url: URL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
         self.init(key: url.absoluteString, url: url, size: size, scale: scale, backgroundColor: backgroundColor, mode: mode, imageProcessor: imageProcessor)
     }
     
-    required public init(key: String, url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
-        imageFetcher = ImageFetcher(url: url)
+    required public init(key: String, url: URL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
+        imageFetcher = ImageFetcher(url: url as NSURL)
         imageResizer = DefaultImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
         self.imageProcessor = imageProcessor
         var newKey = key + "#\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)"
@@ -35,37 +35,41 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
         }
         super.init(key: newKey, originalKey: key)
     }
+
+    required public init(key: String, originalKey: String) {
+        fatalError("init(key:originalKey:) has not been implemented")
+    }
     
-    public override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getFetcherResult: () throws -> FetcherResult<UIImage>) -> Void) -> Request<FetcherResult<UIImage>> {
+    open override func fetchAndRespondInQueue(_ queue: DispatchQueue, completion: (_ getFetcherResult: () throws -> FetcherResult<UIImage>) -> Void) -> Request<FetcherResult<UIImage>> {
         return imageFetcher.fetchAndRespondInQueue(queue, completion: completion)
     }
     
-    override func processObject(object: UIImage, respondInQueue queue: dispatch_queue_t, completion: (getObject: () throws -> UIImage) -> Void) {
+    override func processObject(_ object: UIImage, respondInQueue queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> UIImage) -> Void) {
         do {
             var image = object
-            let scale = imageResizer.scale != 0.0 ? imageResizer.scale : UIScreen.mainScreen().scale
-            if !CGSizeEqualToSize(image.size, imageResizer.size) || image.scale != scale {
+            let scale = imageResizer.scale != 0.0 ? imageResizer.scale : UIScreen.main.scale
+            if !image.size.equalTo(image, Resizer.size) || image.scale != scale {
                 image = imageResizer.scaleImage(object)
             }
             if let processor = imageProcessor {
                 image = try processor.processImage(image)
             }
-            dispatch_async(queue) { completion(getObject: { return image }) }
+            queue.async { completion({ return image }) }
         } catch {
-            dispatch_async(queue) { completion(getObject: { throw error }) }
+            queue.async { completion({ throw error }) }
         }
     }
 }
 
-public class ImageProcessor {
+open class ImageProcessor {
     var identifier: String?
-    public func processImage(image: UIImage) throws -> UIImage { return image }
+    open func processImage(_ image: UIImage) throws -> UIImage { return image }
     
     public init(identifier: String?) {
         self.identifier = identifier
     }
     
-    public var description: String {
+    open var description: String {
         return "Processor: \(identifier)"
     }
 }

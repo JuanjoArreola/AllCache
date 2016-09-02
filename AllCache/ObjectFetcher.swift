@@ -8,36 +8,36 @@
 
 import Foundation
 
-enum FetchError: ErrorType {
-    case InvalidData
-    case ParseError
-    case NotFound
-    case NotImplemented
+enum FetchError: Error {
+    case invalidData
+    case parseError
+    case notFound
+    case notImplemented
 }
 
-public class FetcherResult<T> {
+open class FetcherResult<T> {
     var object: T
-    var data: NSData?
+    var data: Data?
     
-    public required init(object: T, data: NSData?) {
+    public required init(object: T, data: Data?) {
         self.object = object
         self.data = data
     }
 }
 
 /// Abstract class intended to be subclassed to fetch an object of a concrete type
-public class ObjectFetcher<T: AnyObject> {
+open class ObjectFetcher<T: AnyObject> {
     
-    public var identifier: String!
+    open var identifier: String!
     
     public required init(identifier: String) {
         self.identifier = identifier
     }
     
-    public func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
+    open func fetchAndRespondInQueue(_ queue: DispatchQueue, completion: (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
         let request = Request<FetcherResult<T>>(completionHandler: completion)
-        dispatch_async(queue) {
-            request.completeWithError(FetchError.NotImplemented)
+        queue.async {
+            request.completeWithError(FetchError.notImplemented)
         }
         return request
     }

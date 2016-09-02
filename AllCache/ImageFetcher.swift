@@ -15,45 +15,49 @@ import Foundation
 #endif
 
 
-enum ImageFetcherError: ErrorType {
-    case FilterError
+enum ImageFetcherError: Error {
+    case filterError
 }
 
 
 public final class ImageFetcher: ObjectFetcher<Image> {
-    let url: NSURL
+    let url: URL
     
-    public init(url: NSURL) {
+    public init(url: URL) {
         self.url = url
-        super.init(identifier: String(url.hash))
+        super.init(identifier: String((url as NSURL).hash))
+    }
+
+    public required init(identifier: String) {
+        fatalError("init(identifier:) has not been implemented")
     }
     
-    public override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getFetcherResult: () throws -> FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
+    public override func fetchAndRespondInQueue(_ queue: DispatchQueue, completion: (_ getFetcherResult: () throws -> FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
         let request = URLRequest<FetcherResult<Image>>(completionHandler: completion)
         do {
-            request.dataTask = try requestURL(url) { (data: NSData?, response: NSURLResponse?, error: NSError?) -> Void in
+            request.dataTask = try requestURL(url) { (data: Data?, response: URLResponse?, error: NSError?) -> Void in
                 do {
                     if let error = error {
                         throw error
                     }
                     guard let validData = data else {
-                        throw FetchError.InvalidData
+                        throw FetchError.invalidData
                     }
-                    guard let image = Image(data: validData, scale: UIScreen.mainScreen().scale) else {
-                        throw FetchError.ParseError
+                    guard let image = Image(data: validData, scale: UIScreen.main.scale) else {
+                        throw FetchError.parseError
                     }
-                    dispatch_async(queue) {
+                    queue.async {
                         request.completeWithObject(FetcherResult(object: image, data: data))
                     }
                 } catch {
-                    dispatch_async(queue) {
+                    queue.async {
                         request.completeWithError(error)
                     }
                 }
             }
         }
         catch {
-            dispatch_async(queue) {
+            queue.async {
                 request.completeWithError(error)
             }
         }

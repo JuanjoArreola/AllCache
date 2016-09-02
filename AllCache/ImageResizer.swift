@@ -9,7 +9,7 @@
 import Foundation
 
 public protocol ImageResizer {
-    func scaleImage(image: UIImage) -> UIImage
+    func scaleImage(_ image: UIImage) -> UIImage
     var size: CGSize { get }
     var scale: CGFloat { get }
 }
@@ -28,13 +28,13 @@ public final class DefaultImageResizer: ImageResizer {
         self.mode = mode
     }
     
-    public func scaleImage(image: UIImage) -> UIImage {
-        var rect = CGRect(origin: CGPointZero, size: size)
+    public func scaleImage(_ image: UIImage) -> UIImage {
+        var rect = CGRect(origin: CGPoint.zero, size: size)
         
         switch mode {
-        case .ScaleAspectFit:
+        case .scaleAspectFit:
             rect = aspectFit(size: size, imageSize: image.size)
-        case .ScaleAspectFill:
+        case .scaleAspectFill:
             rect = aspectFill(size: size, imageSize: image.size)
         default:
             break
@@ -46,36 +46,36 @@ public final class DefaultImageResizer: ImageResizer {
         
         UIGraphicsBeginImageContextWithOptions(size, !hasAlpha, scale)
         
-        if backgroundColor != UIColor.clearColor() && mode != .ScaleAspectFill && mode != .ScaleToFill {
+        if backgroundColor != UIColor.clear && mode != .scaleAspectFill && mode != .scaleToFill {
             backgroundColor.set()
-            UIRectFill(CGRectMake(0, 0, size.width, size.height))
+            UIRectFill(CGRect(x: 0, y: 0, width: size.width, height: size.height))
         }
         
-        image.drawInRect(rect)
+        image.draw(in: rect)
         
         let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return scaledImage
+        return scaledImage!
     }
     
-    final func aspectFit(size size: CGSize, imageSize: CGSize) -> CGRect {
+    final func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
         let ratio = size.width / size.height
         let imageRatio = imageSize.width / imageSize.height
         
-        let newSize = ratio > imageRatio ? CGSizeMake(imageSize.width * (size.height / imageSize.height), size.height) :
-            CGSizeMake(size.width, imageSize.height * (size.width / imageSize.width))
-        let origin = CGPointMake((size.width - newSize.width) / 2.0, (size.height - newSize.height) / 2.0)
+        let newSize = ratio > imageRatio ? CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height) :
+            CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width))
+        let origin = CGPoint(x: (size.width - newSize.width) / 2.0, y: (size.height - newSize.height) / 2.0)
         
         return CGRect(origin: origin, size: newSize)
     }
     
-    final func aspectFill(size size: CGSize, imageSize: CGSize) -> CGRect {
+    final func aspectFill(size: CGSize, imageSize: CGSize) -> CGRect {
         let ratio = size.width / size.height
         let imageRatio = imageSize.width / imageSize.height
         
-        let newSize = ratio > imageRatio ? CGSizeMake(size.width, imageSize.height * (size.width / imageSize.width)) :
-            CGSizeMake(imageSize.width * (size.height / imageSize.height), size.height)
-        let origin = CGPointMake((size.width - newSize.width) / 2.0, (size.height - newSize.height) / 2.0)
+        let newSize = ratio > imageRatio ? CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width)) :
+            CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height)
+        let origin = CGPoint(x: (size.width - newSize.width) / 2.0, y: (size.height - newSize.height) / 2.0)
         
         return CGRect(origin: origin, size: newSize)
     }
@@ -100,18 +100,18 @@ public final class AdaptiveImageResizer: ImageResizer {
         self.scale = scale
     }
     
-    public func scaleImage(image: UIImage) -> UIImage {
-        let rect = CGRect(origin: CGPointZero, size: getSizeForImageSize(image.size))
+    public func scaleImage(_ image: UIImage) -> UIImage {
+        let rect = CGRect(origin: CGPoint.zero, size: getSizeForImageSize(image.size))
         UIGraphicsBeginImageContextWithOptions(rect.size, true, scale)
         
-        image.drawInRect(rect)
+        image.draw(in: rect)
         
         let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return scaledImage
+        return scaledImage!
     }
     
-    private func getSizeForImageSize(imageSize: CGSize) -> CGSize {
+    fileprivate func getSizeForImageSize(_ imageSize: CGSize) -> CGSize {
         if let width = width {
             return CGSize(width: width, height: (width * imageSize.height) / imageSize.width)
         }

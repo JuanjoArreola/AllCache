@@ -16,15 +16,15 @@
 
 
 
-public class ImageCache: Cache<Image> {
+open class ImageCache: Cache<Image> {
     
-    public static let sharedInstance = try! PNGImageCache(identifier: "sharedImage")
+    open static let sharedInstance = try! PNGImageCache(identifier: "sharedImage")
     
     public init(identifier: String, serializer: DataSerializer<Image>, maxCapacity: Int = 0) throws {
         try super.init(identifier: identifier, dataSerializer: serializer, maxCapacity: maxCapacity)
     }
     
-    public func imageForURL(url: NSURL, completion: (getImage: () throws -> Image) -> Void) -> Request<UIImage>? {
+    open func imageForURL(_ url: URL, completion: (_ getImage: () throws -> Image) -> Void) -> Request<UIImage>? {
         let fetcher = ImageFetcher(url: url)
         return objectForKey(url.absoluteString, objectFetcher: fetcher, completion: completion)
     }

@@ -10,20 +10,20 @@ import Foundation
 
 public final class MemoryCache<T: AnyObject> {
     
-    private var cache = NSCache()
+    private var cache = NSCache<String, T>()
     
-    public func objectForKey(key: String) -> T? {
-        return cache.objectForKey(key) as? T
+    public func objectForKey(_ key: String) -> T? {
+        return cache.object(forKey: key) as? T
     }
     
-    public func setObject(object: T?, forKey key: String) {
+    public func setObject(_ object: T?, forKey key: String) {
         if let object = object {
             cache.setObject(object, forKey: key)
         }
     }
     
-    public func removeObjectForKey(key: String) {
-        cache.removeObjectForKey(key)
+    public func removeObjectForKey(_ key: String) {
+        cache.removeObject(forKey: key)
     }
     
     public func clear() {
