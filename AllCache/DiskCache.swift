@@ -10,9 +10,9 @@ import Foundation
 
 //private let shrinkQueue: dispatch_queue_t = dispatch_queue_create("com.crayon.allcache.FetchQueue", DISPATCH_QUEUE_SERIAL)
 
-enum DiskCacheError: ErrorType {
-    case InvalidPath
-    case InvalidData
+enum DiskCacheError: Error {
+    case invalidPath
+    case invalidData
 }
 
 public final class DiskCache<T: AnyObject> {
@@ -20,52 +20,49 @@ public final class DiskCache<T: AnyObject> {
     public let identifier: String
     public internal(set) var size = 0
     public var maxCapacity = 0
-    private var shrinking = false
+    fileprivate var shrinking = false
     
-    let fileManager = NSFileManager.defaultManager()
-    public var cacheDirectory: NSURL
+    let fileManager = FileManager.default
+    public var cacheDirectory: URL
     var dataSerializer: DataSerializer<T>!
     
     required public init(identifier: String, dataSerializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
         self.identifier = identifier
         self.dataSerializer = dataSerializer
         self.maxCapacity = maxCapacity
-        let cache = try! fileManager.URLForDirectory(.CachesDirectory, inDomain: .UserDomainMask, appropriateForURL: nil, create: false)
-        cacheDirectory = cache.URLByAppendingPathComponent(identifier, isDirectory: true)
+        let cache = try! fileManager.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+        cacheDirectory = cache.appendingPathComponent(identifier, isDirectory: true)
         
-        guard let path = cacheDirectory.path else {
-            throw DiskCacheError.InvalidPath
-        }
-        if !fileManager.fileExistsAtPath(path) {
-            try fileManager.createDirectoryAtURL(cacheDirectory, withIntermediateDirectories: false, attributes: nil)
+        if !fileManager.fileExists(atPath: cacheDirectory.path) {
+            try fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: false, attributes: nil)
         }
         size = getCacheSize()
         restrictSize()
     }
     
     func getCacheSize() -> Int {
-        let resourceKeys = [NSURLTotalFileAllocatedSizeKey]
-        guard let enumerator = fileManager.enumeratorAtURL(cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [], errorHandler: nil) else {
+        let resourceKeys = [URLResourceKey.totalFileAllocatedSizeKey]
+        guard let enumerator = fileManager.enumerator(at: cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [], errorHandler: nil) else {
             return 0
         }
         var total = 0
-        for case let fileURL as NSURL in enumerator {
-            guard let resourceValues = try? fileURL.resourceValuesForKeys(resourceKeys) else { continue }
-            guard let size = resourceValues[NSURLTotalFileAllocatedSizeKey] as? NSNumber else { continue }
-            total += size.integerValue
+        for case let fileURL as URL in enumerator {
+            guard let resourceValues = try? (fileURL as NSURL).resourceValues(forKeys: resourceKeys) else { continue }
+            guard let size = resourceValues[URLResourceKey.totalFileAllocatedSizeKey] as? NSNumber else { continue }
+            total += size.intValue
         }
         return total
     }
     
-    public func objectForKey(key: String) -> T? {
+    public func objectForKey(_ key: String) -> T? {
         let fileName = "c" + String(key.hash)
-        let url = cacheDirectory.URLByAppendingPathComponent(fileName)
+        let url = cacheDirectory.appendingPathComponent(fileName)
         if !objectExistsAtURL(url) {
             return nil
         }
         do {
-            guard let data = NSData(contentsOfURL: url) else {
-                throw DiskCacheError.InvalidData
+            guard let data = try? Data(contentsOf: url) else {
+                throw DiskCacheError.invalidData
             }
             return try dataSerializer.deserializeData(data)
         } catch {
@@ -74,76 +71,72 @@ public final class DiskCache<T: AnyObject> {
         }
     }
     
-    @inline(__always) private func objectExistsAtURL(url: NSURL) -> Bool {
-        if let path = url.path {
-            return fileManager.fileExistsAtPath(path)
-        }
-        return false
+    @inline(__always) fileprivate func objectExists(atURL url: URL) -> Bool {
+        return fileManager.fileExists(atPath: url.path)
     }
     
-    public func setObject(object: T, forKey key: String) throws {
+    public func setObject(_ object: T, forKey key: String) throws {
         Log.debug("Serializing (\(key))")
         let data = try dataSerializer.serializeObject(object)
-        Log.debug("Serialized (\(key)): \(data.length / 1024) Kb")
+        Log.debug("Serialized (\(key)): \(data.count / 1024) Kb")
         let fileName = "c" + String(key.hash)
-        let url = cacheDirectory.URLByAppendingPathComponent(fileName)
-        try data.writeToURL(url, options: .AtomicWrite)
-        size += data.length
+        let url = cacheDirectory.appendingPathComponent(fileName)
+        try data.write(to: url, options: .atomicWrite)
+        size += data.count
         restrictSize()
     }
     
-    public func setData(data: NSData, forKey key: String) throws {
+    public func setData(_ data: Data, forKey key: String) throws {
         let fileName = "c" + String(key.hash)
-        let url = cacheDirectory.URLByAppendingPathComponent(fileName)
-        try data.writeToURL(url, options: .AtomicWrite)
-        size += data.length
+        let url = cacheDirectory.appendingPathComponent(fileName)
+        try data.write(to: url, options: .atomicWrite)
+        size += data.count
         restrictSize()
     }
     
-    func updateLastAccessOfKey(key: String) {
+    func updateLastAccessOfKey(_ key: String) {
         let fileName = String(abs(key.hash))
-        guard let path = cacheDirectory.URLByAppendingPathComponent(fileName).path else {
-            return
-        }
-        _ = try? fileManager.setAttributes([NSURLContentAccessDateKey: NSDate()], ofItemAtPath: path)
+        let path = cacheDirectory.appendingPathComponent(fileName).path
+        fileManager.setAttributes(<#T##attributes: [FileAttributeKey : Any]##[FileAttributeKey : Any]#>, ofItemAtPath: <#T##String#>)
+        _ = try? fileManager.setAttributes([URLResourceKey.contentAccessDateKey: Date()], ofItemAtPath: path)
     }
     
-    public func removeObjectForKey(key: String) throws {
+    public func removeObjectForKey(_ key: String) throws {
         let fileName = "c" + String(key.hash)
-        let url = cacheDirectory.URLByAppendingPathComponent(fileName)
+        let url = cacheDirectory.appendingPathComponent(fileName)
         if let path = url.path {
-            let attributes = try? fileManager.attributesOfItemAtPath(path)
-            if let fileSize = attributes?[NSFileSize] as? NSNumber {
-                size -= fileSize.integerValue
+            let attributes = try? fileManager.attributesOfItem(atPath: path)
+            if let fileSize = attributes?[FileAttributeKey.size] as? NSNumber {
+                size -= fileSize.intValue
             }
         }
-        try fileManager.removeItemAtURL(url)
+        try fileManager.removeItem(at: url)
     }
     
-    public func removeOlderThan(date: NSDate) {
-        dispatch_async(diskQueue) {
-            let resourceKeys = [NSURLContentAccessDateKey, NSURLTotalFileAllocatedSizeKey]
-            guard let enumerator = self.fileManager.enumeratorAtURL(self.cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [], errorHandler: nil) else {
+    public func removeOlderThan(_ date: Date) {
+        diskQueue.async {
+            let resourceKeys = [URLResourceKey.contentAccessDateKey, URLResourceKey.totalFileAllocatedSizeKey]
+            guard let enumerator = self.fileManager.enumerator(at: self.cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [], errorHandler: nil) else {
                 return
             }
-            for case let url as NSURL in enumerator {
-                guard let resourceValues = try? url.resourceValuesForKeys(resourceKeys) else { continue }
-                guard let accessDate = resourceValues[NSURLContentAccessDateKey] as? NSDate else { continue }
-                if date.compare(accessDate) == .OrderedDescending {
-                    guard let size = resourceValues[NSURLTotalFileAllocatedSizeKey] as? NSNumber else { continue }
-                    _ = try? self.fileManager.removeItemAtURL(url)
-                    self.size -= size.integerValue
+            for case let url as URL in enumerator {
+                guard let resourceValues = try? (url as NSURL).resourceValues(forKeys: resourceKeys) else { continue }
+                guard let accessDate = resourceValues[URLResourceKey.contentAccessDateKey] as? Date else { continue }
+                if date.compare(accessDate) == .orderedDescending {
+                    guard let size = resourceValues[URLResourceKey.totalFileAllocatedSizeKey] as? NSNumber else { continue }
+                    _ = try? self.fileManager.removeItem(at: url)
+                    self.size -= size.intValue
                 }
             }
         }
     }
     
     public func clear() {
-        guard let enumerator = fileManager.enumeratorAtURL(cacheDirectory, includingPropertiesForKeys: [], options: [], errorHandler: nil) else {
+        guard let enumerator = fileManager.enumerator(at: cacheDirectory, includingPropertiesForKeys: [], options: [], errorHandler: nil) else {
             return
         }
-        for case let fileURL as NSURL in enumerator {
-            _ = try? fileManager.removeItemAtURL(fileURL)
+        for case let fileURL as URL in enumerator {
+            _ = try? fileManager.removeItem(at: fileURL)
         }
         size = 0
     }
@@ -151,28 +144,28 @@ public final class DiskCache<T: AnyObject> {
     func restrictSize() {
         if maxCapacity <= 0 { return }
         if size < maxCapacity { return }
-        dispatch_async(diskQueue) {
+        diskQueue.async {
             if self.shrinking { return }
             self.shrinking = true
             do {
                 Log.debug("original size: \(self.size)")
                 let sizeTarget = Int(Double(self.maxCapacity) * 0.8)
-                let resourceKeys = [NSURLContentAccessDateKey, NSURLTotalFileAllocatedSizeKey]
-                let dateKeys = [NSURLContentAccessDateKey]
-                var urls = try self.fileManager.contentsOfDirectoryAtURL(self.cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [])
-                urls.sortInPlace({ (first, second) -> Bool in
-                    guard let firstResourceValues = try? first.resourceValuesForKeys(dateKeys) else { return false }
-                    guard let firstDate = firstResourceValues[NSURLContentAccessDateKey] as? NSDate else { return false }
-                    guard let secondResourceValues = try? second.resourceValuesForKeys(dateKeys) else { return false }
-                    guard let secondDate = secondResourceValues[NSURLContentAccessDateKey] as? NSDate else { return false }
-                    return firstDate.compare(secondDate) == .OrderedAscending
+                let resourceKeys = [URLResourceKey.contentAccessDateKey, URLResourceKey.totalFileAllocatedSizeKey]
+                let dateKeys = [URLResourceKey.contentAccessDateKey]
+                var urls = try self.fileManager.contentsOfDirectory(at: self.cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [])
+                urls.sort(by: { (first, second) -> Bool in
+                    guard let firstResourceValues = try? (first as NSURL).resourceValues(forKeys: dateKeys) else { return false }
+                    guard let firstDate = firstResourceValues[URLResourceKey.contentAccessDateKey] as? Date else { return false }
+                    guard let secondResourceValues = try? (second as NSURL).resourceValues(forKeys: dateKeys) else { return false }
+                    guard let secondDate = secondResourceValues[URLResourceKey.contentAccessDateKey] as? Date else { return false }
+                    return firstDate.compare(secondDate) == .orderedAscending
                 })
                 for url in urls {
                     do {
-                        guard let resourceValues = try? url.resourceValuesForKeys(resourceKeys) else { continue }
-                        guard let size = resourceValues[NSURLTotalFileAllocatedSizeKey] as? NSNumber else { continue }
-                        try self.fileManager.removeItemAtURL(url)
-                        self.size -= size.integerValue
+                        guard let resourceValues = try? (url as NSURL).resourceValues(forKeys: resourceKeys) else { continue }
+                        guard let size = resourceValues[URLResourceKey.totalFileAllocatedSizeKey] as? NSNumber else { continue }
+                        try self.fileManager.removeItem(at: url)
+                        self.size -= size.intValue
                         if self.size <= sizeTarget {
                             break
                         }
@@ -191,29 +184,29 @@ public final class DiskCache<T: AnyObject> {
 }
 
 
-public enum DataSerializerError: ErrorType {
-    case NotImplemented
-    case SerializationError
+public enum DataSerializerError: Error {
+    case notImplemented
+    case serializationError
 }
 
 /// Abstract class that converts cachable objects of type T into NSData and NSData into objects of type T
-public class DataSerializer<T: AnyObject> {
+open class DataSerializer<T: AnyObject> {
     
     public init() {}
     
-    public func deserializeData(data: NSData) throws -> T {
+    open func deserializeData(_ data: Data) throws -> T {
         if T.self is NSCoding {
-            if let object = NSKeyedUnarchiver.unarchiveObjectWithData(data) as? T {
+            if let object = NSKeyedUnarchiver.unarchiveObject(with: data) as? T {
                 return object
             }
         }
-        throw DataSerializerError.NotImplemented
+        throw DataSerializerError.notImplemented
     }
     
-    public func serializeObject(object: T) throws -> NSData {
+    open func serializeObject(_ object: T) throws -> Data {
         if T.self is NSCoding {
-            return NSKeyedArchiver.archivedDataWithRootObject(object)
+            return NSKeyedArchiver.archivedData(withRootObject: object)
         }
-        throw DataSerializerError.NotImplemented
+        throw DataSerializerError.notImplemented
     }
 }

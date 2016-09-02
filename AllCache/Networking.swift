@@ -16,54 +16,58 @@ public enum HTTPMethod: String {
 }
 
 public enum ParameterEncoding {
-    case URL
-    case JSON
+    case url
+    case json
+}
+
+enum EncodeError: Error {
+    case invalidMethod, invalidURL
 }
 
 
-public func requestURL(url: NSURL, method: HTTPMethod = .GET, parameters: [String: AnyObject]? = [:], parameterEncoding: ParameterEncoding = .URL, completion: ((data: NSData?, response: NSURLResponse?, error:NSError?)) -> Void) throws -> NSURLSessionDataTask {
+public func request(URL url: URL, method: HTTPMethod = .GET, parameters: [String: AnyObject]? = [:], parameterEncoding: ParameterEncoding = .url, completion: @escaping ((data: Data?, response: URLResponse?, error: Error?)) -> Void) throws -> URLSessionDataTask {
     
-    let request = NSMutableURLRequest(URL: url)
-    request.HTTPMethod = method.rawValue
-    try request.encodeParameters(parameters, withEncoding: parameterEncoding)
+    var request = URLRequest(url: url)
+    request.httpMethod = method.rawValue
+    try request.encode(parameters: parameters, withEncoding: parameterEncoding)
     
-    let task = NSURLSession.sharedSession().dataTaskWithRequest(request, completionHandler: completion)
+    let task = URLSession.shared.dataTask(with: request, completionHandler: completion)
     task.resume()
     return task
 }
 
-extension NSMutableURLRequest {
+extension URLRequest {
     
-    func encodeParameters(parameters: [String: AnyObject]?, withEncoding encoding: ParameterEncoding) throws {
+    mutating func encode(parameters: [String: Any]?, withEncoding encoding: ParameterEncoding) throws {
+        guard let method = httpMethod else { throw EncodeError.invalidMethod }
         switch encoding {
-        case .URL:
-            if NSMutableURLRequest.parametersInURLForMethod(self.HTTPMethod) {
-                guard let params = parameters else {
-                    return
-                }
-                if let URLComponents = NSURLComponents(URL: self.URL!, resolvingAgainstBaseURL: false) {
-                    let parametersString = NSMutableURLRequest.encodeParameters(params)
-                    let percentEncodedQuery = (URLComponents.percentEncodedQuery.map { $0 + "&" } ?? "") + parametersString
-                    URLComponents.percentEncodedQuery = percentEncodedQuery
-                    self.URL = URLComponents.URL
+        case .url:
+            if URLRequest.parametersInURL(forMethod: method) {
+                guard let params = parameters else { return }
+                guard let url = self.url else { throw EncodeError.invalidURL }
+                if var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+                    let parametersString = URLRequest.encode(parameters: params)
+                    let percentEncodedQuery = (urlComponents.percentEncodedQuery.map { $0 + "&" } ?? "") + parametersString
+                    urlComponents.percentEncodedQuery = percentEncodedQuery
+                    self.url = urlComponents.url
                 }
             } else {
                 setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
                 if let params = parameters {
-                    let parametersString = NSMutableURLRequest.encodeParameters(params)
-                    self.HTTPBody = parametersString.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)
+                    let parametersString = URLRequest.encode(parameters: params)
+                    self.httpBody = parametersString.data(using: String.Encoding.utf8, allowLossyConversion: false)
                 }
             }
             
-        case .JSON:
+        case .json:
             self.setValue("application/json", forHTTPHeaderField: "Content-Type")
             if let params = parameters {
-                self.HTTPBody = try NSJSONSerialization.dataWithJSONObject(params, options: NSJSONWritingOptions())
+                self.httpBody = try JSONSerialization.data(withJSONObject: params, options: JSONSerialization.WritingOptions())
             }
         }
     }
     
-    static func parametersInURLForMethod(method: String) -> Bool {
+    static func parametersInURL(forMethod method: String) -> Bool {
         switch method {
         case "GET", "HEAD", "DELETE":
             return true
@@ -72,11 +76,11 @@ extension NSMutableURLRequest {
         }
     }
     
-    static func encodeParameters(parameters: [String: AnyObject]) -> String {
+    static func encode(parameters: [String: Any]) -> String {
         let array = parameters.map { (key, value) -> String in
-            let string = String(value)
+            let string = String(describing: value)
             return "\(key)=\(string)"
         }
-        return array.joinWithSeparator("&")
+        return array.joined(separator: "&")
     }
 }

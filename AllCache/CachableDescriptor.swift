@@ -9,18 +9,18 @@
 import Foundation
 
 /// Abstract class that provides all the information that a cache requires to search, fetch and process an object
-public class CachableDescriptor<T: AnyObject> {
-    public let key: String
-    public let originalKey: String
+open class CachableDescriptor<T: AnyObject> {
+    open let key: String
+    open let originalKey: String
     
     required public init(key: String, originalKey: String) {
         self.key = key
         self.originalKey = originalKey
     }
     
-    func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getObject: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>>? { return nil }
+    func fetchAndRespondInQueue(_ queue: DispatchQueue, completion: (_ getObject: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>>? { return nil }
     
-    func processObject(object: T, respondInQueue queue: dispatch_queue_t, completion: (getObject: () throws -> T) -> Void) {}
+    func processObject(_ object: T, respondInQueue queue: DispatchQueue, completion: (_ getObject: () throws -> T) -> Void) {}
 }
 
 
@@ -35,16 +35,20 @@ public final class CachableDescriptorWrapper<T: AnyObject>: CachableDescriptor<T
         self.objectProcessor = objectProcessor
         super.init(key: key, originalKey: originalKey)
     }
+
+    required public init(key: String, originalKey: String) {
+        fatalError("init(key:originalKey:) has not been implemented")
+    }
     
-    public override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
+    public override func fetchAndRespondInQueue(_ queue: DispatchQueue, completion: (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
         let request = Request<FetcherResult<T>>(completionHandler: completion)
-        dispatch_async(queue) {
-            request.completeWithError(FetchError.NotImplemented)
+        queue.async {
+            request.completeWithError(FetchError.notImplemented)
         }
         return request
     }
     
-    override func processObject(object: T, respondInQueue queue: dispatch_queue_t, completion: (getObject: () throws -> T) -> Void) {
+    override func processObject(_ object: T, respondInQueue queue: DispatchQueue, completion: (_ getObject: () throws -> T) -> Void) {
         objectProcessor.processObject(object, respondInQueue: queue, completion: completion)
     }
 }

@@ -34,33 +34,33 @@
     
 #else
     
-    public class AbstractImageSerializer: DataSerializer<UIImage> {
+    open class AbstractImageSerializer: DataSerializer<UIImage> {
         
-        override public func deserializeData(data: NSData) throws -> Image {
+        override open func deserializeData(_ data: Data) throws -> Image {
             if let image = Image(data: data) {
                 return image
             }
-            throw DataSerializerError.SerializationError
+            throw DataSerializerError.serializationError
         }
     }
     
     public final class PNGImageSerializer: AbstractImageSerializer {
         
-        override public func serializeObject(object: Image) throws -> NSData {
+        override public func serializeObject(_ object: Image) throws -> Data {
             if let data = UIImagePNGRepresentation(object) {
                 return data
             }
-            throw DataSerializerError.SerializationError
+            throw DataSerializerError.serializationError
         }
     }
     
     public final class JPEGImageSerializer: AbstractImageSerializer {
         
-        override public func serializeObject(object: UIImage) throws -> NSData {
+        override public func serializeObject(_ object: UIImage) throws -> Data {
             if let data = UIImagePNGRepresentation(object) {
                 return data
             }
-            throw DataSerializerError.SerializationError
+            throw DataSerializerError.serializationError
         }
     }
     

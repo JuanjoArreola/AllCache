@@ -11,14 +11,14 @@ import Foundation
 
 public final class Configuration: NSObject {
     
-    private static let defaultProperties: [String: AnyObject] = {
-        let bundle = NSBundle(forClass: Configuration.self)
-        let path = bundle.pathForResource("allcache_properties", ofType: "plist")
+    fileprivate static let defaultProperties: [String: AnyObject] = {
+        let bundle = Bundle(for: Configuration.self)
+        let path = bundle.path(forResource: "allcache_properties", ofType: "plist")
         return NSDictionary(contentsOfFile: path!) as! [String:AnyObject]
     }()
     
-    private static let properties: [String: AnyObject]? = {
-        if let path = NSBundle.mainBundle().pathForResource("AllCacheProperties", ofType: "plist") {
+    fileprivate static let properties: [String: AnyObject]? = {
+        if let path = Bundle.main.path(forResource: "AllCacheProperties", ofType: "plist") {
             return NSDictionary(contentsOfFile: path) as? [String: AnyObject]
         }
         return nil
