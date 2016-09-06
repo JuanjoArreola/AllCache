@@ -69,7 +69,7 @@ class ImageCacheTests: XCTestCase {
         
         ImageCache.sharedInstance.objectForDescriptor(descriptor) { (getObject) in
             do {
-                try getObject()
+                _ = try getObject()
                 expectation.fulfill()
             } catch {
                 Log.error(error)

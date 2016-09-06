@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>show_line</key>
-	<true/>
+	<false/>
 	<key>show_func</key>
-	<true/>
+	<false/>
 	<key>show_file</key>
-	<true/>
+	<false/>
 	<key>log_level</key>
 	<integer>2</integer>
 </dict>

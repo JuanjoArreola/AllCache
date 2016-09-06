@@ -13,10 +13,8 @@ public extension UIImageView {
     
     final func requestImageWithURL(url: NSURL?, placeholder: UIImage? = nil, imageProcessor: ImageProcessor? = nil, completion: (() -> Void)? = nil, errorHandler: ((error: ErrorType) -> Void)? = nil) -> Request<UIImage>? {
         image = placeholder
-        if url == nil {
-            return nil
-        }
-        let descriptor = ImageCachableDescriptor(url: url!, size: self.bounds.size, scale: UIScreen.mainScreen().scale, backgroundColor: hintColor, mode: contentMode, imageProcessor: imageProcessor)
+        guard let url = url else { return nil }
+        let descriptor = ImageCachableDescriptor(url: url, size: self.bounds.size, scale: UIScreen.mainScreen().scale, backgroundColor: hintColor, mode: contentMode, imageProcessor: imageProcessor)
         return requestImageWithDesciptor(descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
     }
     

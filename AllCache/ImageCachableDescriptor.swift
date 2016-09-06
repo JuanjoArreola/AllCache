@@ -20,6 +20,12 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     }
     
     required public init(key: String, url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
+        
+        let components = NSURLComponents(URL: url, resolvingAgainstBaseURL: false)
+        if let name = components?.path?.componentsSeparatedByString("/").last {
+            Log.debug("request: \(name) (\(size.width)x\(size.height)))", aspect: LogAspect.SizeErrors)
+        }
+        
         imageFetcher = ImageFetcher(url: url)
         imageResizer = DefaultImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
         self.imageProcessor = imageProcessor
