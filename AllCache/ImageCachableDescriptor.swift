@@ -20,12 +20,6 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     }
     
     required public init(key: String, url: NSURL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
-        
-        let components = NSURLComponents(URL: url, resolvingAgainstBaseURL: false)
-        if let name = components?.path?.componentsSeparatedByString("/").last {
-            Log.debug("request: \(name) (\(size.width)x\(size.height)))", aspect: LogAspect.SizeErrors)
-        }
-        
         imageFetcher = ImageFetcher(url: url)
         imageResizer = DefaultImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
         self.imageProcessor = imageProcessor
@@ -34,6 +28,10 @@ public class ImageCachableDescriptor: CachableDescriptor<UIImage> {
             newKey += identifier
         } else if imageProcessor != nil {
             Log.warn("You should specify an identifier for the imageProcessor: \(imageProcessor)")
+        }
+        let components = NSURLComponents(URL: url, resolvingAgainstBaseURL: false)
+        if let name = components?.path?.componentsSeparatedByString("/").last {
+            Log.debug("request: \(name) #\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)", aspect: LogAspect.SizeErrors)
         }
         super.init(key: newKey, originalKey: key)
     }
