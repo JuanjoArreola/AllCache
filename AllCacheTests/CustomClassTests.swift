@@ -37,18 +37,18 @@ class CustomClassTests: XCTestCase {
         let userInfo = UserInfo(id: "1", name: "Juanjo")
         userCache.setObject(userInfo, forKey: "user_1")
         
-        let expectation: XCTestExpectation = expectationWithDescription("get user")
+        let exp: XCTestExpectation = expectation(description: "get user")
         
-        userCache.objectForKey("user_1", objectFetcher: ObjectFetcher<UserInfo>(identifier: "user_1")) { (getObject) -> Void in
+        _ = userCache.objectForKey("user_1", objectFetcher: ObjectFetcher<UserInfo>(identifier: "user_1")) { (getObject) -> Void in
             do {
-                try getObject()
-                expectation.fulfill()
+                _ = try getObject()
+                exp.fulfill()
             } catch {
                 XCTFail()
             }
         }
         
-        waitForExpectationsWithTimeout(1.0, handler: nil)
+        waitForExpectations(timeout: 1.0, handler: nil)
     }
     
     func testDeleteObject() {
@@ -56,32 +56,32 @@ class CustomClassTests: XCTestCase {
         userCache.setObject(userInfo, forKey: "user_2")
         userCache.removeObjectForKey("user_2")
         
-        let expectation: XCTestExpectation = expectationWithDescription("get user")
+        let expectation: XCTestExpectation = self.expectation(description: "get user")
         
-        userCache.objectForKey("user_2", objectFetcher: ObjectFetcher<UserInfo>(identifier: "user_2")) { (getObject) -> Void in
+        _ = userCache.objectForKey("user_2", objectFetcher: ObjectFetcher<UserInfo>(identifier: "user_2")) { (getObject) -> Void in
             do {
-                try getObject()
+                _ = try getObject()
                 XCTFail()
             } catch {
                 expectation.fulfill()
             }
         }
         
-        waitForExpectationsWithTimeout(2.0, handler: nil)
+        waitForExpectations(timeout: 2.0, handler: nil)
     }
     
     func testFetchObject() {
-        let expectation: XCTestExpectation = expectationWithDescription("get user")
-        userCache.objectForKey("user_1", objectFetcher: UserFetcher(userName: "Juanjo")) { (getObject) -> Void in
+        let expectation: XCTestExpectation = self.expectation(description: "get user")
+        _ = userCache.objectForKey("user_1", objectFetcher: UserFetcher(userName: "Juanjo")) { (getObject) -> Void in
             do {
-                try getObject()
+                _ = try getObject()
                 expectation.fulfill()
             } catch {
                 XCTFail()
             }
         }
         
-        waitForExpectationsWithTimeout(1.0, handler: nil)
+        waitForExpectations(timeout: 1.0, handler: nil)
     }
     
 }
@@ -96,30 +96,30 @@ class UserInfo: NSObject, NSCoding {
     }
     
     required convenience init?(coder aDecoder: NSCoder) {
-        guard let id = aDecoder.decodeObjectForKey("id") as? String else { return nil }
-        guard let name = aDecoder.decodeObjectForKey("name") as? String else { return nil }
+        guard let id = aDecoder.decodeObject(forKey: "id") as? String else { return nil }
+        guard let name = aDecoder.decodeObject(forKey: "name") as? String else { return nil }
         self.init(id: id, name: name)
     }
     
-    func encodeWithCoder(aCoder: NSCoder) {
-        aCoder.encodeObject(id, forKey: "id")
-        aCoder.encodeObject(name, forKey: "name")
+    func encode(with aCoder: NSCoder) {
+        aCoder.encode(id, forKey: "id")
+        aCoder.encode(name, forKey: "name")
     }
 }
 
 class UserFetcher: ObjectFetcher<UserInfo> {
     
-    var name: String
+    var name: String!
     
-    init(userName: String) {
+    convenience init(userName: String) {
+        self.init(identifier: userName)
         self.name = userName
-        super.init(identifier: userName)
     }
     
-    override func fetchAndRespondInQueue(queue: dispatch_queue_t, completion: (getFetcherResult: () throws -> FetcherResult<UserInfo>) -> Void) -> Request<FetcherResult<UserInfo>> {
+    override func fetchAndRespond(inQueue queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<UserInfo>) -> Void) -> Request<FetcherResult<UserInfo>> {
         let request = Request<FetcherResult<UserInfo>>(completionHandler: completion)
         let userInfo = UserInfo(id: "1", name: self.name)
-        dispatch_async(queue) {
+        queue.async {
             request.completeWithObject(FetcherResult(object: userInfo, data: nil))
         }
         return request

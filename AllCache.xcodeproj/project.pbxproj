@@ -47,7 +47,6 @@
 		8195F1731CBF4D6000155007 /* UIButton+ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8195F1721CBF4D6000155007 /* UIButton+ImageCache.swift */; };
 		81A5F8491C695281007B47CE /* ImageCachableDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A5F8481C695281007B47CE /* ImageCachableDescriptor.swift */; };
 		81A5F84B1C69546F007B47CE /* ImageResizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A5F84A1C69546F007B47CE /* ImageResizer.swift */; };
-		97978E0B74E32AAE0EF3CA2B /* Pods_AllCache.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B369D60033AF25633169530 /* Pods_AllCache.framework */; };
 		E894078C49C67F8FC8C19FCC /* Pods_AllCacheTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 562C45EC73B4332C001C7A88 /* Pods_AllCacheTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -64,8 +63,8 @@
 /* Begin PBXFileReference section */
 		12E4BC5E8CCD31A062069781 /* Pods_AllCache_OSX.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AllCache_OSX.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2670888BDA13488A81962D3D /* Pods-AllCacheTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AllCacheTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-AllCacheTests/Pods-AllCacheTests.release.xcconfig"; sourceTree = "<group>"; };
-		552BA2F7DC4F6D74BA6C1A1F /* Pods-AllCache.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AllCache.debug.xcconfig"; path = "Pods/Target Support Files/Pods-AllCache/Pods-AllCache.debug.xcconfig"; sourceTree = "<group>"; };
 		562C45EC73B4332C001C7A88 /* Pods_AllCacheTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AllCacheTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		594A299F520AA250900C0FC1 /* Pods-AllCache.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AllCache.debug.xcconfig"; path = "Pods/Target Support Files/Pods-AllCache/Pods-AllCache.debug.xcconfig"; sourceTree = "<group>"; };
 		6B369D60033AF25633169530 /* Pods_AllCache.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AllCache.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		810B5A5A1C6FC76E00E64D24 /* ImageSerializer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageSerializer.swift; sourceTree = "<group>"; };
 		810D29421C6685310022AC57 /* allcache_properties.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = allcache_properties.plist; sourceTree = "<group>"; };
@@ -95,8 +94,8 @@
 		8195F1721CBF4D6000155007 /* UIButton+ImageCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIButton+ImageCache.swift"; sourceTree = "<group>"; };
 		81A5F8481C695281007B47CE /* ImageCachableDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageCachableDescriptor.swift; sourceTree = "<group>"; };
 		81A5F84A1C69546F007B47CE /* ImageResizer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageResizer.swift; sourceTree = "<group>"; };
-		9688AE6CCCB835ACF5BCE6EF /* Pods-AllCache.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AllCache.release.xcconfig"; path = "Pods/Target Support Files/Pods-AllCache/Pods-AllCache.release.xcconfig"; sourceTree = "<group>"; };
 		AC66230821C297B725ABE163 /* Pods-AllCacheTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AllCacheTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-AllCacheTests/Pods-AllCacheTests.debug.xcconfig"; sourceTree = "<group>"; };
+		B3897BAA0B505A2E49B39AB9 /* Pods-AllCache.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AllCache.release.xcconfig"; path = "Pods/Target Support Files/Pods-AllCache/Pods-AllCache.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,7 +110,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				97978E0B74E32AAE0EF3CA2B /* Pods_AllCache.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,10 +128,10 @@
 		50BDD39E34538EECB42D340C /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				552BA2F7DC4F6D74BA6C1A1F /* Pods-AllCache.debug.xcconfig */,
-				9688AE6CCCB835ACF5BCE6EF /* Pods-AllCache.release.xcconfig */,
 				AC66230821C297B725ABE163 /* Pods-AllCacheTests.debug.xcconfig */,
 				2670888BDA13488A81962D3D /* Pods-AllCacheTests.release.xcconfig */,
+				594A299F520AA250900C0FC1 /* Pods-AllCache.debug.xcconfig */,
+				B3897BAA0B505A2E49B39AB9 /* Pods-AllCache.release.xcconfig */,
 			);
 			name = Pods;
 			sourceTree = "<group>";
@@ -284,12 +282,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8143A8B01C6565C400F9C4F8 /* Build configuration list for PBXNativeTarget "AllCache" */;
 			buildPhases = (
-				85C86EB557875D6DD6FC87EC /* [CP] Check Pods Manifest.lock */,
 				8143A8971C6565C400F9C4F8 /* Sources */,
 				8143A8981C6565C400F9C4F8 /* Frameworks */,
 				8143A8991C6565C400F9C4F8 /* Headers */,
 				8143A89A1C6565C400F9C4F8 /* Resources */,
-				E02E7BD7B7F3FF08EFA65490 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -391,21 +387,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		85C86EB557875D6DD6FC87EC /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
-			showEnvVarsInLog = 0;
-		};
 		99DC666BE60B93C3BC7A689B /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -449,21 +430,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-AllCacheTests/Pods-AllCacheTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		E02E7BD7B7F3FF08EFA65490 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-AllCache/Pods-AllCache-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -673,7 +639,7 @@
 		};
 		8143A8B11C6565C400F9C4F8 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 552BA2F7DC4F6D74BA6C1A1F /* Pods-AllCache.debug.xcconfig */;
+			baseConfigurationReference = 594A299F520AA250900C0FC1 /* Pods-AllCache.debug.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
@@ -697,7 +663,7 @@
 		};
 		8143A8B21C6565C400F9C4F8 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9688AE6CCCB835ACF5BCE6EF /* Pods-AllCache.release.xcconfig */;
+			baseConfigurationReference = B3897BAA0B505A2E49B39AB9 /* Pods-AllCache.release.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";

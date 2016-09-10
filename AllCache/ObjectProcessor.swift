@@ -9,9 +9,9 @@
 import Foundation
 
 
-open class ObjectProcessor<T: AnyObject> {
+open class ObjectProcessor<T: Any> {
     
     var identifier: String?
     
-    func processObject(_ object: T, respondInQueue queue: DispatchQueue, completion: (_ getObject: () throws -> T) -> Void) {}
+    func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {}
 }
