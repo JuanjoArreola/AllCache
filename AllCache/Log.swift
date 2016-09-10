@@ -27,25 +27,25 @@ public final class Log {
     
     class func debug(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.debug.rawValue >= logLevel.rawValue {
-            log("Debug", message: String(message()), file: file, function: function, line: line)
+            log("Debug", message: String(describing: message()), file: file, function: function, line: line)
         }
     }
     
     class func warn(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.warning.rawValue >= logLevel.rawValue {
-            log("Warning", message: String(message()), file: file, function: function, line: line)
+            log("Warning", message: String(describing: message()), file: file, function: function, line: line)
         }
     }
     
     class func error(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.error.rawValue >= logLevel.rawValue {
-            log("Error", message: String(message()), file: file, function: function, line: line)
+            log("Error", message: String(describing: message()), file: file, function: function, line: line)
         }
     }
     
     class func severe(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.severe.rawValue >= logLevel.rawValue {
-            log("Severe", message: String(message()), file: file, function: function, line: line)
+            log("Severe", message: String(describing: message()), file: file, function: function, line: line)
         }
     }
     

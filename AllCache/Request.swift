@@ -37,7 +37,7 @@ open class Request<T: Any>: Cancellable, CustomDebugStringConvertible {
     
     required public init() {}
     
-    public convenience init(completionHandler: (_ getObject: () throws -> T) -> Void) {
+    public convenience init(completionHandler: @escaping (_ getObject: () throws -> T) -> Void) {
         self.init()
         completionHandlers!.append(completionHandler)
     }
@@ -79,11 +79,11 @@ open class Request<T: Any>: Cancellable, CustomDebugStringConvertible {
     }
     
     open var debugDescription: String {
-        return String(self)
+        return String(describing: self)
     }
 }
 
-private func sync(_ closure: () -> Void) {
+private func sync(closure: @escaping () -> Void) {
     syncQueue.async(flags: .barrier, execute: closure)
 }
 

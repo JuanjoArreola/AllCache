@@ -40,7 +40,7 @@ open class Cache<T: AnyObject> {
     }
     
     open func objectForKey(_ key: String) -> T? {
-        if let object = memoryCache.objectForKey(key) {
+        if let object = memoryCache.object(forKey: key) {
             Log.debug("-\(key) found in memory")
             return object
         }
@@ -63,7 +63,7 @@ open class Cache<T: AnyObject> {
     /// - parameter objectFetcher: The object that fetches the object if is not currently in the cache
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
-    open func objectForKey(_ key: String, objectFetcher: ObjectFetcher<T>, completion: (_ getObject: () throws -> T) -> Void) -> Request<T>? {
+    open func objectForKey(_ key: String, objectFetcher: ObjectFetcher<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
         if let request = getCachedRequestWithIdentifier(key) {
             if request.canceled {
                 setCachedRequest(nil, forIdentifier: key)
@@ -75,7 +75,7 @@ open class Cache<T: AnyObject> {
         setCachedRequest(Request(completionHandler: completion), forIdentifier: key)
         let request = getCachedRequestWithIdentifier(key)!
         
-        if let object = memoryCache.objectForKey(key) {
+        if let object = memoryCache.object(forKey: key) {
             Log.debug("\(key) found in memory")
             request.completeWithObject(object)
             setCachedRequest(nil, forIdentifier: key)
@@ -129,7 +129,7 @@ open class Cache<T: AnyObject> {
                     fetcherRequest.addCompletionHandler(completionHandler)
                 } else {
                     syncQueue.async(flags: .barrier, execute: {
-                        self.fetching[objectFetcher.identifier] = objectFetcher.fetchAndRespondInQueue(diskQueue, completion: completionHandler)
+                        self.fetching[objectFetcher.identifier] = objectFetcher.fetchAndRespond(inQueue: diskQueue, completion: completionHandler)
                     }) 
                     fetcherRequest = self.getCachedFetchingRequestWithIdentifier(objectFetcher.identifier)
                     if fetcherRequest == nil {
@@ -170,7 +170,7 @@ open class Cache<T: AnyObject> {
     /// - parameter objectProcessor: The object that process the original object to obtain the final object
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
-    func objectForKey(_ key: String, originalKey: String, objectFetcher: ObjectFetcher<T>, objectProcessor: ObjectProcessor<T>, completion: (_ getObject: () throws -> T) -> Void) -> Request<T>? {
+    func objectForKey(_ key: String, originalKey: String, objectFetcher: ObjectFetcher<T>, objectProcessor: ObjectProcessor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
         let descriptor = CachableDescriptorWrapper<T>(key: key, originalKey: originalKey, objectFetcher: objectFetcher, objectProcessor: objectProcessor)
         return objectForDescriptor(descriptor, completion: completion)
     }
@@ -179,7 +179,7 @@ open class Cache<T: AnyObject> {
     /// - parameter descriptor: An object that encapsulates the key, origianlKey, objectFetcher and objectProcessor
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
-    open func objectForDescriptor(_ descriptor: CachableDescriptor<T>, completion: (_ getObject: () throws -> T) -> Void) -> Request<T>? {
+    open func objectForDescriptor(_ descriptor: CachableDescriptor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
         if let request = getCachedRequestWithIdentifier(descriptor.key) {
             if request.canceled {
                 setCachedRequest(nil, forIdentifier: descriptor.key)
@@ -192,7 +192,7 @@ open class Cache<T: AnyObject> {
         let request = getCachedRequestWithIdentifier(descriptor.key)!
         
         //      MARK: - Search in Memory o'
-        if let object = memoryCache.objectForKey(descriptor.key) {
+        if let object = memoryCache.object(forKey: descriptor.key) {
             Log.debug("\(descriptor.key) found in memory")
             request.completeWithObject(object)
             return request
@@ -219,7 +219,7 @@ open class Cache<T: AnyObject> {
             
             //          MARK: - Search in Memory o
             self.responseQueue.async {
-                if let rawObject = self.memoryCache.objectForKey(descriptor.originalKey) {
+                if let rawObject = self.memoryCache.object(forKey: descriptor.originalKey) {
                     Log.debug("\(descriptor.originalKey) found in memory")
                     self.processRawObject(rawObject, withDescriptor: descriptor, request: request)
                 }
@@ -290,7 +290,7 @@ open class Cache<T: AnyObject> {
                                 fetcherRequest.addCompletionHandler(completionHandler)
                             } else {
                                 syncQueue.async(flags: .barrier, execute: {
-                                    self.fetching[descriptor.originalKey] = descriptor.fetchAndRespondInQueue(diskQueue, completion: completionHandler)
+                                    self.fetching[descriptor.originalKey] = descriptor.fetchAndRespond(in: diskQueue, completion: completionHandler)
                                 }) 
                                 fetcherRequest = self.getCachedFetchingRequestWithIdentifier(descriptor.originalKey)
                                 request.subrequest = fetcherRequest
@@ -344,7 +344,7 @@ open class Cache<T: AnyObject> {
         if request.canceled { return }
         processQueue.async {
             Log.debug("processing \(descriptor.key)")
-            descriptor.processObject(rawObject, respondInQueue: self.responseQueue) { (getObject) in
+            descriptor.process(object: rawObject, respondIn: self.responseQueue) { (getObject) in
                 do {
                     let object = try getObject()
                     request.completeWithObject(object)

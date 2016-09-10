@@ -20,7 +20,7 @@ open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     }
     
     required public init(key: String, url: URL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
-        imageFetcher = ImageFetcher(url: url as NSURL)
+        imageFetcher = ImageFetcher(url: url)
         imageResizer = DefaultImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
         self.imageProcessor = imageProcessor
         var newKey = key + "#\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)"
@@ -36,15 +36,15 @@ open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
         fatalError("init(key:originalKey:) has not been implemented")
     }
     
-    open override func fetchAndRespondInQueue(_ queue: DispatchQueue, completion: (_ getFetcherResult: () throws -> FetcherResult<UIImage>) -> Void) -> Request<FetcherResult<UIImage>> {
-        return imageFetcher.fetchAndRespondInQueue(queue, completion: completion)
+    open override func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<UIImage>) -> Void) -> Request<FetcherResult<UIImage>> {
+        return imageFetcher.fetchAndRespond(inQueue: queue, completion: completion)
     }
     
-    override func processObject(_ object: UIImage, respondInQueue queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> UIImage) -> Void) {
+    override func process(object: UIImage, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> UIImage) -> Void) {
         do {
             var image = object
             let scale = imageResizer.scale != 0.0 ? imageResizer.scale : UIScreen.main.scale
-            if !image.size.equalTo(image, Resizer.size) || image.scale != scale {
+            if image.size != imageResizer.size || image.scale != scale {
                 image = imageResizer.scaleImage(object)
             }
             if let processor = imageProcessor {

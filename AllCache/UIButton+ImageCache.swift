@@ -10,7 +10,7 @@ import UIKit
 
 public extension UIButton {
     
-    final func requestImageWithURL(_ url: URL?, placeholder: UIImage? = nil, imageProcessor: ImageProcessor? = nil, completion: (() -> Void)? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
+    final func requestImage(withURL url: URL?, placeholder: UIImage? = nil, imageProcessor: ImageProcessor? = nil, completion: (() -> Void)? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
         if url == nil {
             self.setImage(placeholder, for: UIControlState())
             return nil
@@ -23,11 +23,11 @@ public extension UIButton {
         if color != UIColor.clear && (mode == .scaleAspectFill || mode == .scaleToFill) {
             color = UIColor.black
         }
-        let descriptor = ImageCachableDescriptor(url: url! as NSURL, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: color, mode: mode, imageProcessor: imageProcessor)
-        return requestImageWithDesciptor(descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
+        let descriptor = ImageCachableDescriptor(url: url!, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: color, mode: mode, imageProcessor: imageProcessor)
+        return requestImage(withDesciptor: descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
     }
     
-    final func requestImageWithDesciptor(_ descriptor: ImageCachableDescriptor, placeholder: UIImage? = nil, completion: (() -> Void)? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
+    final func requestImage(withDesciptor descriptor: ImageCachableDescriptor, placeholder: UIImage? = nil, completion: (() -> Void)? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
         if let image = placeholder {
             self.setImage(image, for: UIControlState())
         }
@@ -40,7 +40,7 @@ public extension UIButton {
                 self.setImage(try getObject(), for: UIControlState())
                 completion?()
             } catch {
-                errorHandler?(error: error)
+                errorHandler?(error)
             }
         }
     }

@@ -57,7 +57,7 @@ public final class DiskCache<T: AnyObject> {
     public func objectForKey(_ key: String) -> T? {
         let fileName = "c" + String(key.hash)
         let url = cacheDirectory.appendingPathComponent(fileName)
-        if !objectExistsAtURL(url) {
+        if !objectExists(atURL: url) {
             return nil
         }
         do {
@@ -97,18 +97,15 @@ public final class DiskCache<T: AnyObject> {
     func updateLastAccessOfKey(_ key: String) {
         let fileName = String(abs(key.hash))
         let path = cacheDirectory.appendingPathComponent(fileName).path
-        fileManager.setAttributes(<#T##attributes: [FileAttributeKey : Any]##[FileAttributeKey : Any]#>, ofItemAtPath: <#T##String#>)
-        _ = try? fileManager.setAttributes([URLResourceKey.contentAccessDateKey: Date()], ofItemAtPath: path)
+        _ = try? fileManager.setAttributes([.modificationDate: Date()], ofItemAtPath: path)
     }
     
     public func removeObjectForKey(_ key: String) throws {
         let fileName = "c" + String(key.hash)
         let url = cacheDirectory.appendingPathComponent(fileName)
-        if let path = url.path {
-            let attributes = try? fileManager.attributesOfItem(atPath: path)
-            if let fileSize = attributes?[FileAttributeKey.size] as? NSNumber {
-                size -= fileSize.intValue
-            }
+        let attributes = try? fileManager.attributesOfItem(atPath: url.path)
+        if let fileSize = attributes?[FileAttributeKey.size] as? NSNumber {
+            size -= fileSize.intValue
         }
         try fileManager.removeItem(at: url)
     }

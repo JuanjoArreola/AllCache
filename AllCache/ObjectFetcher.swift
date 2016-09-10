@@ -34,7 +34,7 @@ open class ObjectFetcher<T: AnyObject> {
         self.identifier = identifier
     }
     
-    open func fetchAndRespondInQueue(_ queue: DispatchQueue, completion: (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
+    open func fetchAndRespond(inQueue queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
         let request = Request<FetcherResult<T>>(completionHandler: completion)
         queue.async {
             request.completeWithError(FetchError.notImplemented)

@@ -18,9 +18,9 @@ open class CachableDescriptor<T: AnyObject> {
         self.originalKey = originalKey
     }
     
-    func fetchAndRespondInQueue(_ queue: DispatchQueue, completion: (_ getObject: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>>? { return nil }
+    func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>>? { return nil }
     
-    func processObject(_ object: T, respondInQueue queue: DispatchQueue, completion: (_ getObject: () throws -> T) -> Void) {}
+    func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {}
 }
 
 
@@ -40,7 +40,7 @@ public final class CachableDescriptorWrapper<T: AnyObject>: CachableDescriptor<T
         fatalError("init(key:originalKey:) has not been implemented")
     }
     
-    public override func fetchAndRespondInQueue(_ queue: DispatchQueue, completion: (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
+    public override func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
         let request = Request<FetcherResult<T>>(completionHandler: completion)
         queue.async {
             request.completeWithError(FetchError.notImplemented)
@@ -48,7 +48,7 @@ public final class CachableDescriptorWrapper<T: AnyObject>: CachableDescriptor<T
         return request
     }
     
-    override func processObject(_ object: T, respondInQueue queue: DispatchQueue, completion: (_ getObject: () throws -> T) -> Void) {
-        objectProcessor.processObject(object, respondInQueue: queue, completion: completion)
+    override func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {
+        objectProcessor.process(object: object, respondIn: queue, completion: completion)
     }
 }
