@@ -24,11 +24,11 @@ public final class DiskCache<T: AnyObject> {
     
     let fileManager = FileManager.default
     public var cacheDirectory: URL
-    var dataSerializer: DataSerializer<T>!
+    var serializer: DataSerializer<T>!
     
-    required public init(identifier: String, dataSerializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
+    required public init(identifier: String, serializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
         self.identifier = identifier
-        self.dataSerializer = dataSerializer
+        self.serializer = serializer
         self.maxCapacity = maxCapacity
         let cache = try! fileManager.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
         cacheDirectory = cache.appendingPathComponent(identifier, isDirectory: true)
@@ -54,7 +54,7 @@ public final class DiskCache<T: AnyObject> {
         return total
     }
     
-    public func objectForKey(_ key: String) -> T? {
+    public func object(forKey key: String) -> T? {
         let fileName = "c" + String(key.hash)
         let url = cacheDirectory.appendingPathComponent(fileName)
         if !objectExists(atURL: url) {
@@ -64,7 +64,7 @@ public final class DiskCache<T: AnyObject> {
             guard let data = try? Data(contentsOf: url) else {
                 throw DiskCacheError.invalidData
             }
-            return try dataSerializer.deserializeData(data)
+            return try serializer.deserialize(data: data)
         } catch {
             Log.error(error)
             return nil
@@ -75,9 +75,9 @@ public final class DiskCache<T: AnyObject> {
         return fileManager.fileExists(atPath: url.path)
     }
     
-    public func setObject(_ object: T, forKey key: String) throws {
+    public func set(object: T, forKey key: String) throws {
         Log.debug("Serializing (\(key))")
-        let data = try dataSerializer.serializeObject(object)
+        let data = try serializer.serialize(object: object)
         Log.debug("Serialized (\(key)): \(data.count / 1024) Kb")
         let fileName = "c" + String(key.hash)
         let url = cacheDirectory.appendingPathComponent(fileName)
@@ -86,7 +86,7 @@ public final class DiskCache<T: AnyObject> {
         restrictSize()
     }
     
-    public func setData(_ data: Data, forKey key: String) throws {
+    public func set(data: Data, forKey key: String) throws {
         let fileName = "c" + String(key.hash)
         let url = cacheDirectory.appendingPathComponent(fileName)
         try data.write(to: url, options: .atomicWrite)
@@ -94,13 +94,13 @@ public final class DiskCache<T: AnyObject> {
         restrictSize()
     }
     
-    func updateLastAccessOfKey(_ key: String) {
+    func updateLastAccess(ofKey key: String) {
         let fileName = String(abs(key.hash))
         let path = cacheDirectory.appendingPathComponent(fileName).path
         _ = try? fileManager.setAttributes([.modificationDate: Date()], ofItemAtPath: path)
     }
     
-    public func removeObjectForKey(_ key: String) throws {
+    public func removeObject(forKey key: String) throws {
         let fileName = "c" + String(key.hash)
         let url = cacheDirectory.appendingPathComponent(fileName)
         let attributes = try? fileManager.attributesOfItem(atPath: url.path)
@@ -110,7 +110,7 @@ public final class DiskCache<T: AnyObject> {
         try fileManager.removeItem(at: url)
     }
     
-    public func removeOlderThan(_ date: Date) {
+    public func removeOlderThan(date: Date) {
         diskQueue.async {
             let resourceKeys = [URLResourceKey.contentAccessDateKey, URLResourceKey.totalFileAllocatedSizeKey]
             guard let enumerator = self.fileManager.enumerator(at: self.cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [], errorHandler: nil) else {
@@ -191,7 +191,7 @@ open class DataSerializer<T: AnyObject> {
     
     public init() {}
     
-    open func deserializeData(_ data: Data) throws -> T {
+    open func deserialize(data: Data) throws -> T {
         if T.self is NSCoding {
             if let object = NSKeyedUnarchiver.unarchiveObject(with: data) as? T {
                 return object
@@ -200,7 +200,7 @@ open class DataSerializer<T: AnyObject> {
         throw DataSerializerError.notImplemented
     }
     
-    open func serializeObject(_ object: T) throws -> Data {
+    open func serialize(object: T) throws -> Data {
         if T.self is NSCoding {
             return NSKeyedArchiver.archivedData(withRootObject: object)
         }

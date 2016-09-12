@@ -36,7 +36,7 @@
     
     open class AbstractImageSerializer: DataSerializer<UIImage> {
         
-        override open func deserializeData(_ data: Data) throws -> Image {
+        override open func deserialize(data: Data) throws -> Image {
             if let image = Image(data: data) {
                 return image
             }
@@ -46,7 +46,7 @@
     
     public final class PNGImageSerializer: AbstractImageSerializer {
         
-        override public func serializeObject(_ object: Image) throws -> Data {
+        override public func serialize(object: Image) throws -> Data {
             if let data = UIImagePNGRepresentation(object) {
                 return data
             }
@@ -56,7 +56,7 @@
     
     public final class JPEGImageSerializer: AbstractImageSerializer {
         
-        override public func serializeObject(_ object: UIImage) throws -> Data {
+        override public func serialize(object: UIImage) throws -> Data {
             if let data = UIImagePNGRepresentation(object) {
                 return data
             }
