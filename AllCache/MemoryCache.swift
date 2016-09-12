@@ -15,13 +15,13 @@ public final class MemoryCache<T: AnyObject> {
         return cache.object(forKey: key as NSString)
     }
     
-    public func setObject(_ object: T?, forKey key: String) {
+    public func set(object: T?, forKey key: String) {
         if let object = object {
             cache.setObject(object, forKey: key as NSString)
         }
     }
     
-    public func removeObjectForKey(_ key: String) {
+    public func removeObject(forKey key: String) {
         cache.removeObject(forKey: key as NSString)
     }
     

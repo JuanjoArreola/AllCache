@@ -20,26 +20,26 @@ open class ImageCache: Cache<Image> {
     
     open static let sharedInstance = try! PNGImageCache(identifier: "sharedImage")
     
-    required public init(identifier: String, dataSerializer: DataSerializer<Image>, maxCapacity: Int = 0) throws {
-        try super.init(identifier: identifier, dataSerializer: dataSerializer, maxCapacity: maxCapacity)
+    required public init(identifier: String, serializer: DataSerializer<Image>, maxCapacity: Int = 0) throws {
+        try super.init(identifier: identifier, serializer: serializer, maxCapacity: maxCapacity)
     }
     
     open func imageForURL(_ url: URL, completion: @escaping (_ getImage: () throws -> Image) -> Void) -> Request<UIImage>? {
         let fetcher = ImageFetcher(url: url)
-        return objectForKey(url.absoluteString, objectFetcher: fetcher, completion: completion)
+        return object(forKey: url.absoluteString, fetcher: fetcher, completion: completion)
     }
 }
 
 public final class PNGImageCache: ImageCache {
     
     convenience public init(identifier: String, maxCapacity: Int = 0) throws {
-        try self.init(identifier: identifier, dataSerializer: PNGImageSerializer(), maxCapacity: maxCapacity)
+        try self.init(identifier: identifier, serializer: PNGImageSerializer(), maxCapacity: maxCapacity)
     }
 }
 
 public final class JPEGImageCache: ImageCache {
     
     convenience public init(identifier: String, maxCapacity: Int = 0) throws {
-        try self.init(identifier: identifier, dataSerializer: JPEGImageSerializer(), maxCapacity: maxCapacity)
+        try self.init(identifier: identifier, serializer: JPEGImageSerializer(), maxCapacity: maxCapacity)
     }
 }

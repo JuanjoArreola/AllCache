@@ -32,10 +32,10 @@ public final class ImageFetcher: ObjectFetcher<Image> {
         fatalError("init(identifier:) has not been implemented")
     }
     
-    public override func fetchAndRespond(inQueue queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
+    public override func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
         let allRequest = AllCacheURLRequest<FetcherResult<Image>>(completionHandler: completion)
         do {
-            allRequest.dataTask = try request(URL: url) { (data: Data?, response: URLResponse?, error: Error?) -> Void in
+            allRequest.dataTask = try request(url: url) { (data: Data?, response: URLResponse?, error: Error?) -> Void in
                 do {
                     if let error = error {
                         throw error
@@ -47,18 +47,18 @@ public final class ImageFetcher: ObjectFetcher<Image> {
                         throw FetchError.parseError
                     }
                     queue.async {
-                        allRequest.completeWithObject(FetcherResult(object: image, data: data))
+                        allRequest.complete(withObject: FetcherResult(object: image, data: data))
                     }
                 } catch {
                     queue.async {
-                        allRequest.completeWithError(error)
+                        allRequest.complete(withError: error)
                     }
                 }
             }
         }
         catch {
             queue.async {
-                allRequest.completeWithError(error)
+                allRequest.complete(withError: error)
             }
         }
         return allRequest

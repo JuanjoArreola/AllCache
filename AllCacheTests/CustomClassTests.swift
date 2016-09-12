@@ -16,7 +16,7 @@ class CustomClassTests: XCTestCase {
     override func setUp() {
         super.setUp()
         
-        userCache = try! Cache<UserInfo>(identifier: "user_info", dataSerializer: DataSerializer<UserInfo>())
+        userCache = try! Cache<UserInfo>(identifier: "user_info", serializer: DataSerializer<UserInfo>())
     }
     
     override func tearDown() {
@@ -27,7 +27,7 @@ class CustomClassTests: XCTestCase {
     
     func testCacheCreation() {
         do {
-            _ = try Cache<UserInfo>(identifier: "user_info", dataSerializer: DataSerializer<UserInfo>())
+            _ = try Cache<UserInfo>(identifier: "user_info", serializer: DataSerializer<UserInfo>())
         } catch {
             XCTFail()
         }
@@ -39,7 +39,7 @@ class CustomClassTests: XCTestCase {
         
         let exp: XCTestExpectation = expectation(description: "get user")
         
-        _ = userCache.objectForKey("user_1", objectFetcher: ObjectFetcher<UserInfo>(identifier: "user_1")) { (getObject) -> Void in
+        _ = userCache.object(forKey: "user_1", fetcher: ObjectFetcher<UserInfo>(identifier: "user_1")) { (getObject) -> Void in
             do {
                 _ = try getObject()
                 exp.fulfill()
@@ -58,7 +58,7 @@ class CustomClassTests: XCTestCase {
         
         let expectation: XCTestExpectation = self.expectation(description: "get user")
         
-        _ = userCache.objectForKey("user_2", objectFetcher: ObjectFetcher<UserInfo>(identifier: "user_2")) { (getObject) -> Void in
+        _ = userCache.object(forKey: "user_2", fetcher: ObjectFetcher<UserInfo>(identifier: "user_2")) { (getObject) -> Void in
             do {
                 _ = try getObject()
                 XCTFail()
@@ -72,7 +72,7 @@ class CustomClassTests: XCTestCase {
     
     func testFetchObject() {
         let expectation: XCTestExpectation = self.expectation(description: "get user")
-        _ = userCache.objectForKey("user_1", objectFetcher: UserFetcher(userName: "Juanjo")) { (getObject) -> Void in
+        _ = userCache.object(forKey: "user_1", fetcher: UserFetcher(userName: "Juanjo")) { (getObject) -> Void in
             do {
                 _ = try getObject()
                 expectation.fulfill()
@@ -116,11 +116,11 @@ class UserFetcher: ObjectFetcher<UserInfo> {
         self.name = userName
     }
     
-    override func fetchAndRespond(inQueue queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<UserInfo>) -> Void) -> Request<FetcherResult<UserInfo>> {
+    override func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<UserInfo>) -> Void) -> Request<FetcherResult<UserInfo>> {
         let request = Request<FetcherResult<UserInfo>>(completionHandler: completion)
         let userInfo = UserInfo(id: "1", name: self.name)
         queue.async {
-            request.completeWithObject(FetcherResult(object: userInfo, data: nil))
+            request.complete(withObject: FetcherResult(object: userInfo, data: nil))
         }
         return request
     }

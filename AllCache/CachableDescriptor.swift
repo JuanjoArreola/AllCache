@@ -27,12 +27,12 @@ open class CachableDescriptor<T: AnyObject> {
 /// Concrete subclass of CachableDescriptor that serves as a wrapper for an objectFetcher and objectProcessor
 public final class CachableDescriptorWrapper<T: AnyObject>: CachableDescriptor<T> {
     
-    let objectFetcher: ObjectFetcher<T>
-    let objectProcessor: ObjectProcessor<T>
+    let fetcher: ObjectFetcher<T>
+    let processor: ObjectProcessor<T>
     
-    public required init(key: String, originalKey: String, objectFetcher: ObjectFetcher<T>, objectProcessor: ObjectProcessor<T>) {
-        self.objectFetcher = objectFetcher
-        self.objectProcessor = objectProcessor
+    public required init(key: String, originalKey: String, fetcher: ObjectFetcher<T>, processor: ObjectProcessor<T>) {
+        self.fetcher = fetcher
+        self.processor = processor
         super.init(key: key, originalKey: originalKey)
     }
 
@@ -43,12 +43,12 @@ public final class CachableDescriptorWrapper<T: AnyObject>: CachableDescriptor<T
     public override func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
         let request = Request<FetcherResult<T>>(completionHandler: completion)
         queue.async {
-            request.completeWithError(FetchError.notImplemented)
+            request.complete(withError: FetchError.notImplemented)
         }
         return request
     }
     
     override func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {
-        objectProcessor.process(object: object, respondIn: queue, completion: completion)
+        processor.process(object: object, respondIn: queue, completion: completion)
     }
 }

@@ -41,7 +41,7 @@ open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     }
     
     open override func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<UIImage>) -> Void) -> Request<FetcherResult<UIImage>> {
-        return imageFetcher.fetchAndRespond(inQueue: queue, completion: completion)
+        return imageFetcher.fetchAndRespond(in: queue, completion: completion)
     }
     
     override func process(object: UIImage, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> UIImage) -> Void) {

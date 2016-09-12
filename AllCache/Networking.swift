@@ -25,7 +25,7 @@ enum EncodeError: Error {
 }
 
 
-public func request(URL url: URL, method: HTTPMethod = .GET, parameters: [String: AnyObject]? = [:], parameterEncoding: ParameterEncoding = .url, completion: @escaping ((data: Data?, response: URLResponse?, error: Error?)) -> Void) throws -> URLSessionDataTask {
+public func request(url: URL, method: HTTPMethod = .GET, parameters: [String: AnyObject]? = [:], parameterEncoding: ParameterEncoding = .url, completion: @escaping ((data: Data?, response: URLResponse?, error: Error?)) -> Void) throws -> URLSessionDataTask {
     
     var request = URLRequest(url: url)
     request.httpMethod = method.rawValue
