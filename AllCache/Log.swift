@@ -56,7 +56,7 @@ public final class Log {
     
     class func debug(_ message: @autoclosure () -> Any, aspect: LogAspect, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if logAspect == aspect {
-            log("Debug(\(aspect.rawValue))", message: String(message()), file: file, function: function, line: line)
+            log("Debug(\(aspect.rawValue))", message: String(describing: message()), file: file, function: function, line: line)
         }
     }
     

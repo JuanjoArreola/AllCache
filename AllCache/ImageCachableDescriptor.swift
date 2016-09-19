@@ -29,8 +29,8 @@ open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
         } else if imageProcessor != nil {
             Log.warn("You should specify an identifier for the imageProcessor: \(imageProcessor)")
         }
-        let components = NSURLComponents(URL: url, resolvingAgainstBaseURL: false)
-        if let name = components?.path?.componentsSeparatedByString("/").last {
+        let components = NSURLComponents(url: url, resolvingAgainstBaseURL: false)
+        if let name = components?.path?.components(separatedBy: "/").last {
             Log.debug("request: \(name) #\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)", aspect: LogAspect.SizeErrors)
         }
         super.init(key: newKey, originalKey: key)
