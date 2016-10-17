@@ -15,7 +15,6 @@
 #endif
 
 
-
 open class ImageCache: Cache<Image> {
     
     open static let sharedInstance = try! PNGImageCache(identifier: "sharedImage")

@@ -16,7 +16,6 @@
     
     public final class ImageSerializer: DataSerializer<Image> {
         
-        
         override func serializeObject(object: Image) throws -> NSData {
             if let data = object.TIFFRepresentation {
                 return data

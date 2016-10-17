@@ -49,7 +49,11 @@ open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
             var image = object
             let scale = imageResizer.scale != 0.0 ? imageResizer.scale : UIScreen.main.scale
             if image.size != imageResizer.size || image.scale != scale {
-                image = imageResizer.scaleImage(object)
+                if let scaledImage = imageResizer.scaleImage(object) {
+                    image = scaledImage
+                } else {
+                    throw ImageProcessError.resizeError
+                }
             }
             if let processor = imageProcessor {
                 image = try processor.processImage(image)

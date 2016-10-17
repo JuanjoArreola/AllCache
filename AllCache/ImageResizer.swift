@@ -8,8 +8,13 @@
 
 import Foundation
 
+
+public enum ImageProcessError: Error {
+    case resizeError
+}
+
 public protocol ImageResizer {
-    func scaleImage(_ image: UIImage) -> UIImage
+    func scaleImage(_ image: UIImage) -> UIImage?
     var size: CGSize { get }
     var scale: CGFloat { get }
 }
@@ -28,7 +33,7 @@ public final class DefaultImageResizer: ImageResizer {
         self.mode = mode
     }
     
-    public func scaleImage(_ image: UIImage) -> UIImage {
+    public func scaleImage(_ image: UIImage) -> UIImage? {
         var rect = CGRect(origin: CGPoint.zero, size: size)
         
         switch mode {
@@ -55,7 +60,7 @@ public final class DefaultImageResizer: ImageResizer {
         
         let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return scaledImage!
+        return scaledImage
     }
     
     final func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
@@ -100,7 +105,7 @@ public final class AdaptiveImageResizer: ImageResizer {
         self.scale = scale
     }
     
-    public func scaleImage(_ image: UIImage) -> UIImage {
+    public func scaleImage(_ image: UIImage) -> UIImage? {
         let rect = CGRect(origin: CGPoint.zero, size: getSizeForImageSize(image.size))
         UIGraphicsBeginImageContextWithOptions(rect.size, true, scale)
         
