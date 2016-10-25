@@ -30,7 +30,7 @@ public extension UIImageView {
     }
     
     final func requestImage(withDesciptor descriptor: ImageCachableDescriptor, placeholder: UIImage? = nil, completion: (() -> Void)? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
-        return ImageCache.sharedInstance.objectForDescriptor(descriptor) { (getObject) -> Void in
+        return ImageCache.shared.objectForDescriptor(descriptor) { (getObject) -> Void in
             do {
                 self.image = try getObject()
                 completion?()

@@ -35,7 +35,7 @@ public extension UIButton {
         if color != UIColor.clear && (self.contentMode == .scaleAspectFill || self.contentMode == .scaleToFill) {
             color = UIColor.black
         }
-        return ImageCache.sharedInstance.objectForDescriptor(descriptor) { (getObject) -> Void in
+        return ImageCache.shared.objectForDescriptor(descriptor) { (getObject) -> Void in
             do {
                 self.setImage(try getObject(), for: UIControlState())
                 completion?()

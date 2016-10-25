@@ -55,7 +55,7 @@ public final class DiskCache<T: AnyObject> {
     }
     
     public func object(forKey key: String) -> T? {
-        let fileName = "c" + String(key.hash)
+        let fileName = "c" + key
         let url = cacheDirectory.appendingPathComponent(fileName)
         if !objectExists(atURL: url) {
             return nil
@@ -79,7 +79,7 @@ public final class DiskCache<T: AnyObject> {
         Log.debug("Serializing (\(key))")
         let data = try serializer.serialize(object: object)
         Log.debug("Serialized (\(key)): \(data.count / 1024) Kb")
-        let fileName = "c" + String(key.hash)
+        let fileName = "c" + key
         let url = cacheDirectory.appendingPathComponent(fileName)
         try data.write(to: url, options: .atomicWrite)
         size += data.count
@@ -87,7 +87,7 @@ public final class DiskCache<T: AnyObject> {
     }
     
     public func set(data: Data, forKey key: String) throws {
-        let fileName = "c" + String(key.hash)
+        let fileName = "c" + key
         let url = cacheDirectory.appendingPathComponent(fileName)
         try data.write(to: url, options: .atomicWrite)
         size += data.count
@@ -95,13 +95,13 @@ public final class DiskCache<T: AnyObject> {
     }
     
     func updateLastAccess(ofKey key: String) {
-        let fileName = String(abs(key.hash))
+        let fileName = "c" + key
         let path = cacheDirectory.appendingPathComponent(fileName).path
         _ = try? fileManager.setAttributes([.modificationDate: Date()], ofItemAtPath: path)
     }
     
     public func removeObject(forKey key: String) throws {
-        let fileName = "c" + String(key.hash)
+        let fileName = "c" + key
         let url = cacheDirectory.appendingPathComponent(fileName)
         let attributes = try? fileManager.attributesOfItem(atPath: url.path)
         if let fileSize = attributes?[FileAttributeKey.size] as? NSNumber {

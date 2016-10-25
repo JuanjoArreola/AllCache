@@ -17,14 +17,14 @@ class ImageCacheTests: XCTestCase {
     }
     
     override func tearDown() {
-        ImageCache.sharedInstance.diskCache.clear()
+        ImageCache.shared.diskCache.clear()
         super.tearDown()
     }
     
     func testGetImage() {
         let expectation = self.expectation(description: "get image")
         let fetcher = ImageFetcher(url: URL(string: "https://placeholdit.imgix.net/~text?txtsize=33&txt=Placeholder&w=400&h=200&bg=0000ff")!)
-        _ = ImageCache.sharedInstance.object(forKey: "", fetcher: fetcher) { (getObject) -> Void in
+        _ = ImageCache.shared.object(forKey: "", fetcher: fetcher) { (getObject) -> Void in
             do {
                 _ = try getObject()
                 expectation.fulfill()
@@ -40,7 +40,7 @@ class ImageCacheTests: XCTestCase {
         let expectation = self.expectation(description: "get image")
         let expectation2 = self.expectation(description: "get image 2")
         let fetcher = ImageFetcher(url: URL(string: "https://placeholdit.imgix.net/~text?txtsize=33&txt=Placeholder&w=400&h=200&bg=0000ff")!)
-        _ = ImageCache.sharedInstance.object(forKey: fetcher.identifier, fetcher: fetcher) { (getObject) -> Void in
+        _ = ImageCache.shared.object(forKey: fetcher.identifier, fetcher: fetcher) { (getObject) -> Void in
             do {
                 _ = try getObject()
                 expectation.fulfill()
@@ -49,7 +49,7 @@ class ImageCacheTests: XCTestCase {
                 XCTFail()
             }
         }
-        _ = ImageCache.sharedInstance.object(forKey: fetcher.identifier, fetcher: fetcher) { (getObject) -> Void in
+        _ = ImageCache.shared.object(forKey: fetcher.identifier, fetcher: fetcher) { (getObject) -> Void in
             do {
                 _ = try getObject()
                 expectation2.fulfill()
@@ -67,7 +67,7 @@ class ImageCacheTests: XCTestCase {
         
         let descriptor = ImageCachableDescriptor(url: URL(string: "http://img.cinemasapp.co/unsafe/640x360/smart/ia.media-imdb.com/images/M/MV5BMjQ0MTgyNjAxMV5BMl5BanBnXkFtZTgwNjUzMDkyODE@._V1__SX1234_SY660_.jpg")!, size: CGSize(width: 320, height: 180), scale: 0.0, backgroundColor: UIColor.black, mode: UIViewContentMode.scaleAspectFill)
         
-        _ = ImageCache.sharedInstance.objectForDescriptor(descriptor) { (getObject) in
+        _ = ImageCache.shared.objectForDescriptor(descriptor) { (getObject) in
             do {
                 _ = try getObject()
                 expectation.fulfill()

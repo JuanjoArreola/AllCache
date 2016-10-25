@@ -17,7 +17,7 @@
 
 open class ImageCache: Cache<Image> {
     
-    open static let sharedInstance = try! PNGImageCache(identifier: "sharedImage")
+    open static let shared = try! PNGImageCache(identifier: "sharedImage")
     
     required public init(identifier: String, serializer: DataSerializer<Image>, maxCapacity: Int = 0) throws {
         try super.init(identifier: identifier, serializer: serializer, maxCapacity: maxCapacity)
