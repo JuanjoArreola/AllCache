@@ -350,7 +350,11 @@ open class Cache<T: AnyObject> {
                     request.complete(withObject: object)
                     self.memoryCache.set(object: object, forKey: descriptor.key)
                     diskQueue.async {
-                        _ = try? self.diskCache?.set(object: object, forKey: descriptor.key)
+                        do {
+                            _ = try self.diskCache?.set(object: object, forKey: descriptor.key)
+                        } catch {
+                            Log.error(error)
+                        }
                     }
                 } catch {
                     request.complete(withError: error)

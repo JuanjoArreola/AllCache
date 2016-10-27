@@ -8,6 +8,8 @@
 
 import UIKit
 
+let fileNameRegex = try! NSRegularExpression(pattern: "[/:;?*|']", options: [])
+
 /// Convenience class to encapsulate the steps 
 open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
     
@@ -23,9 +25,10 @@ open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
         imageFetcher = ImageFetcher(url: url)
         imageResizer = DefaultImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
         self.imageProcessor = imageProcessor
-        var newKey = "i\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)_" + key
+        let validKey = fileNameRegex.stringByReplacingMatches(in: key, options: [], range: NSRange(location: 0, length: key.characters.count), withTemplate: "")
+        var newKey = "i\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)_" + validKey
         if let identifier = imageProcessor?.identifier {
-            newKey = "i\(identifier)\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)_" + key
+            newKey = "i\(identifier)\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)_" + validKey
         } else if imageProcessor != nil {
             Log.warn("You should specify an identifier for the imageProcessor: \(imageProcessor)")
         }
