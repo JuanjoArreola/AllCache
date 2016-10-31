@@ -11,15 +11,15 @@ import Foundation
 
 public final class Configuration: NSObject {
     
-    fileprivate static let defaultProperties: [String: AnyObject] = {
+    fileprivate static let defaultProperties: [String: Any] = {
         let bundle = Bundle(for: Configuration.self)
         let path = bundle.path(forResource: "allcache_properties", ofType: "plist")
-        return NSDictionary(contentsOfFile: path!) as! [String:AnyObject]
+        return NSDictionary(contentsOfFile: path!) as! [String: Any]
     }()
     
-    fileprivate static let properties: [String: AnyObject]? = {
+    fileprivate static let properties: [String: Any]? = {
         if let path = Bundle.main.path(forResource: "AllCacheProperties", ofType: "plist") {
-            return NSDictionary(contentsOfFile: path) as? [String: AnyObject]
+            return NSDictionary(contentsOfFile: path) as? [String: Any]
         }
         return nil
     }()
