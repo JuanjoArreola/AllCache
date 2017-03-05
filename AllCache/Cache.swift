@@ -66,19 +66,19 @@ open class Cache<T: AnyObject> {
     open func object(forKey key: String, fetcher: ObjectFetcher<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
         if let request = getCachedRequest(withIdentifier: key) {
             if request.canceled {
-                setCachedRequest(nil, forIdentifier: key)
+                setCached(request: nil, forIdentifier: key)
             } else {
                 request.add(completionHandler: completion)
                 return request
             }
         }
-        setCachedRequest(Request(completionHandler: completion), forIdentifier: key)
+        setCached(request: Request(completionHandler: completion), forIdentifier: key)
         let request = getCachedRequest(withIdentifier: key)!
         
         if let object = memoryCache.object(forKey: key) {
             Log.debug("\(key) found in memory")
             request.complete(withObject: object)
-            setCachedRequest(nil, forIdentifier: key)
+            setCached(request: nil, forIdentifier: key)
             return request
         }
         Log.debug("\(key) NOT found in memory")
@@ -89,13 +89,13 @@ open class Cache<T: AnyObject> {
                 self.responseQueue.async {
                     request.complete(withObject: object)
                     self.memoryCache.set(object: object, forKey: key)
-                    self.setCachedRequest(nil, forIdentifier: key)
+                    self.setCached(request: nil, forIdentifier: key)
                 }
                 self.diskCache?.updateLastAccess(ofKey: key)
             } else {
                 Log.debug("\(key) NOT found in disk")
                 if request.canceled {
-                    self.setCachedRequest(nil, forIdentifier: key)
+                    self.setCached(request:nil, forIdentifier: key)
                     return
                 }
                 
@@ -106,7 +106,7 @@ open class Cache<T: AnyObject> {
                         self.responseQueue.async {
                             request.complete(withObject: result.object)
                             self.memoryCache.set(object: result.object, forKey: key)
-                            self.setCachedRequest(nil, forIdentifier: key)
+                            self.setCached(request: nil, forIdentifier: key)
                         }
                         if self.saveRawData, let data = result.data {
                             _ = try? self.diskCache.set(data: data, forKey: key)
@@ -116,7 +116,7 @@ open class Cache<T: AnyObject> {
                     } catch {
                         self.responseQueue.async {
                             request.complete(withError: error)
-                            self.setCachedRequest(nil, forIdentifier: key)
+                            self.setCached(request: nil, forIdentifier: key)
                         }
                     }
                     syncQueue.async(flags: .barrier, execute: {
@@ -157,7 +157,7 @@ open class Cache<T: AnyObject> {
         return request
     }
     
-    @inline(__always) fileprivate func setCachedRequest(_ request: Request<T>?, forIdentifier identifier: String) {
+    @inline(__always) fileprivate func setCached(request: Request<T>?, forIdentifier identifier: String) {
         syncQueue.async(flags: .barrier, execute: {
             self.requesting[identifier] = request
         }) 
@@ -170,7 +170,7 @@ open class Cache<T: AnyObject> {
     /// - parameter objectProcessor: The object that process the original object to obtain the final object
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
-    func objectForKey(_ key: String, originalKey: String, objectFetcher: ObjectFetcher<T>, objectProcessor: ObjectProcessor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
+    func object(forKey key: String, originalKey: String, objectFetcher: ObjectFetcher<T>, objectProcessor: ObjectProcessor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
         let descriptor = CachableDescriptorWrapper<T>(key: key, originalKey: originalKey, fetcher: objectFetcher, processor: objectProcessor)
         return objectForDescriptor(descriptor, completion: completion)
     }
@@ -182,13 +182,13 @@ open class Cache<T: AnyObject> {
     open func objectForDescriptor(_ descriptor: CachableDescriptor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
         if let request = getCachedRequest(withIdentifier: descriptor.key) {
             if request.canceled {
-                setCachedRequest(nil, forIdentifier: descriptor.key)
+                setCached(request: nil, forIdentifier: descriptor.key)
             } else {
                 request.add(completionHandler: completion)
                 return request
             }
         }
-        setCachedRequest(Request(completionHandler: completion), forIdentifier: descriptor.key)
+        setCached(request: Request(completionHandler: completion), forIdentifier: descriptor.key)
         let request = getCachedRequest(withIdentifier: descriptor.key)!
         
         //      MARK: - Search in Memory o'
@@ -206,14 +206,14 @@ open class Cache<T: AnyObject> {
                 self.responseQueue.async {
                     request.complete(withObject: object)
                     self.memoryCache.set(object: object, forKey: descriptor.key)
-                    self.setCachedRequest(nil, forIdentifier: descriptor.key)
+                    self.setCached(request: nil, forIdentifier: descriptor.key)
                 }
                 self.diskCache?.updateLastAccess(ofKey: descriptor.key)
                 return
             }
             Log.debug("\(descriptor.key) NOT found in disk")
             if request.canceled {
-                self.setCachedRequest(nil, forIdentifier: descriptor.key)
+                self.setCached(request: nil, forIdentifier: descriptor.key)
                 return
             }
             
@@ -226,7 +226,7 @@ open class Cache<T: AnyObject> {
                 else {
                     Log.debug("\(descriptor.originalKey) NOT found in memory")
                     if request.canceled {
-                        self.setCachedRequest(nil, forIdentifier: descriptor.key)
+                        self.setCached(request: nil, forIdentifier: descriptor.key)
                         return
                     }
                     
@@ -246,7 +246,7 @@ open class Cache<T: AnyObject> {
                             Log.debug("\(descriptor.originalKey) NOT found in disk")
                             
                             if request.canceled {
-                                self.setCachedRequest(nil, forIdentifier: descriptor.key)
+                                self.setCached(request: nil, forIdentifier: descriptor.key)
                                 return
                             }
                             
@@ -276,7 +276,7 @@ open class Cache<T: AnyObject> {
                                 } catch {
                                     self.responseQueue.async {
                                         request.complete(withError: error)
-                                        self.setCachedRequest(nil, forIdentifier: descriptor.key)
+                                        self.setCached(request: nil, forIdentifier: descriptor.key)
                                     }
                                 }
                                 syncQueue.async(flags: .barrier, execute: {
@@ -296,7 +296,7 @@ open class Cache<T: AnyObject> {
                                 request.subrequest = fetcherRequest
                                 if fetcherRequest == nil {
                                     request.complete(withError: FetchError.notFound)
-                                    self.setCachedRequest(nil, forIdentifier: descriptor.key)
+                                    self.setCached(request: nil, forIdentifier: descriptor.key)
                                 }
                             }
                         }
@@ -359,7 +359,7 @@ open class Cache<T: AnyObject> {
                 } catch {
                     request.complete(withError: error)
                 }
-                self.setCachedRequest(nil, forIdentifier: descriptor.key)
+                self.setCached(request: nil, forIdentifier: descriptor.key)
             }
         }
     }

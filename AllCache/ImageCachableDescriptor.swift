@@ -36,7 +36,7 @@ open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
         if let name = components?.path?.components(separatedBy: "/").last {
             Log.debug("request: \(name) #\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)", aspect: LogAspect.SizeErrors)
         }
-        super.init(key: newKey, originalKey: key)
+        super.init(key: newKey, originalKey: validKey)
     }
 
     required public init(key: String, originalKey: String) {
