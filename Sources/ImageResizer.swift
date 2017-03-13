@@ -6,20 +6,53 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
-import Foundation
+#if os(iOS) || os(OSX)
+    
+    import CoreGraphics
+    
+    public enum ImageProcessError: Error {
+        case resizeError
+    }
+
+    public protocol ImageResizer {
+        func scaleImage(_ image: Image) -> Image?
+        var size: CGSize { get }
+        var scale: CGFloat { get }
+    }
+
+    public class ImageContentModeConverter {
+        
+        final func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
+            let ratio = size.width / size.height
+            let imageRatio = imageSize.width / imageSize.height
+            
+            let newSize = ratio > imageRatio ? CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height) :
+                CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width))
+            let origin = CGPoint(x: (size.width - newSize.width) / 2.0, y: (size.height - newSize.height) / 2.0)
+            
+            return CGRect(origin: origin, size: newSize)
+        }
+        
+        final func aspectFill(size: CGSize, imageSize: CGSize) -> CGRect {
+            let ratio = size.width / size.height
+            let imageRatio = imageSize.width / imageSize.height
+            
+            let newSize = ratio > imageRatio ? CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width)) :
+                CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height)
+            let origin = CGPoint(x: (size.width - newSize.width) / 2.0, y: (size.height - newSize.height) / 2.0)
+            
+            return CGRect(origin: origin, size: newSize)
+        }
+    }
+    
+#endif
 
 
-public enum ImageProcessError: Error {
-    case resizeError
-}
+#if os(iOS)
+    
+    import UIKit
 
-public protocol ImageResizer {
-    func scaleImage(_ image: UIImage) -> UIImage?
-    var size: CGSize { get }
-    var scale: CGFloat { get }
-}
-
-public final class DefaultImageResizer: ImageResizer {
+public final class DefaultImageResizer: ImageContentModeConverter, ImageResizer {
     
     public var size: CGSize
     public var scale: CGFloat
@@ -62,28 +95,6 @@ public final class DefaultImageResizer: ImageResizer {
         UIGraphicsEndImageContext()
         return scaledImage
     }
-    
-    final func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
-        let ratio = size.width / size.height
-        let imageRatio = imageSize.width / imageSize.height
-        
-        let newSize = ratio > imageRatio ? CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height) :
-            CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width))
-        let origin = CGPoint(x: (size.width - newSize.width) / 2.0, y: (size.height - newSize.height) / 2.0)
-        
-        return CGRect(origin: origin, size: newSize)
-    }
-    
-    final func aspectFill(size: CGSize, imageSize: CGSize) -> CGRect {
-        let ratio = size.width / size.height
-        let imageRatio = imageSize.width / imageSize.height
-        
-        let newSize = ratio > imageRatio ? CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width)) :
-            CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height)
-        let origin = CGPoint(x: (size.width - newSize.width) / 2.0, y: (size.height - newSize.height) / 2.0)
-        
-        return CGRect(origin: origin, size: newSize)
-    }
 }
 
 public final class AdaptiveImageResizer: ImageResizer {
@@ -123,3 +134,5 @@ public final class AdaptiveImageResizer: ImageResizer {
         return CGSize(width: (height! * imageSize.width) / imageSize.height, height: height!)
     }
 }
+
+#endif

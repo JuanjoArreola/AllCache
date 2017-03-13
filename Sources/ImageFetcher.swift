@@ -10,10 +10,20 @@ import Foundation
 
 #if os(OSX)
     import AppKit
-#else
+    let screenScale = NSScreen.main()?.backingScaleFactor ?? 1.0
+    
+    extension Image {
+        convenience init?(data: Data, scale: CGFloat) {
+            self.init(data: data)
+        }
+    }
+#elseif os(iOS)
     import UIKit
+    let screenScale = UIScreen.main.scale
 #endif
 
+
+#if os(OSX) || os(iOS)
 
 enum ImageFetcherError: Error {
     case filterError
@@ -43,7 +53,7 @@ public final class ImageFetcher: ObjectFetcher<Image> {
                     guard let validData = data else {
                         throw FetchError.invalidData
                     }
-                    guard let image = Image(data: validData, scale: UIScreen.main.scale) else {
+                    guard let image = Image(data: validData, scale: screenScale) else {
                         throw FetchError.parseError
                     }
                     queue.async {
@@ -65,3 +75,5 @@ public final class ImageFetcher: ObjectFetcher<Image> {
     }
     
 }
+
+#endif

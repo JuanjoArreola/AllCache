@@ -36,8 +36,22 @@ open class Cache<T: AnyObject> {
     required public init(identifier: String, serializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
         self.identifier = identifier
         self.diskCache = try! DiskCache<T>(identifier: identifier, serializer: serializer, maxCapacity: maxCapacity)
+        registerForLowMemoryNotification()
+    }
+    
+    // MARK: - Configuration
+    
+    #if os(iOS)
+    func registerForLowMemoryNotification() {
         NotificationCenter.default.addObserver(self, selector: #selector(self.handleMemoryWarning(notification:)), name: NSNotification.Name.UIApplicationDidReceiveMemoryWarning, object: nil)
     }
+    #else
+    
+    func registerForLowMemoryNotification() {}
+    
+    #endif
+    
+    // MARK: - GET
     
     open func object(forKey key: String) -> T? {
         if let object = memoryCache.object(forKey: key) {

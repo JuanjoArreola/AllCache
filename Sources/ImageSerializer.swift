@@ -8,7 +8,7 @@
 
 #if os(OSX)
     import AppKit
-#else
+#elseif os(iOS)
     import UIKit
 #endif
 
@@ -16,22 +16,22 @@
     
     public final class ImageSerializer: DataSerializer<Image> {
         
-        override func serializeObject(object: Image) throws -> NSData {
-            if let data = object.TIFFRepresentation {
+        public override func serialize(object: Image) throws -> Data {
+            if let data = object.tiffRepresentation {
                 return data
             }
-            throw DataSerializerError.SerializationError
+            throw DataSerializerError.serializationError
         }
         
-        override public func deserializeData(data: NSData) throws -> Image {
+        public override func deserialize(data: Data) throws -> Image {
             if let image = Image(data: data) {
                 return image
             }
-            throw DataSerializerError.SerializationError
+            throw DataSerializerError.serializationError
         }
     }
     
-#else
+#elseif os(iOS)
     
     open class AbstractImageSerializer: DataSerializer<UIImage> {
         

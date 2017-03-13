@@ -6,8 +6,9 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
-import Foundation
+#if os(iOS)
 
+import UIKit
 
 public extension UIImageView {
     
@@ -44,3 +45,5 @@ public extension UIImageView {
         return color
     }
 }
+
+#endif

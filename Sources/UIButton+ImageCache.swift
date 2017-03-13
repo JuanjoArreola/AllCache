@@ -6,6 +6,8 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 public extension UIButton {
@@ -45,3 +47,5 @@ public extension UIButton {
         }
     }
 }
+
+#endif

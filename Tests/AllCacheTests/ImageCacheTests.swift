@@ -62,21 +62,4 @@ class ImageCacheTests: XCTestCase {
         waitForExpectations(timeout: 60, handler: nil)
     }
     
-    func testResizeImage() {
-        let expectation = self.expectation(description: "resize image")
-        
-        let descriptor = ImageCachableDescriptor(url: URL(string: "http://img.cinemasapp.co/unsafe/640x360/smart/ia.media-imdb.com/images/M/MV5BMjQ0MTgyNjAxMV5BMl5BanBnXkFtZTgwNjUzMDkyODE@._V1__SX1234_SY660_.jpg")!, size: CGSize(width: 320, height: 180), scale: 0.0, backgroundColor: UIColor.black, mode: UIViewContentMode.scaleAspectFill)
-        
-        _ = ImageCache.shared.objectForDescriptor(descriptor) { (getObject) in
-            do {
-                _ = try getObject()
-                expectation.fulfill()
-            } catch {
-                Log.error(error)
-                XCTFail()
-            }
-        }
-        waitForExpectations(timeout: 60, handler: nil)
-    }
-    
 }

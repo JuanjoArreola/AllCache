@@ -6,12 +6,14 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
+#if os(iOS)
+    
 import UIKit
 
 let fileNameRegex = try! NSRegularExpression(pattern: "[/:;?*|']", options: [])
 
 /// Convenience class to encapsulate the steps 
-open class ImageCachableDescriptor: CachableDescriptor<UIImage> {
+open class ImageCachableDescriptor: CachableDescriptor<Image> {
     
     var imageFetcher: ImageFetcher
     var imageResizer: ImageResizer
@@ -80,3 +82,5 @@ open class ImageProcessor {
         return "Processor: \(identifier)"
     }
 }
+
+#endif

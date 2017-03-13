@@ -30,31 +30,31 @@ public final class Log {
         return f
     }()
     
-    class func debug(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
+    public class func debug(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.debug.rawValue >= logLevel.rawValue {
             log("Debug", message: String(describing: message()), file: file, function: function, line: line)
         }
     }
     
-    class func warn(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
+    public class func warn(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.warning.rawValue >= logLevel.rawValue {
             log("Warning", message: String(describing: message()), file: file, function: function, line: line)
         }
     }
     
-    class func error(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
+    public class func error(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.error.rawValue >= logLevel.rawValue {
             log("Error", message: String(describing: message()), file: file, function: function, line: line)
         }
     }
     
-    class func severe(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
+    public class func severe(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.severe.rawValue >= logLevel.rawValue {
             log("Severe", message: String(describing: message()), file: file, function: function, line: line)
         }
     }
     
-    class func debug(_ message: @autoclosure () -> Any, aspect: LogAspect, file: String = #file, function: StaticString = #function, line: Int = #line) {
+    public class func debug(_ message: @autoclosure () -> Any, aspect: LogAspect, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if logAspect == aspect {
             log("Debug(\(aspect.rawValue))", message: String(describing: message()), file: file, function: function, line: line)
         }
