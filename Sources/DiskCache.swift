@@ -186,7 +186,7 @@ public enum DataSerializerError: Error {
     case serializationError
 }
 
-/// Abstract class that converts cachable objects of type T into NSData and NSData into objects of type T
+/// Abstract class that converts cachable objects of type T into Data and Data into objects of type T
 open class DataSerializer<T: AnyObject> {
     
     public init() {}

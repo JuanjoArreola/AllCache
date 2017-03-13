@@ -19,10 +19,10 @@ public enum LogAspect: String {
 public final class Log {
     public static var logLevel = LogLevel(rawValue: Configuration.logLevel)!
     public static var logAspect = LogAspect.Normal
-    static var showDate = true
-    static var showFile = Configuration.showFile
-    static var showFunc = Configuration.showFunc
-    static var showLine = Configuration.showLine
+    public static var showDate = true
+    public static var showFile = Configuration.showFile
+    public static var showFunc = Configuration.showFunc
+    public static var showLine = Configuration.showLine
     
     static var formatter: DateFormatter = {
         let f = DateFormatter()
@@ -60,7 +60,7 @@ public final class Log {
         }
     }
     
-    fileprivate class func log(_ level: String, message: String, file: String, function: StaticString, line: Int) {
+    private class func log(_ level: String, message: String, file: String, function: StaticString, line: Int) {
         var s = ""
         s += showDate ? formatter.string(from: Date()) + " " : ""
         s += showFile ? file.components(separatedBy: "/").last ?? "" : ""

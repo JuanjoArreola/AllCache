@@ -11,13 +11,7 @@ import Foundation
 
 public final class Configuration: NSObject {
     
-    fileprivate static let defaultProperties: [String: Any] = {
-        let bundle = Bundle(for: Configuration.self)
-        let path = bundle.path(forResource: "allcache_properties", ofType: "plist")
-        return NSDictionary(contentsOfFile: path!) as! [String: Any]
-    }()
-    
-    fileprivate static let properties: [String: Any]? = {
+    private static let properties: [String: Any]? = {
         if let path = Bundle.main.path(forResource: "AllCacheProperties", ofType: "plist") {
             return NSDictionary(contentsOfFile: path) as? [String: Any]
         }
@@ -30,18 +24,18 @@ public final class Configuration: NSObject {
                 return level
             }
         }
-        return defaultProperties["log_level"] as! Int
+        return 2
     }()
     
     static var showFile: Bool = {
-        return properties?["show_file"] as? Bool ?? defaultProperties["show_file"] as! Bool
+        return properties?["show_file"] as? Bool ?? false
     }()
     
     static var showFunc: Bool = {
-        return properties?["show_func"] as? Bool ?? defaultProperties["show_func"] as! Bool
+        return properties?["show_func"] as? Bool ?? false
     }()
     
     static var showLine: Bool = {
-        return properties?["show_line"] as? Bool ?? defaultProperties["show_line"] as! Bool
+        return properties?["show_line"] as? Bool ?? false
     }()
 }
