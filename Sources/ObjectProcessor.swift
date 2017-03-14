@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 open class ObjectProcessor<T: Any> {
     
     var identifier: String?

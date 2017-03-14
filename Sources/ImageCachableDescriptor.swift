@@ -27,15 +27,15 @@ open class ImageCachableDescriptor: CachableDescriptor<Image> {
         imageFetcher = ImageFetcher(url: url)
         imageResizer = DefaultImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
         self.imageProcessor = imageProcessor
-        let validKey = fileNameRegex.stringByReplacingMatches(in: key, options: [], range: NSRange(location: 0, length: key.characters.count), withTemplate: "")
+        let validKey = fileNameRegex.stringByReplacingMatches(in: key, options: [], range: key.wholeNSRange, withTemplate: "")
         var newKey = "i\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)_" + validKey
         if let identifier = imageProcessor?.identifier {
             newKey = "i\(identifier)\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)_" + validKey
         } else if imageProcessor != nil {
             Log.warn("You should specify an identifier for the imageProcessor: \(imageProcessor)")
         }
-        let components = NSURLComponents(url: url, resolvingAgainstBaseURL: false)
-        if let name = components?.path?.components(separatedBy: "/").last {
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        if let name = components?.path.components(separatedBy: "/").last {
             Log.debug("request: \(name) #\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)", aspect: LogAspect.SizeErrors)
         }
         super.init(key: newKey, originalKey: validKey)
@@ -49,7 +49,7 @@ open class ImageCachableDescriptor: CachableDescriptor<Image> {
         return imageFetcher.fetchAndRespond(in: queue, completion: completion)
     }
     
-    override func process(object: UIImage, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> UIImage) -> Void) {
+    override open func process(object: UIImage, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> UIImage) -> Void) {
         do {
             var image = object
             let scale = imageResizer.scale != 0.0 ? imageResizer.scale : UIScreen.main.scale

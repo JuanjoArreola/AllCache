@@ -8,18 +8,20 @@
 
 import Foundation
 
-internal let diskQueue: DispatchQueue = DispatchQueue(label: "com.allcache.DiskQueue", attributes: DispatchQueue.Attributes.concurrent)
-private let processQueue: DispatchQueue = DispatchQueue(label: "com.allcache.ProcessQueue", attributes: DispatchQueue.Attributes.concurrent)
-internal let syncQueue: DispatchQueue = DispatchQueue(label: "com.allcache.SyncQueue", attributes: DispatchQueue.Attributes.concurrent)
+internal let diskQueue = DispatchQueue(label: "com.allcache.DiskQueue", attributes: .concurrent)
+internal let syncQueue = DispatchQueue(label: "com.allcache.SyncQueue", attributes: .concurrent)
 
-private let fetchQueue: DispatchQueue = DispatchQueue(label: "com.allcache.FetchQueue", attributes: [])
-private let diskWriteQueue: DispatchQueue = DispatchQueue(label: "com.allcache.DiskWriteQueue", attributes: [])
+private let processQueue = DispatchQueue(label: "com.allcache.ProcessQueue", attributes: .concurrent)
 
-/// The Cache class is a generic container that stores key-value pairs, internally has a memory cache and a disk cache
+private let fetchQueue = DispatchQueue(label: "com.allcache.FetchQueue", attributes: [])
+private let diskWriteQueue = DispatchQueue(label: "com.allcache.DiskWriteQueue", attributes: [])
+
+/// The Cache class is a generic container that stores key-value pairs, 
+/// internally has a memory cache and a disk cache
 open class Cache<T: AnyObject> {
     
-    fileprivate var fetching: [String: Request<FetcherResult<T>>] = [:]
-    fileprivate var requesting: [String: Request<T>] = [:]
+    private var fetching: [String: Request<FetcherResult<T>>] = [:]
+    private var requesting: [String: Request<T>] = [:]
     
     open let memoryCache = MemoryCache<T>()
     open internal(set) var diskCache: DiskCache<T>!
@@ -43,7 +45,9 @@ open class Cache<T: AnyObject> {
     
     #if os(iOS)
     func registerForLowMemoryNotification() {
-        NotificationCenter.default.addObserver(self, selector: #selector(self.handleMemoryWarning(notification:)), name: NSNotification.Name.UIApplicationDidReceiveMemoryWarning, object: nil)
+        let name = NSNotification.Name.UIApplicationDidReceiveMemoryWarning
+        let selector = #selector(self.handleMemoryWarning(notification:))
+        NotificationCenter.default.addObserver(self, selector: selector, name: name, object: nil)
     }
     #else
     
@@ -53,6 +57,7 @@ open class Cache<T: AnyObject> {
     
     // MARK: - GET
     
+    /// Search an object in caches, does not try to fetch it if not found
     open func object(forKey key: String) -> T? {
         if let object = memoryCache.object(forKey: key) {
             Log.debug("-\(key) found in memory")
@@ -60,7 +65,7 @@ open class Cache<T: AnyObject> {
         }
         Log.debug("-\(key) NOT found in memory")
         
-        if let object = self.diskCache?.object(forKey: key) {
+        if let object = diskCache?.object(forKey: key) {
             Log.debug("-\(key) found in disk")
             memoryCache.set(object: object, forKey: key)
             diskQueue.async {
@@ -72,12 +77,12 @@ open class Cache<T: AnyObject> {
         return nil
     }
     
-    /// Search an object in the caches, if the object is found the completion closure is called, if not it uses the objectFetcher to try to get it.
+    /// Search an object in the caches, if not found, tries to fetch it.
     /// - parameter key: the key of the object to search
-    /// - parameter objectFetcher: The object that fetches the object if is not currently in the cache
+    /// - parameter fetcher: The fetcher try to fetch the object if is not currently in the cache
     /// - parameter completion: The clusure to call when the cache finds the object
-    /// - returns: An optional request
-    open func object(forKey key: String, fetcher: ObjectFetcher<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
+    /// - returns: A request object
+    open func object(forKey key: String, fetcher: ObjectFetcher<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T> {
         if let request = getCachedRequest(withIdentifier: key) {
             if request.canceled {
                 setCached(request: nil, forIdentifier: key)
@@ -91,7 +96,7 @@ open class Cache<T: AnyObject> {
         
         if let object = memoryCache.object(forKey: key) {
             Log.debug("\(key) found in memory")
-            request.complete(withObject: object)
+            responseQueue.async { request.complete(withObject: object) }
             setCached(request: nil, forIdentifier: key)
             return request
         }
@@ -155,6 +160,163 @@ open class Cache<T: AnyObject> {
         return request
     }
     
+    /// Search an object in the caches, if the object is found the completion closure is called, if not, the cache search for the original object and apply the objectProcessor, if the origianl object wasn't found it uses the objectFetcher to try to get it.
+    /// - parameter key: the key of the object to search
+    /// - parameter originalKey: the key of the original object to search
+    /// - parameter objectFetcher: The object that fetches the object if is not currently in the cache
+    /// - parameter objectProcessor: The object that process the original object to obtain the final object
+    /// - parameter completion: The clusure to call when the cache finds the object
+    /// - returns: A request object
+    func object(forKey key: String, originalKey: String, objectFetcher: ObjectFetcher<T>, objectProcessor: ObjectProcessor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T> {
+        let descriptor = CachableDescriptorWrapper<T>(key: key, originalKey: originalKey, fetcher: objectFetcher, processor: objectProcessor)
+        return object(for: descriptor, completion: completion)
+    }
+    
+    /// Search an object in the caches, if the object is found the completion closure is called, if not, the cache search for the original object and apply the objectProcessor, if the origianl object wasn't found it uses the objectFetcher to try to get it.
+    /// - parameter descriptor: An object that encapsulates the key, origianlKey, objectFetcher and objectProcessor
+    /// - parameter completion: The clusure to call when the cache finds the object
+    /// - returns: An optional request
+    open func object(for descriptor: CachableDescriptor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T> {
+        if let request = getCachedRequest(withIdentifier: descriptor.key) {
+            if request.canceled {
+                setCached(request: nil, forIdentifier: descriptor.key)
+            } else {
+                request.add(completionHandler: completion)
+                return request
+            }
+        }
+        setCached(request: Request(completionHandler: completion), forIdentifier: descriptor.key)
+        let request = getCachedRequest(withIdentifier: descriptor.key)!
+        
+        //      MARK: - Search in Memory o'
+        if let object = memoryCache.object(forKey: descriptor.key) {
+            Log.debug("\(descriptor.key) found in memory")
+            responseQueue.async { request.complete(withObject: object) }
+            setCached(request: nil, forIdentifier: descriptor.key)
+            return request
+        }
+        Log.debug("\(descriptor.key) NOT found in memory")
+        
+//      MARK: - Search in Disk o'
+        
+        diskQueue.async {
+            if let object = self.diskCache?.object(forKey: descriptor.key) {
+                Log.debug("\(descriptor.key) found in disk")
+                self.responseQueue.async {
+                    request.complete(withObject: object)
+                    self.memoryCache.set(object: object, forKey: descriptor.key)
+                    self.setCached(request: nil, forIdentifier: descriptor.key)
+                }
+                self.diskCache?.updateLastAccess(ofKey: descriptor.key)
+                return
+            }
+            Log.debug("\(descriptor.key) NOT found in disk")
+            if request.canceled {
+                self.setCached(request: nil, forIdentifier: descriptor.key)
+                return
+            }
+            
+//          MARK: - Search in Memory o
+            
+            self.responseQueue.async {
+                if let rawObject = self.memoryCache.object(forKey: descriptor.originalKey) {
+                    Log.debug("\(descriptor.originalKey) found in memory")
+                    self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
+                }
+                else {
+                    Log.debug("\(descriptor.originalKey) NOT found in memory")
+                    if request.canceled {
+                        self.setCached(request: nil, forIdentifier: descriptor.key)
+                        return
+                    }
+                    
+//                  MARK: - Search in Disk o
+                    
+                    self.searchInDisk(for: descriptor, request: request)
+                }
+            }
+        }
+        return request
+    }
+    
+    private func searchInDisk(for descriptor: CachableDescriptor<T>, request: Request<T>) {
+        diskQueue.async {
+            if let rawObject = self.diskCache?.object(forKey: descriptor.originalKey) {
+                Log.debug("\(descriptor.originalKey) found in disk")
+                self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
+                if self.moveOriginalToMemoryCache {
+                    self.responseQueue.async {
+                        self.memoryCache.set(object: rawObject, forKey: descriptor.originalKey)
+                    }
+                }
+                self.diskCache?.updateLastAccess(ofKey: descriptor.originalKey)
+            }
+            else {
+                Log.debug("\(descriptor.originalKey) NOT found in disk")
+                
+                if request.canceled {
+                    self.setCached(request: nil, forIdentifier: descriptor.key)
+                    return
+                }
+                
+                self.fetchObject(for: descriptor, request: request)
+            }
+        }
+    }
+    
+    private func fetchObject(for descriptor: CachableDescriptor<T>, request: Request<T>) {
+        let completionHandler: (_ getObject: () throws -> FetcherResult<T>) -> Void = { getFetcherResult in
+            do {
+                let result = try getFetcherResult()
+                let rawObject = result.object
+                Log.debug("\(descriptor.originalKey) fetched")
+                
+                self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
+                if self.moveOriginalToMemoryCache {
+                    self.responseQueue.async {
+                        self.memoryCache.set(object: rawObject, forKey: descriptor.originalKey)
+                    }
+                }
+                if self.moveOriginalToDiskCache {
+                    if self.saveRawData, let data = result.data {
+                        diskWriteQueue.async {
+                            _ = try? self.diskCache?.set(data: data, forKey: descriptor.originalKey)
+                        }
+                    } else {
+                        diskWriteQueue.async {
+                            _ = try? self.diskCache?.set(object: rawObject, forKey: descriptor.originalKey)
+                        }
+                    }
+                }
+            } catch {
+                self.responseQueue.async {
+                    request.complete(withError: error)
+                    self.setCached(request: nil, forIdentifier: descriptor.key)
+                }
+            }
+            syncQueue.async(flags: .barrier, execute: {
+                self.fetching[descriptor.originalKey] = nil
+            })
+        }
+        
+        var fetcherRequest = self.getCachedFetchingRequest(withIdentifier: descriptor.originalKey)
+        if let fetcherRequest = fetcherRequest {
+            fetcherRequest.add(completionHandler: completionHandler)
+        } else {
+            syncQueue.async(flags: .barrier, execute: {
+                self.fetching[descriptor.originalKey] = descriptor.fetchAndRespond(in: diskQueue, completion: completionHandler)
+            })
+            fetcherRequest = self.getCachedFetchingRequest(withIdentifier: descriptor.originalKey)
+            request.subrequest = fetcherRequest
+            if fetcherRequest == nil {
+                request.complete(withError: FetchError.notFound)
+                self.setCached(request: nil, forIdentifier: descriptor.key)
+            }
+        }
+    }
+    
+    // MARK: - Request caching
+    
     @inline(__always) private func getCachedFetchingRequest(withIdentifier identifier: String) -> Request<FetcherResult<T>>? {
         var request: Request<FetcherResult<T>>?
         syncQueue.sync {
@@ -174,152 +336,10 @@ open class Cache<T: AnyObject> {
     @inline(__always) fileprivate func setCached(request: Request<T>?, forIdentifier identifier: String) {
         syncQueue.async(flags: .barrier, execute: {
             self.requesting[identifier] = request
-        }) 
+        })
     }
     
-    /// Search an object in the caches, if the object is found the completion closure is called, if not, the cache search for the original object and apply the objectProcessor, if the origianl object wasn't found it uses the objectFetcher to try to get it.
-    /// - parameter key: the key of the object to search
-    /// - parameter originalKey: the key of the original object to search
-    /// - parameter objectFetcher: The object that fetches the object if is not currently in the cache
-    /// - parameter objectProcessor: The object that process the original object to obtain the final object
-    /// - parameter completion: The clusure to call when the cache finds the object
-    /// - returns: An optional request
-    func object(forKey key: String, originalKey: String, objectFetcher: ObjectFetcher<T>, objectProcessor: ObjectProcessor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
-        let descriptor = CachableDescriptorWrapper<T>(key: key, originalKey: originalKey, fetcher: objectFetcher, processor: objectProcessor)
-        return objectForDescriptor(descriptor, completion: completion)
-    }
-    
-    /// Search an object in the caches, if the object is found the completion closure is called, if not, the cache search for the original object and apply the objectProcessor, if the origianl object wasn't found it uses the objectFetcher to try to get it.
-    /// - parameter descriptor: An object that encapsulates the key, origianlKey, objectFetcher and objectProcessor
-    /// - parameter completion: The clusure to call when the cache finds the object
-    /// - returns: An optional request
-    open func objectForDescriptor(_ descriptor: CachableDescriptor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T>? {
-        if let request = getCachedRequest(withIdentifier: descriptor.key) {
-            if request.canceled {
-                setCached(request: nil, forIdentifier: descriptor.key)
-            } else {
-                request.add(completionHandler: completion)
-                return request
-            }
-        }
-        setCached(request: Request(completionHandler: completion), forIdentifier: descriptor.key)
-        let request = getCachedRequest(withIdentifier: descriptor.key)!
-        
-        //      MARK: - Search in Memory o'
-        if let object = memoryCache.object(forKey: descriptor.key) {
-            Log.debug("\(descriptor.key) found in memory")
-            request.complete(withObject: object)
-            return request
-        }
-        Log.debug("\(descriptor.key) NOT found in memory")
-        
-        //      MARK: - Search in Disk o'
-        diskQueue.async {
-            if let object = self.diskCache?.object(forKey: descriptor.key) {
-                Log.debug("\(descriptor.key) found in disk")
-                self.responseQueue.async {
-                    request.complete(withObject: object)
-                    self.memoryCache.set(object: object, forKey: descriptor.key)
-                    self.setCached(request: nil, forIdentifier: descriptor.key)
-                }
-                self.diskCache?.updateLastAccess(ofKey: descriptor.key)
-                return
-            }
-            Log.debug("\(descriptor.key) NOT found in disk")
-            if request.canceled {
-                self.setCached(request: nil, forIdentifier: descriptor.key)
-                return
-            }
-            
-            //          MARK: - Search in Memory o
-            self.responseQueue.async {
-                if let rawObject = self.memoryCache.object(forKey: descriptor.originalKey) {
-                    Log.debug("\(descriptor.originalKey) found in memory")
-                    self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
-                }
-                else {
-                    Log.debug("\(descriptor.originalKey) NOT found in memory")
-                    if request.canceled {
-                        self.setCached(request: nil, forIdentifier: descriptor.key)
-                        return
-                    }
-                    
-//                  MARK: - Search in Disk o
-                    diskQueue.async {
-                        if let rawObject = self.diskCache?.object(forKey: descriptor.originalKey) {
-                            Log.debug("\(descriptor.originalKey) found in disk")
-                            self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
-                            if self.moveOriginalToMemoryCache {
-                                self.responseQueue.async {
-                                    self.memoryCache.set(object: rawObject, forKey: descriptor.originalKey)
-                                }
-                            }
-                            self.diskCache?.updateLastAccess(ofKey: descriptor.originalKey)
-                        }
-                        else {
-                            Log.debug("\(descriptor.originalKey) NOT found in disk")
-                            
-                            if request.canceled {
-                                self.setCached(request: nil, forIdentifier: descriptor.key)
-                                return
-                            }
-                            
-                            let completionHandler: (_ getObject: () throws -> FetcherResult<T>) -> Void = { getFetcherResult in
-                                do {
-                                    let result = try getFetcherResult()
-                                    let rawObject = result.object
-                                    Log.debug("\(descriptor.originalKey) fetched")
-                                    
-                                    self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
-                                    if self.moveOriginalToMemoryCache {
-                                        self.responseQueue.async {
-                                            self.memoryCache.set(object: rawObject, forKey: descriptor.originalKey)
-                                        }
-                                    }
-                                    if self.moveOriginalToDiskCache {
-                                        if self.saveRawData, let data = result.data {
-                                            diskWriteQueue.async {
-                                                _ = try? self.diskCache?.set(data: data, forKey: descriptor.originalKey)
-                                            }
-                                        } else {
-                                            diskWriteQueue.async {
-                                                _ = try? self.diskCache?.set(object: rawObject, forKey: descriptor.originalKey)
-                                            }
-                                        }
-                                    }
-                                } catch {
-                                    self.responseQueue.async {
-                                        request.complete(withError: error)
-                                        self.setCached(request: nil, forIdentifier: descriptor.key)
-                                    }
-                                }
-                                syncQueue.async(flags: .barrier, execute: {
-                                    self.fetching[descriptor.originalKey] = nil
-                                }) 
-                            }
-                            
-//                          MARK: - Fetch Object
-                            var fetcherRequest = self.getCachedFetchingRequest(withIdentifier: descriptor.originalKey)
-                            if let fetcherRequest = fetcherRequest {
-                                fetcherRequest.add(completionHandler: completionHandler)
-                            } else {
-                                syncQueue.async(flags: .barrier, execute: {
-                                    self.fetching[descriptor.originalKey] = descriptor.fetchAndRespond(in: diskQueue, completion: completionHandler)
-                                }) 
-                                fetcherRequest = self.getCachedFetchingRequest(withIdentifier: descriptor.originalKey)
-                                request.subrequest = fetcherRequest
-                                if fetcherRequest == nil {
-                                    request.complete(withError: FetchError.notFound)
-                                    self.setCached(request: nil, forIdentifier: descriptor.key)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return request
-    }
+    // MARK: - Set
     
     open func setObject(_ object: T, forKey key: String, errorHandler: ((_ error: Error) -> Void)? = nil) {
         memoryCache.set(object: object, forKey: key)
@@ -331,8 +351,10 @@ open class Cache<T: AnyObject> {
                     errorHandler?(error)
                 }
             }
-        }) 
+        })
     }
+    
+    // MARK: - Delete
     
     open func removeObjectForKey(_ key: String, errorHandler: ((_ error: Error) -> Void)? = nil) {
         memoryCache.removeObject(forKey: key)

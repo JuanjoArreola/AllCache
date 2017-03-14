@@ -12,39 +12,41 @@ import UIKit
 
 public extension UIButton {
     
-    final func requestImage(withURL url: URL?, placeholder: UIImage? = nil, imageProcessor: ImageProcessor? = nil, completion: (() -> Void)? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
-        if url == nil {
-            self.setImage(placeholder, for: UIControlState())
-            return nil
-        }
-        if let image = placeholder {
-            self.setImage(image, for: UIControlState())
-        }
+    final func requestImage(with url: URL?,
+                            placeholder: UIImage? = nil,
+                            processor: ImageProcessor? = nil,
+                            completion: ((_ image: UIImage) -> Void)? = nil,
+                            errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
+        self.setImage(placeholder, for: UIControlState())
+        guard let url = url else { return nil }
+
         let mode = imageView?.contentMode ?? contentMode
-        var color = self.backgroundColor ?? UIColor.clear
-        if color != UIColor.clear && (mode == .scaleAspectFill || mode == .scaleToFill) {
-            color = UIColor.black
-        }
-        let descriptor = ImageCachableDescriptor(url: url!, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: color, mode: mode, imageProcessor: imageProcessor)
-        return requestImage(withDesciptor: descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
+        let descriptor = ImageCachableDescriptor(url: url, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: mode, imageProcessor: processor)
+        return requestImage(with: descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
     }
     
-    final func requestImage(withDesciptor descriptor: ImageCachableDescriptor, placeholder: UIImage? = nil, completion: (() -> Void)? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
-        if let image = placeholder {
-            self.setImage(image, for: UIControlState())
-        }
-        var color = self.backgroundColor ?? UIColor.clear
-        if color != UIColor.clear && (self.contentMode == .scaleAspectFill || self.contentMode == .scaleToFill) {
-            color = UIColor.black
-        }
-        return ImageCache.shared.objectForDescriptor(descriptor) { (getObject) -> Void in
+    final func requestImage(with descriptor: ImageCachableDescriptor,
+                            placeholder: UIImage? = nil,
+                            completion: ((_ image: UIImage) -> Void)? = nil,
+                            errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage> {
+        self.setImage(placeholder, for: UIControlState())
+        return ImageCache.shared.object(for: descriptor) { [weak self] (getObject) -> Void in
             do {
-                self.setImage(try getObject(), for: UIControlState())
-                completion?()
+                let image = try getObject()
+                self?.setImage(image, for: UIControlState())
+                completion?(image)
             } catch {
                 errorHandler?(error)
             }
         }
+    }
+    
+    var hintColor: UIColor {
+        var color = backgroundColor ?? UIColor.clear
+        if color != UIColor.clear && (contentMode == .scaleAspectFill || contentMode == .scaleToFill) {
+            color = UIColor.black
+        }
+        return color
     }
 }
 

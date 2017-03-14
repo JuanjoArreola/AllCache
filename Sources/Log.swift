@@ -32,43 +32,50 @@ public final class Log {
     
     public class func debug(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.debug.rawValue >= logLevel.rawValue {
-            log("Debug", message: String(describing: message()), file: file, function: function, line: line)
+            let prefix = getPrefix(file: file, function: function, line: line)
+            log("Debug", message: String(describing: message()), prefix: prefix)
         }
     }
     
     public class func warn(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.warning.rawValue >= logLevel.rawValue {
-            log("Warning", message: String(describing: message()), file: file, function: function, line: line)
+            let prefix = getPrefix(file: file, function: function, line: line)
+            log("Warning", message: String(describing: message()), prefix: prefix)
         }
     }
     
     public class func error(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.error.rawValue >= logLevel.rawValue {
-            log("Error", message: String(describing: message()), file: file, function: function, line: line)
+            let prefix = getPrefix(file: file, function: function, line: line)
+            log("Error", message: String(describing: message()), prefix: prefix)
         }
     }
     
     public class func severe(_ message: @autoclosure () -> Any, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if LogLevel.severe.rawValue >= logLevel.rawValue {
-            log("Severe", message: String(describing: message()), file: file, function: function, line: line)
+            let prefix = getPrefix(file: file, function: function, line: line)
+            log("Severe", message: String(describing: message()), prefix: prefix)
         }
     }
     
     public class func debug(_ message: @autoclosure () -> Any, aspect: LogAspect, file: String = #file, function: StaticString = #function, line: Int = #line) {
         if logAspect == aspect {
-            log("Debug(\(aspect.rawValue))", message: String(describing: message()), file: file, function: function, line: line)
+            let prefix = getPrefix(file: file, function: function, line: line)
+            log("Debug(\(aspect.rawValue))", message: String(describing: message()), prefix: prefix)
         }
     }
     
-    private class func log(_ level: String, message: String, file: String, function: StaticString, line: Int) {
+    @inline(__always) class func getPrefix(file: String, function: StaticString, line: Int) -> String {
         var s = ""
         s += showDate ? formatter.string(from: Date()) + " " : ""
         s += showFile ? file.components(separatedBy: "/").last ?? "" : ""
         s += showFunc ? " \(function)" : ""
         s += showLine ? " [\(line)] " : ""
-        s += level + ": "
-        s += message
-        print(s)
+        return s
+    }
+    
+    private class func log(_ level: String, message: String, prefix: String) {
+        print("\(prefix) \(level): \(message)")
     }
     
 }

@@ -9,7 +9,7 @@
 import Foundation
 
 public final class MemoryCache<T: AnyObject> {
-    private var cache = NSCache<NSString, T>()
+    private let cache = NSCache<NSString, T>()
     
     public func object(forKey key: String) -> T? {
         return cache.object(forKey: key as NSString)

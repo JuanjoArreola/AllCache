@@ -84,6 +84,22 @@ class CustomClassTests: XCTestCase {
         waitForExpectations(timeout: 1.0, handler: nil)
     }
     
+    func testFetchObjectWithDescriptor() {
+        let expectation: XCTestExpectation = self.expectation(description: "get user")
+        let descriptor = CachableDescriptorWrapper(key: "user_1", originalKey: "user", fetcher: UserFetcher(userName: "Juanjo"), processor: nil)
+        _ = userCache.object(for: descriptor, completion: { getObject in
+            do {
+                _ = try getObject()
+                expectation.fulfill()
+            } catch {
+                XCTFail()
+                Log.error(error)
+            }
+        })
+        
+        waitForExpectations(timeout: 2.0, handler: nil)
+    }
+    
 }
 
 class UserInfo: NSObject, NSCoding {

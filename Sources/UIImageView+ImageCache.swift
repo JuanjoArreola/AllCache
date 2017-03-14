@@ -12,25 +12,37 @@ import UIKit
 
 public extension UIImageView {
     
-    final func requestImage(withURL url: URL?, placeholder: UIImage? = nil, imageProcessor: ImageProcessor? = nil, completion: (() -> Void)? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
+    final func requestImage(with url: URL?,
+                            placeholder: UIImage? = nil,
+                            imageProcessor: ImageProcessor? = nil,
+                            completion: ((_ image: UIImage) -> Void)? = nil,
+                            errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
         image = placeholder
         guard let url = url else { return nil }
         let descriptor = ImageCachableDescriptor(url: url, size: self.bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: contentMode, imageProcessor: imageProcessor)
-        return requestImage(withDesciptor: descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
+        return requestImage(with: descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
     }
     
-    final func requestImage(withKey key: String, url: URL?, placeholder: UIImage? = nil, imageProcessor: ImageProcessor? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
+    final func requestImage(withKey key: String,
+                            url: URL?,
+                            placeholder: UIImage? = nil,
+                            imageProcessor: ImageProcessor? = nil,
+                            errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
         image = placeholder
         guard let url = url else { return nil }
         let descriptor = ImageCachableDescriptor(key: key, url: url, size: self.bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: self.contentMode, imageProcessor: imageProcessor)
-        return requestImage(withDesciptor: descriptor, placeholder: placeholder, errorHandler: errorHandler)
+        return requestImage(with: descriptor, placeholder: placeholder, errorHandler: errorHandler)
     }
     
-    final func requestImage(withDesciptor descriptor: ImageCachableDescriptor, placeholder: UIImage? = nil, completion: (() -> Void)? = nil, errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
-        return ImageCache.shared.objectForDescriptor(descriptor) { (getObject) -> Void in
+    final func requestImage(with descriptor: ImageCachableDescriptor,
+                            placeholder: UIImage? = nil,
+                            completion: ((_ image: UIImage) -> Void)? = nil,
+                            errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage> {
+        return ImageCache.shared.object(for: descriptor) { [weak self] (getObject) -> Void in
             do {
-                self.image = try getObject()
-                completion?()
+                let image = try getObject()
+                self?.image = image
+                completion?(image)
             } catch {
                 errorHandler?(error)
             }

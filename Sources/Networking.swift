@@ -21,66 +21,70 @@ public enum ParameterEncoding {
 }
 
 enum EncodeError: Error {
-    case invalidMethod, invalidURL
+    case invalidMethod, invalidURL, encodingError
 }
 
 
-public func request(url: URL, method: HTTPMethod = .GET, parameters: [String: AnyObject]? = [:], parameterEncoding: ParameterEncoding = .url, completion: @escaping ((data: Data?, response: URLResponse?, error: Error?)) -> Void) throws -> URLSessionDataTask {
+public func request(url: URL, method: HTTPMethod = .GET, parameters: [String: Any]? = [:], parameterEncoding: ParameterEncoding = .url, completion: @escaping ((data: Data?, response: URLResponse?, error: Error?)) -> Void) throws -> URLSessionDataTask {
     
     var request = URLRequest(url: url)
     request.httpMethod = method.rawValue
-    try request.encode(parameters: parameters, withEncoding: parameterEncoding)
+    try request.encode(parameters: parameters, with: parameterEncoding)
     
     let task = URLSession.shared.dataTask(with: request, completionHandler: completion)
     task.resume()
     return task
 }
 
-extension URLRequest {
+public extension URLRequest {
     
-    mutating func encode(parameters: [String: Any]?, withEncoding encoding: ParameterEncoding) throws {
+    mutating func encode(parameters: [String: Any]?, with encoding: ParameterEncoding) throws {
         guard let method = httpMethod else { throw EncodeError.invalidMethod }
         switch encoding {
         case .url:
-            if URLRequest.parametersInURL(forMethod: method) {
-                guard let params = parameters else { return }
-                guard let url = self.url else { throw EncodeError.invalidURL }
-                if var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false) {
-                    let parametersString = URLRequest.encode(parameters: params)
-                    let percentEncodedQuery = (urlComponents.percentEncodedQuery.map { $0 + "&" } ?? "") + parametersString
-                    urlComponents.percentEncodedQuery = percentEncodedQuery
-                    self.url = urlComponents.url
-                }
+            if ["GET", "HEAD", "DELETE"].contains(method) {
+                self.url = try self.url?.appending(parameters: parameters)
             } else {
                 setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
                 if let params = parameters {
-                    let parametersString = URLRequest.encode(parameters: params)
-                    self.httpBody = parametersString.data(using: String.Encoding.utf8, allowLossyConversion: false)
+                    guard let queryString = params.urlQueryString else { throw EncodeError.encodingError }
+                    self.httpBody = queryString.data(using: .utf8, allowLossyConversion: false)
                 }
             }
             
         case .json:
             self.setValue("application/json", forHTTPHeaderField: "Content-Type")
             if let params = parameters {
-                self.httpBody = try JSONSerialization.data(withJSONObject: params, options: JSONSerialization.WritingOptions())
+                self.httpBody = try JSONSerialization.data(withJSONObject: params.jsonValid, options: [])
             }
         }
     }
+}
+
+public extension Dictionary where Key: ExpressibleByStringLiteral {
     
-    static func parametersInURL(forMethod method: String) -> Bool {
-        switch method {
-        case "GET", "HEAD", "DELETE":
-            return true
-        default:
-            return false
-        }
+    public var urlQueryString: String? {
+        let string = self.map({ "\($0)=\(String(describing: $1))" }).joined(separator: "&")
+        return string.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
     }
     
-    static func encode(parameters: [String: Any]) -> String {
-        let array = parameters.map { (key, value) -> String in
-            let string = String(describing: value)
-            return "\(key)=\(string)"
+    public var jsonValid: [Key: Any] {
+        var result = [Key: Any]()
+        self.forEach({ result[$0] = JSONSerialization.isValidJSONObject($1) ? $1 : String(describing: $1) })
+        return result
+    }
+}
+
+public extension URL {
+    func appending(parameters: [String: Any]?) throws -> URL {
+        guard let params = parameters else { return self }
+        guard var components = URLComponents(url: self, resolvingAgainstBaseURL: false) else { return self }
+        guard let queryString = params.urlQueryString else { throw EncodeError.encodingError }
+        let percentEncodedQuery = (components.percentEncodedQuery.map { $0 + "&" } ?? "") + queryString
+        components.percentEncodedQuery = percentEncodedQuery
+        if let url = components.url {
+            return url
         }
-        return array.joined(separator: "&")
+        throw EncodeError.encodingError
     }
 }

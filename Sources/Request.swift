@@ -86,7 +86,7 @@ private func sync(closure: @escaping () -> Void) {
 }
 
 
-open class AllCacheURLRequest<T: AnyObject>: Request<T> {
+open class AllCacheURLRequest<T: Any>: Request<T> {
     
     var dataTask: URLSessionDataTask?
     

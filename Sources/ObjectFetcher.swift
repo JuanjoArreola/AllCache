@@ -26,7 +26,7 @@ open class FetcherResult<T> {
 }
 
 /// Abstract class intended to be subclassed to fetch an object of a concrete type
-open class ObjectFetcher<T: AnyObject> {
+open class ObjectFetcher<T: Any> {
     
     open var identifier: String!
     

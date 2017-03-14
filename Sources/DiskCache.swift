@@ -8,8 +8,6 @@
 
 import Foundation
 
-//private let shrinkQueue: dispatch_queue_t = dispatch_queue_create("com.crayon.allcache.FetchQueue", DISPATCH_QUEUE_SERIAL)
-
 enum DiskCacheError: Error {
     case invalidPath
     case invalidData
@@ -20,7 +18,7 @@ public final class DiskCache<T: AnyObject> {
     public let identifier: String
     public internal(set) var size = 0
     public var maxCapacity = 0
-    fileprivate var shrinking = false
+    private var shrinking = false
     
     let fileManager = FileManager.default
     public var cacheDirectory: URL
@@ -57,7 +55,7 @@ public final class DiskCache<T: AnyObject> {
     public func object(forKey key: String) -> T? {
         let fileName = "c" + key
         let url = cacheDirectory.appendingPathComponent(fileName)
-        if !objectExists(atURL: url) {
+        if !objectExists(at: url) {
             return nil
         }
         do {
@@ -71,7 +69,7 @@ public final class DiskCache<T: AnyObject> {
         }
     }
     
-    @inline(__always) fileprivate func objectExists(atURL url: URL) -> Bool {
+    @inline(__always) private func objectExists(at url: URL) -> Bool {
         return fileManager.fileExists(atPath: url.path)
     }
     
@@ -79,11 +77,7 @@ public final class DiskCache<T: AnyObject> {
         Log.debug("Serializing (\(key))")
         let data = try serializer.serialize(object: object)
         Log.debug("Serialized (\(key)): \(data.count / 1024) Kb")
-        let fileName = "c" + key
-        let url = cacheDirectory.appendingPathComponent(fileName)
-        try data.write(to: url, options: .atomicWrite)
-        size += data.count
-        restrictSize()
+        try set(data: data, forKey: key)
     }
     
     public func set(data: Data, forKey key: String) throws {
@@ -187,7 +181,7 @@ public enum DataSerializerError: Error {
 }
 
 /// Abstract class that converts cachable objects of type T into Data and Data into objects of type T
-open class DataSerializer<T: AnyObject> {
+open class DataSerializer<T: Any> {
     
     public init() {}
     

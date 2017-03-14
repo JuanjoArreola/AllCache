@@ -9,7 +9,7 @@
 import Foundation
 
 /// Abstract class that provides all the information that a cache requires to search, fetch and process an object
-open class CachableDescriptor<T: AnyObject> {
+open class CachableDescriptor<T: Any> {
     open let key: String
     open let originalKey: String
     
@@ -18,19 +18,19 @@ open class CachableDescriptor<T: AnyObject> {
         self.originalKey = originalKey
     }
     
-    func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>>? { return nil }
+    open func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>>? { return nil }
     
-    func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {}
+    open func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {}
 }
 
 
 /// Concrete subclass of CachableDescriptor that serves as a wrapper for an objectFetcher and objectProcessor
-public final class CachableDescriptorWrapper<T: AnyObject>: CachableDescriptor<T> {
+public final class CachableDescriptorWrapper<T: Any>: CachableDescriptor<T> {
     
     let fetcher: ObjectFetcher<T>
-    let processor: ObjectProcessor<T>
+    let processor: ObjectProcessor<T>?
     
-    public required init(key: String, originalKey: String, fetcher: ObjectFetcher<T>, processor: ObjectProcessor<T>) {
+    public required init(key: String, originalKey: String, fetcher: ObjectFetcher<T>, processor: ObjectProcessor<T>?) {
         self.fetcher = fetcher
         self.processor = processor
         super.init(key: key, originalKey: originalKey)
@@ -41,14 +41,14 @@ public final class CachableDescriptorWrapper<T: AnyObject>: CachableDescriptor<T
     }
     
     public override func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
-        let request = Request<FetcherResult<T>>(completionHandler: completion)
-        queue.async {
-            request.complete(withError: FetchError.notImplemented)
-        }
-        return request
+        return fetcher.fetchAndRespond(in: queue, completion: completion)
     }
     
-    override func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {
-        processor.process(object: object, respondIn: queue, completion: completion)
+    override public func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {
+        if let processor = processor {
+            processor.process(object: object, respondIn: queue, completion: completion)
+        } else {
+            queue.async { completion({ return object }) }
+        }
     }
 }
