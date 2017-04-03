@@ -93,7 +93,6 @@ open class AllCacheURLRequest<T: Any>: Request<T> {
     required public init() {}
     
     override open func cancel() {
-        Log.debug("Cancelling: \(dataTask?.originalRequest?.url)")
         dataTask?.cancel()
         super.cancel()
     }

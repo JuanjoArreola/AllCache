@@ -31,8 +31,8 @@ open class ImageCachableDescriptor: CachableDescriptor<Image> {
         var newKey = "i\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)_" + validKey
         if let identifier = imageProcessor?.identifier {
             newKey = "i\(identifier)\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)_" + validKey
-        } else if imageProcessor != nil {
-            Log.warn("You should specify an identifier for the imageProcessor: \(imageProcessor)")
+        } else if let processor = imageProcessor {
+            Log.warn("You should specify an identifier for the imageProcessor: \(processor)")
         }
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         if let name = components?.path.components(separatedBy: "/").last {
@@ -79,7 +79,7 @@ open class ImageProcessor {
     }
     
     open var description: String {
-        return "Processor: \(identifier)"
+        return "Processor: \(identifier ?? "")"
     }
 }
 
