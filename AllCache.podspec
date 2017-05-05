@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "AllCache"
-  s.version      = "2.2.1"
+  s.version      = "2.2.2"
   s.summary      = "AllCache is a swift 3 generic cache for iOS"
 
   s.homepage     = "https://github.com/JuanjoArreola/AllCache"
@@ -14,5 +14,6 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/JuanjoArreola/AllCache.git", :tag => "#{s.version}" }
   s.source_files = "Sources/*.swift"
   s.requires_arc = true
+  s.dependency "Logg"
 
 end

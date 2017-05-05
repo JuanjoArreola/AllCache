@@ -18,6 +18,7 @@ open class ImageCachableDescriptor: CachableDescriptor<Image> {
     var imageFetcher: ImageFetcher
     var imageResizer: ImageResizer
     var imageProcessor: ImageProcessor?
+    public var size: CGSize
     
     required convenience public init(url: URL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
         self.init(key: url.path, url: url, size: size, scale: scale, backgroundColor: backgroundColor, mode: mode, imageProcessor: imageProcessor)
@@ -26,6 +27,7 @@ open class ImageCachableDescriptor: CachableDescriptor<Image> {
     required public init(key: String, url: URL, size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode, imageProcessor: ImageProcessor? = nil) {
         imageFetcher = ImageFetcher(url: url)
         imageResizer = DefaultImageResizer(size: size, scale: scale, backgroundColor: backgroundColor, mode: mode)
+        self.size = size
         self.imageProcessor = imageProcessor
         let validKey = fileNameRegex.stringByReplacingMatches(in: key, options: [], range: key.wholeNSRange, withTemplate: "")
         var newKey = "i\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)_" + validKey
@@ -36,7 +38,7 @@ open class ImageCachableDescriptor: CachableDescriptor<Image> {
         }
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         if let name = components?.path.components(separatedBy: "/").last {
-            Log.debug("request: \(name) #\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)", aspect: LogAspect.SizeErrors)
+            Log.debug("request: \(name) #\(size.width),\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)")
         }
         super.init(key: newKey, originalKey: validKey)
     }

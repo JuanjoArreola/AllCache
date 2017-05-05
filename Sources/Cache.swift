@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Logg
 
 internal let diskQueue = DispatchQueue(label: "com.allcache.DiskQueue", attributes: .concurrent)
 internal let syncQueue = DispatchQueue(label: "com.allcache.SyncQueue", attributes: .concurrent)
@@ -15,6 +16,8 @@ private let processQueue = DispatchQueue(label: "com.allcache.ProcessQueue", att
 
 private let fetchQueue = DispatchQueue(label: "com.allcache.FetchQueue", attributes: [])
 private let diskWriteQueue = DispatchQueue(label: "com.allcache.DiskWriteQueue", attributes: [])
+
+public let Log = LoggerContainer(loggers: [ConsoleLogger(formatter: AllCacheFormatter(), level: .all)])
 
 /// The Cache class is a generic container that stores key-value pairs, 
 /// internally has a memory cache and a disk cache

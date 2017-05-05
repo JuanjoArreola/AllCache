@@ -42,6 +42,9 @@ public extension UIImageView {
             do {
                 let image = try getObject()
                 self?.image = image
+                if descriptor.size != self?.bounds.size {
+                    Log.warn("different size")
+                }
                 completion?(image)
             } catch {
                 errorHandler?(error)
