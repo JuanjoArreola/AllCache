@@ -19,7 +19,7 @@ public extension UIImageView {
                             errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
         image = placeholder
         guard let url = url else { return nil }
-        let descriptor = ImageCachableDescriptor(url: url, size: self.bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: contentMode, imageProcessor: imageProcessor)
+        let descriptor = ImageCachableDescriptor(url: url, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: contentMode, imageProcessor: imageProcessor)
         return requestImage(with: descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
     }
     
@@ -30,7 +30,7 @@ public extension UIImageView {
                             errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
         image = placeholder
         guard let url = url else { return nil }
-        let descriptor = ImageCachableDescriptor(key: key, url: url, size: self.bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: self.contentMode, imageProcessor: imageProcessor)
+        let descriptor = ImageCachableDescriptor(key: key, url: url, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: contentMode, imageProcessor: imageProcessor)
         return requestImage(with: descriptor, placeholder: placeholder, errorHandler: errorHandler)
     }
     
@@ -38,12 +38,13 @@ public extension UIImageView {
                             placeholder: UIImage? = nil,
                             completion: ((_ image: UIImage) -> Void)? = nil,
                             errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage> {
-        return ImageCache.shared.object(for: descriptor) { [weak self] (getObject) -> Void in
+        image = placeholder
+        return ImageCache.shared.object(for: descriptor) { [weak self] getImage in
             do {
-                let image = try getObject()
+                let image = try getImage()
                 self?.image = image
-                if descriptor.size != self?.bounds.size {
-                    Log.warn("different size")
+                if let size = self?.bounds.size, descriptor.size != size {
+                    Log.warn("The requested size (\(descriptor.size)) is different of the bounds size (\(size))")
                 }
                 completion?(image)
             } catch {

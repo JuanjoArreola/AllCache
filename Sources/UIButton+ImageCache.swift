@@ -13,27 +13,32 @@ import UIKit
 public extension UIButton {
     
     final func requestImage(with url: URL?,
+                            for controlState: UIControlState,
                             placeholder: UIImage? = nil,
                             processor: ImageProcessor? = nil,
                             completion: ((_ image: UIImage) -> Void)? = nil,
                             errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
-        self.setImage(placeholder, for: UIControlState())
+        self.setImage(placeholder, for: controlState)
         guard let url = url else { return nil }
 
         let mode = imageView?.contentMode ?? contentMode
         let descriptor = ImageCachableDescriptor(url: url, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: mode, imageProcessor: processor)
-        return requestImage(with: descriptor, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
+        return requestImage(with: descriptor, for: controlState, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
     }
     
     final func requestImage(with descriptor: ImageCachableDescriptor,
+                            for controlState: UIControlState,
                             placeholder: UIImage? = nil,
                             completion: ((_ image: UIImage) -> Void)? = nil,
                             errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage> {
-        self.setImage(placeholder, for: UIControlState())
-        return ImageCache.shared.object(for: descriptor) { [weak self] (getObject) -> Void in
+        self.setImage(placeholder, for: controlState)
+        return ImageCache.shared.object(for: descriptor) { [weak self] getImage in
             do {
-                let image = try getObject()
-                self?.setImage(image, for: UIControlState())
+                let image = try getImage()
+                self?.setImage(image, for: controlState)
+                if let size = self?.bounds.size, descriptor.size != size {
+                    Log.warn("The requested size (\(descriptor.size)) is different of the bounds size (\(size))")
+                }
                 completion?(image)
             } catch {
                 errorHandler?(error)
