@@ -10,17 +10,17 @@
     import AppKit
     public typealias Image = NSImage
     public typealias Color = NSColor
-#elseif os(iOS)
+#elseif os(iOS) || os(tvOS)
     import UIKit
     public typealias Image = UIImage
     public typealias Color = UIColor
 #endif
 
-#if os(OSX) || os(iOS)
+#if os(OSX) || os(iOS) || os(tvOS)
 
 open class ImageCache: Cache<Image> {
     
-    #if os(iOS)
+    #if os(iOS) || os(tvOS)
     open static let shared = try! PNGImageCache(identifier: "sharedImage")
     #else
     open static let shared = try! TIFFImageCache(identifier: "sharedImage")
@@ -38,7 +38,7 @@ open class ImageCache: Cache<Image> {
     
 #endif
 
-#if os(iOS)
+#if os(iOS) || os(tvOS)
 
 public final class PNGImageCache: ImageCache {
     

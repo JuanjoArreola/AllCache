@@ -46,7 +46,7 @@ open class Cache<T: AnyObject> {
     
     // MARK: - Configuration
     
-    #if os(iOS)
+    #if os(iOS) || os(tvOS)
     func registerForLowMemoryNotification() {
         let name = NSNotification.Name.UIApplicationDidReceiveMemoryWarning
         let selector = #selector(self.handleMemoryWarning(notification:))
@@ -61,14 +61,14 @@ open class Cache<T: AnyObject> {
     // MARK: - GET
     
     /// Search an object in caches, does not try to fetch it if not found
-    open func object(forKey key: String) -> T? {
+    open func object(forKey key: String) throws -> T? {
         if let object = memoryCache.object(forKey: key) {
             Log.debug("-\(key) found in memory")
             return object
         }
         Log.debug("-\(key) NOT found in memory")
         
-        if let object = diskCache?.object(forKey: key) {
+        if let object = try diskCache?.object(forKey: key) {
             Log.debug("-\(key) found in disk")
             memoryCache.set(object: object, forKey: key)
             diskQueue.async {
@@ -106,13 +106,17 @@ open class Cache<T: AnyObject> {
         Log.debug("\(key) NOT found in memory")
         
         diskQueue.async {
-            self.searchInDisk(forKey: key, request: request, fetcher: fetcher)
+            do {
+                try self.searchInDisk(forKey: key, request: request, fetcher: fetcher)
+            } catch {
+                self.responseQueue.async { request.complete(withError: error) }
+            }
         }
         return request
     }
     
-    private func searchInDisk(forKey key: String, request: Request<T>, fetcher: ObjectFetcher<T>) {
-        if let object = diskCache?.object(forKey: key) {
+    private func searchInDisk(forKey key: String, request: Request<T>, fetcher: ObjectFetcher<T>) throws {
+        if let object = try diskCache?.object(forKey: key) {
             Log.debug("\(key) found in disk")
             responseQueue.async {
                 request.complete(withObject: object)
@@ -166,7 +170,7 @@ open class Cache<T: AnyObject> {
                 fetcherRequest = getCachedFetchingRequest(withIdentifier: fetcher.identifier)
                 request.subrequest = fetcherRequest
                 if fetcherRequest == nil {
-                    request.complete(withError: FetchError.notFound)
+                    self.responseQueue.async { request.complete(withError: FetchError.notFound) }
                     setCached(request: nil, forIdentifier: fetcher.identifier)
                 }
             }
@@ -213,14 +217,21 @@ open class Cache<T: AnyObject> {
 //      MARK: - Search in Disk o'
         
         diskQueue.async {
-            if let object = self.diskCache?.object(forKey: descriptor.key) {
-                Log.debug("\(descriptor.key) found in disk")
-                self.responseQueue.async {
-                    request.complete(withObject: object)
-                    self.memoryCache.set(object: object, forKey: descriptor.key)
-                    self.setCached(request: nil, forIdentifier: descriptor.key)
+            do {
+                if let object = try self.diskCache?.object(forKey: descriptor.key) {
+                    Log.debug("\(descriptor.key) found in disk")
+                    self.responseQueue.async {
+                        request.complete(withObject: object)
+                        self.memoryCache.set(object: object, forKey: descriptor.key)
+                        self.setCached(request: nil, forIdentifier: descriptor.key)
+                    }
+                    self.diskCache?.updateLastAccess(ofKey: descriptor.key)
+                    return
                 }
-                self.diskCache?.updateLastAccess(ofKey: descriptor.key)
+            } catch {
+                self.responseQueue.async {
+                    request.complete(withError: error)
+                }
                 return
             }
             Log.debug("\(descriptor.key) NOT found in disk")
@@ -245,7 +256,11 @@ open class Cache<T: AnyObject> {
                     
 //                  MARK: - Search in Disk o
                     diskQueue.async {
-                        self.searchInDisk(for: descriptor, request: request)
+                        do {
+                            try self.searchInDisk(for: descriptor, request: request)
+                        } catch {
+                            self.responseQueue.async { request.complete(withError: error) }
+                        }
                     }
                 }
             }
@@ -253,8 +268,8 @@ open class Cache<T: AnyObject> {
         return request
     }
     
-    private func searchInDisk(for descriptor: CachableDescriptor<T>, request: Request<T>) {
-        if let rawObject = diskCache?.object(forKey: descriptor.originalKey) {
+    private func searchInDisk(for descriptor: CachableDescriptor<T>, request: Request<T>) throws {
+        if let rawObject = try diskCache?.object(forKey: descriptor.originalKey) {
             Log.debug("\(descriptor.originalKey) found in disk")
             process(rawObject: rawObject, withDescriptor: descriptor, request: request)
             if moveOriginalToMemoryCache {
@@ -320,7 +335,7 @@ open class Cache<T: AnyObject> {
             fetcherRequest = self.getCachedFetchingRequest(withIdentifier: descriptor.originalKey)
             request.subrequest = fetcherRequest
             if fetcherRequest == nil {
-                request.complete(withError: FetchError.notFound)
+                self.responseQueue.async { request.complete(withError: FetchError.notFound) }
                 setCached(request: nil, forIdentifier: descriptor.key)
             }
         }
@@ -352,7 +367,7 @@ open class Cache<T: AnyObject> {
     
     // MARK: - Set
     
-    open func setObject(_ object: T, forKey key: String, errorHandler: ((_ error: Error) -> Void)? = nil) {
+    open func set(_ object: T, forKey key: String, errorHandler: ((_ error: Error) -> Void)? = nil) {
         memoryCache.set(object: object, forKey: key)
         diskQueue.async(flags: .barrier, execute: {
             do {
@@ -367,7 +382,7 @@ open class Cache<T: AnyObject> {
     
     // MARK: - Delete
     
-    open func removeObjectForKey(_ key: String, errorHandler: ((_ error: Error) -> Void)? = nil) {
+    open func removeObject(forKey key: String, errorHandler: ((_ error: Error) -> Void)? = nil) {
         memoryCache.removeObject(forKey: key)
         diskQueue.async(flags: .barrier, execute: {
             do {

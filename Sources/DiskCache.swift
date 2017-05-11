@@ -52,21 +52,25 @@ public final class DiskCache<T: AnyObject> {
         return total
     }
     
-    public func object(forKey key: String) -> T? {
+    public func object(forKey key: String) throws -> T? {
         let fileName = "c" + key
         let url = cacheDirectory.appendingPathComponent(fileName)
         if !objectExists(at: url) {
             return nil
         }
-        do {
-            guard let data = try? Data(contentsOf: url) else {
-                throw DiskCacheError.invalidData
-            }
-            return try serializer.deserialize(data: data)
-        } catch {
-            Log.error(error)
-            return nil
+        guard let data = try? Data(contentsOf: url) else {
+            throw DiskCacheError.invalidData
         }
+        return try serializer.deserialize(data: data)
+    }
+    
+    public func fileURL(forKey key: String) -> URL? {
+        let fileName = "c" + key
+        let url = cacheDirectory.appendingPathComponent(fileName)
+        if objectExists(at: url) {
+            return url
+        }
+        return nil
     }
     
     @inline(__always) private func objectExists(at url: URL) -> Bool {

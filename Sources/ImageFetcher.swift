@@ -17,13 +17,13 @@ import Foundation
             self.init(data: data)
         }
     }
-#elseif os(iOS)
+#elseif os(iOS) || os(tvOS)
     import UIKit
     let screenScale = UIScreen.main.scale
 #endif
 
 
-#if os(OSX) || os(iOS)
+#if os(OSX) || os(iOS) || os(tvOS)
 
 enum ImageFetcherError: Error {
     case filterError
@@ -35,7 +35,7 @@ public final class ImageFetcher: ObjectFetcher<Image> {
     
     public init(url: URL) {
         self.url = url
-        super.init(identifier: String((url as NSURL).hash))
+        super.init(identifier: url.absoluteString)
     }
 
     public required init(identifier: String) {

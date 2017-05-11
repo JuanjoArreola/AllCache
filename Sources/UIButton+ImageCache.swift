@@ -6,7 +6,7 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
-#if os(iOS)
+#if os(iOS) || os(tvOS)
 
 import UIKit
 
@@ -37,7 +37,7 @@ public extension UIButton {
                 let image = try getImage()
                 self?.setImage(image, for: controlState)
                 if let size = self?.bounds.size, descriptor.size != size {
-                    Log.warn("The requested size (\(descriptor.size)) is different of the bounds size (\(size))")
+                    Log.warn("Size mismatch, requested: \(descriptor.size) ≠ bounds: \(size) - \(self!.description)")
                 }
                 completion?(image)
             } catch {

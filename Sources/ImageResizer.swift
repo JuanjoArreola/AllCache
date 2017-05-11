@@ -6,7 +6,7 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
-#if os(iOS) || os(OSX)
+#if os(iOS) || os(OSX) || os(tvOS)
     
     import CoreGraphics
     
@@ -48,7 +48,7 @@
 #endif
 
 
-#if os(iOS)
+#if os(iOS) || os(tvOS)
     
     import UIKit
 

@@ -16,8 +16,8 @@ enum FetchError: Error {
 }
 
 open class FetcherResult<T> {
-    var object: T
-    var data: Data?
+    public var object: T
+    public var data: Data?
     
     public required init(object: T, data: Data?) {
         self.object = object

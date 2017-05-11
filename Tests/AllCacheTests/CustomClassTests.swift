@@ -35,7 +35,7 @@ class CustomClassTests: XCTestCase {
     
     func testSaveObject() {
         let userInfo = UserInfo(id: "1", name: "Juanjo")
-        userCache.setObject(userInfo, forKey: "user_1")
+        userCache.set(userInfo, forKey: "user_1")
         
         let exp: XCTestExpectation = expectation(description: "get user")
         
@@ -53,8 +53,8 @@ class CustomClassTests: XCTestCase {
     
     func testDeleteObject() {
         let userInfo = UserInfo(id: "1", name: "Juanjo")
-        userCache.setObject(userInfo, forKey: "user_2")
-        userCache.removeObjectForKey("user_2")
+        userCache.set(userInfo, forKey: "user_2")
+        userCache.removeObject(forKey: "user_2")
         
         let expectation: XCTestExpectation = self.expectation(description: "get user")
         
