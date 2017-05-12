@@ -440,3 +440,10 @@ open class Cache<T: AnyObject> {
     }
     
 }
+
+public extension Cache where T: NSCoding {
+    
+    convenience public init(identifier: String, maxCapacity: Int = 0) throws {
+        try self.init(identifier: identifier, serializer: DataSerializer<T>(), maxCapacity: maxCapacity)
+    }
+}

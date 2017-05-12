@@ -42,15 +42,15 @@ open class ImageCache: Cache<Image> {
 
 public final class PNGImageCache: ImageCache {
     
-    convenience public init(identifier: String, maxCapacity: Int = 0) throws {
-        try self.init(identifier: identifier, serializer: PNGImageSerializer(), maxCapacity: maxCapacity)
+    convenience public init(identifier: String) throws {
+        try self.init(identifier: identifier, serializer: PNGImageSerializer(), maxCapacity: 0)
     }
 }
 
 public final class JPEGImageCache: ImageCache {
     
-    convenience public init(identifier: String, maxCapacity: Int = 0) throws {
-        try self.init(identifier: identifier, serializer: JPEGImageSerializer(), maxCapacity: maxCapacity)
+    convenience public init(identifier: String) throws {
+        try self.init(identifier: identifier, serializer: JPEGImageSerializer(), maxCapacity: 0)
     }
 }
     
