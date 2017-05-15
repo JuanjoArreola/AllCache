@@ -15,33 +15,27 @@
     }
 
     public protocol ImageResizer {
-        func scaleImage(_ image: Image) -> Image?
         var size: CGSize { get }
         var scale: CGFloat { get }
+        func scaleImage(_ image: Image) -> Image?
     }
 
     public class ImageContentModeConverter {
         
         final func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
-            let ratio = size.width / size.height
-            let imageRatio = imageSize.width / imageSize.height
-            
-            let newSize = ratio > imageRatio ? CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height) :
+            let newSize = size.ratio > imageSize.ratio ?
+                CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height) :
                 CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width))
-            let origin = CGPoint(x: (size.width - newSize.width) / 2.0, y: (size.height - newSize.height) / 2.0)
             
-            return CGRect(origin: origin, size: newSize)
+            return CGRect(origin: (size - newSize).mid, size: newSize)
         }
         
         final func aspectFill(size: CGSize, imageSize: CGSize) -> CGRect {
-            let ratio = size.width / size.height
-            let imageRatio = imageSize.width / imageSize.height
-            
-            let newSize = ratio > imageRatio ? CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width)) :
+            let newSize = size.ratio > imageSize.ratio ?
+                CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width)) :
                 CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height)
-            let origin = CGPoint(x: (size.width - newSize.width) / 2.0, y: (size.height - newSize.height) / 2.0)
             
-            return CGRect(origin: origin, size: newSize)
+            return CGRect(origin: (size - newSize).mid, size: newSize)
         }
     }
     

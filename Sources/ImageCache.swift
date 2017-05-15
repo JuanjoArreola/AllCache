@@ -58,8 +58,8 @@ public final class JPEGImageCache: ImageCache {
     
     public final class TIFFImageCache: ImageCache {
         
-        convenience public init(identifier: String, maxCapacity: Int = 0) throws {
-            try self.init(identifier: identifier, serializer: ImageSerializer(), maxCapacity: maxCapacity)
+        convenience public init(identifier: String) throws {
+            try self.init(identifier: identifier, serializer: ImageSerializer(), maxCapacity: 0)
         }
     }
 

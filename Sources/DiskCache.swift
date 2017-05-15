@@ -177,21 +177,3 @@ public final class DiskCache<T: AnyObject> {
         }
     }
 }
-
-extension URL {
-    var contentAccessDate: Date? {
-        if let values = try? resourceValues(forKeys: Set([.contentAccessDateKey])) {
-            return values.allValues[.contentAccessDateKey] as? Date
-        }
-        return nil
-    }
-    
-    // bytes
-    var totalFileAllocatedSize: Int? {
-        if let values = try? resourceValues(forKeys: Set([.totalFileAllocatedSizeKey])) {
-            return (values.allValues[.totalFileAllocatedSizeKey] as? NSNumber)?.intValue
-        }
-        return nil
-    }
-    
-}
