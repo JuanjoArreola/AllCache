@@ -30,7 +30,7 @@ enum ImageFetcherError: Error {
 }
 
 
-public final class ImageFetcher: ObjectFetcher<Image> {
+public final class ImageFetcher: Fetcher<Image> {
     let url: URL
     
     public init(url: URL) {
@@ -42,7 +42,7 @@ public final class ImageFetcher: ObjectFetcher<Image> {
         fatalError("init(identifier:) has not been implemented")
     }
     
-    public override func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
+    public override func fetch(respondIn queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
         let allRequest = AllCacheURLRequest<FetcherResult<Image>>(completionHandler: completion)
         do {
             allRequest.dataTask = try request(url: url) { (data: Data?, response: URLResponse?, error: Error?) -> Void in

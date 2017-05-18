@@ -24,7 +24,7 @@ class ImageCacheTests: XCTestCase {
     func testGetImage() {
         let expectation = self.expectation(description: "get image")
         let fetcher = ImageFetcher(url: URL(string: "https://placeholdit.imgix.net/~text?txtsize=33&txt=Placeholder&w=400&h=200&bg=0000ff")!)
-        _ = ImageCache.shared.object(forKey: "", fetcher: fetcher) { (getObject) -> Void in
+        _ = ImageCache.shared.object(forKey: "test", fetcher: fetcher, completion: { (getObject) in
             do {
                 _ = try getObject()
                 expectation.fulfill()
@@ -32,8 +32,8 @@ class ImageCacheTests: XCTestCase {
                 Log.error(error)
                 XCTFail()
             }
-        }
-        waitForExpectations(timeout: 60, handler: nil)
+        })
+        waitForExpectations(timeout: 4, handler: nil)
     }
     
     func testGetSameImage() {
@@ -59,7 +59,7 @@ class ImageCacheTests: XCTestCase {
             }
         }
         
-        waitForExpectations(timeout: 60, handler: nil)
+        waitForExpectations(timeout: 4, handler: nil)
     }
     
 }

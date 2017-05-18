@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum FetchError: Error {
+public enum FetchError: Error {
     case invalidData
     case parseError
     case notFound
@@ -26,19 +26,15 @@ open class FetcherResult<T> {
 }
 
 /// Abstract class intended to be subclassed to fetch an object of a concrete type
-open class ObjectFetcher<T: Any> {
+open class Fetcher<T> {
     
-    open var identifier: String!
+    open var identifier: String
     
     public required init(identifier: String) {
         self.identifier = identifier
     }
     
-    open func fetchAndRespond(in queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
-        let request = Request<FetcherResult<T>>(completionHandler: completion)
-        queue.async {
-            request.complete(withError: FetchError.notImplemented)
-        }
-        return request
+    open func fetch(respondIn queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
+        fatalError("Not implemented")
     }
 }

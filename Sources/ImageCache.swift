@@ -21,9 +21,9 @@
 open class ImageCache: Cache<Image> {
     
     #if os(iOS) || os(tvOS)
-    open static let shared = try! PNGImageCache(identifier: "sharedImage")
+    open static let shared = try! ImageCache(identifier: "sharedImage", serializer: PNGImageSerializer())
     #else
-    open static let shared = try! TIFFImageCache(identifier: "sharedImage")
+    open static let shared = try! ImageCache(identifier: "sharedImage", serializer: ImageSerializer())
     #endif
     
     required public init(identifier: String, serializer: DataSerializer<Image>, maxCapacity: Int = 0) throws {
@@ -32,35 +32,8 @@ open class ImageCache: Cache<Image> {
     
     open func image(for url: URL, completion: @escaping (_ getImage: () throws -> Image) -> Void) -> Request<Image>? {
         let fetcher = ImageFetcher(url: url)
-        return object(forKey: url.absoluteString, fetcher: fetcher, completion: completion)
+        return object(forKey: url.absoluteString, fetcher: fetcher, processor: nil, completion: completion)
     }
 }
     
-#endif
-
-#if os(iOS) || os(tvOS)
-
-public final class PNGImageCache: ImageCache {
-    
-    convenience public init(identifier: String) throws {
-        try self.init(identifier: identifier, serializer: PNGImageSerializer(), maxCapacity: 0)
-    }
-}
-
-public final class JPEGImageCache: ImageCache {
-    
-    convenience public init(identifier: String) throws {
-        try self.init(identifier: identifier, serializer: JPEGImageSerializer(), maxCapacity: 0)
-    }
-}
-    
-#elseif os(OSX)
-    
-    public final class TIFFImageCache: ImageCache {
-        
-        convenience public init(identifier: String) throws {
-            try self.init(identifier: identifier, serializer: ImageSerializer(), maxCapacity: 0)
-        }
-    }
-
 #endif

@@ -8,9 +8,24 @@
 
 import Foundation
 
-open class ObjectProcessor<T: Any> {
+open class Processor<T> {
     
-    var identifier: String?
+    public var identifier: String
+    var next: Processor<T>?
     
-    func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {}
+    var key: String {
+        if let processor = next {
+            return "\(processor.key)__\(identifier)"
+        }
+        return identifier
+    }
+    
+    public init(identifier: String, next: Processor<T>? = nil) {
+        self.identifier = identifier
+        self.next = next
+    }
+    
+    open func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {
+        fatalError("Not implemented")
+    }
 }

@@ -14,7 +14,7 @@ public extension UIImageView {
     
     final func requestImage(with url: URL?,
                             placeholder: UIImage? = nil,
-                            imageProcessor: ImageProcessor? = nil,
+                            imageProcessor: Processor<Image>? = nil,
                             completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
         image = placeholder
         guard let url = url else { return nil }
@@ -25,7 +25,7 @@ public extension UIImageView {
     final func requestImage(withKey key: String,
                             url: URL?,
                             placeholder: UIImage? = nil,
-                            imageProcessor: ImageProcessor? = nil,
+                            imageProcessor: Processor<Image>? = nil,
                             completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
         image = placeholder
         guard let url = url else { return nil }

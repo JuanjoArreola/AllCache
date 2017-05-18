@@ -15,7 +15,7 @@ public extension UIButton {
     final func requestImage(with url: URL?,
                             for controlState: UIControlState,
                             placeholder: UIImage? = nil,
-                            processor: ImageProcessor? = nil,
+                            processor: Processor<UIImage>? = nil,
                             completion: ((_ image: UIImage) -> Void)? = nil,
                             errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
         self.setImage(placeholder, for: controlState)

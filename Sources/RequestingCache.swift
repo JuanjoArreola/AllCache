@@ -17,25 +17,16 @@ class RequestingCache<T: AnyObject> {
     
     @inline(__always)
     func request(forKey key: String, completion: @escaping (_ getObject: () throws -> T) -> Void) -> (request: Request<T>, ongoing: Bool) {
-        if let request = getCachedRequest(withIdentifier: key) {
-            if request.canceled {
-                setCached(request: nil, forIdentifier: key)
-            } else {
-                request.add(completionHandler: completion)
-                return (request, true)
-            }
-        }
+//        if let request = getCachedRequest(withIdentifier: key) {
+//            if request.canceled || request.completed {
+//                setCached(request: nil, forIdentifier: key)
+//            } else {
+//                request.add(completionHandler: completion)
+//                return (request, true)
+//            }
+//        }
         setCached(request: Request(completionHandler: completion), forIdentifier: key)
         return (getCachedRequest(withIdentifier: key)!, false)
-    }
-    
-    @inline(__always)
-    func getCachedFetchingRequest(withIdentifier identifier: String) -> Request<FetcherResult<T>>? {
-        var request: Request<FetcherResult<T>>?
-        syncQueue.sync {
-            request = self.fetching[identifier]
-        }
-        return request
     }
     
     @inline(__always)
@@ -54,10 +45,33 @@ class RequestingCache<T: AnyObject> {
         })
     }
     
+    // MARK: - Fetching
+    
+    @inline(__always)
+    func fetchingRequest(fetcher: Fetcher<T>, completion: @escaping (_ getObject: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
+        if let request = getCachedFetchingRequest(withIdentifier: fetcher.identifier) {
+            request.add(completionHandler: completion)
+            return request
+        }
+        let request = fetcher.fetch(respondIn: diskQueue, completion: completion)
+        setCached(fetching: request, forIdentifier: fetcher.identifier)
+        return request
+    }
+    
+    @inline(__always)
+    func getCachedFetchingRequest(withIdentifier identifier: String) -> Request<FetcherResult<T>>? {
+        var request: Request<FetcherResult<T>>?
+        syncQueue.sync {
+            request = self.fetching[identifier]
+        }
+        return request
+    }
+    
     @inline(__always)
     func setCached(fetching: Request<FetcherResult<T>>?, forIdentifier identifier: String) {
         syncQueue.async(flags: .barrier, execute: {
             self.fetching[identifier] = fetching
         })
     }
+    
 }
