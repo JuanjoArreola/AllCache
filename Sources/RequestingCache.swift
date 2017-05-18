@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import AsyncRequest
 
 internal let syncQueue = DispatchQueue(label: "com.allcache.SyncQueue", attributes: .concurrent)
 
@@ -17,16 +18,16 @@ class RequestingCache<T: AnyObject> {
     
     @inline(__always)
     func request(forKey key: String, completion: @escaping (_ getObject: () throws -> T) -> Void) -> (request: Request<T>, ongoing: Bool) {
-//        if let request = getCachedRequest(withIdentifier: key) {
-//            if request.canceled || request.completed {
-//                setCached(request: nil, forIdentifier: key)
-//            } else {
-//                request.add(completionHandler: completion)
-//                return (request, true)
-//            }
-//        }
-        setCached(request: Request(completionHandler: completion), forIdentifier: key)
-        return (getCachedRequest(withIdentifier: key)!, false)
+        if let request = getCachedRequest(withIdentifier: key) {
+            if request.completed {
+                setCached(request: nil, forIdentifier: key)
+            } else {
+                return (request.proxy(completion: completion), true)
+            }
+        }
+        setCached(request: Request(), forIdentifier: key)
+        let request = getCachedRequest(withIdentifier: key)!
+        return (request.proxy(completion: completion), false)
     }
     
     @inline(__always)

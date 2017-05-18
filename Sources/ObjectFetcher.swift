@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import AsyncRequest
 
 public enum FetchError: Error {
     case invalidData

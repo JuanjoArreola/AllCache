@@ -24,6 +24,8 @@ import Foundation
 
 
 #if os(OSX) || os(iOS) || os(tvOS)
+    
+import AsyncRequest
 
 enum ImageFetcherError: Error {
     case filterError
@@ -43,7 +45,7 @@ public final class ImageFetcher: Fetcher<Image> {
     }
     
     public override func fetch(respondIn queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
-        let allRequest = AllCacheURLRequest<FetcherResult<Image>>(completionHandler: completion)
+        let allRequest = URLSessionRequest<FetcherResult<Image>>(completionHandler: completion)
         do {
             allRequest.dataTask = try request(url: url) { (data: Data?, response: URLResponse?, error: Error?) -> Void in
                 do {
@@ -57,18 +59,18 @@ public final class ImageFetcher: Fetcher<Image> {
                         throw FetchError.parseError
                     }
                     queue.async {
-                        allRequest.complete(withObject: FetcherResult(object: image, data: data))
+                        allRequest.complete(with: FetcherResult(object: image, data: data))
                     }
                 } catch {
                     queue.async {
-                        allRequest.complete(withError: error)
+                        allRequest.complete(with: error)
                     }
                 }
             }
         }
         catch {
             queue.async {
-                allRequest.complete(withError: error)
+                allRequest.complete(with: error)
             }
         }
         return allRequest

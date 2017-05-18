@@ -17,6 +17,8 @@
 #endif
 
 #if os(OSX) || os(iOS) || os(tvOS)
+    
+import AsyncRequest
 
 open class ImageCache: Cache<Image> {
     
