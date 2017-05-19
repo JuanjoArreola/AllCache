@@ -72,13 +72,13 @@ public final class DiskCache<T: AnyObject> {
     
     public func set(object: T, forKey key: String) throws {
         let data = try serializer.serialize(object: object)
-        Log.debug("Serialized (\(key)): \(data.count / 1024) Kb")
         try set(data: data, forKey: key)
     }
     
     public func set(data: Data, forKey key: String) throws {
         let url = cacheDirectory.appendingPathComponent("c\(key)")
         try data.write(to: url, options: .atomicWrite)
+        Log.debug("Saved (\(key)): \(data.formattedSize)")
         size += data.count
         restrictSize()
     }
@@ -175,5 +175,17 @@ public final class DiskCache<T: AnyObject> {
                 self.shrinking = false
             }
         }
+    }
+}
+
+extension Data {
+    var formattedSize: String {
+        if count < 1024 {
+            return "\(count) bytes"
+        }
+        if count < 1024 * 1024 {
+            return "\(Double(count) / 1024.0) Kb"
+        }
+        return "\(Double(count) / (1024 * 1024)) Mb"
     }
 }

@@ -17,17 +17,17 @@ class RequestingCache<T: AnyObject> {
     var requesting: [String: Request<T>] = [:]
     
     @inline(__always)
-    func request(forKey key: String, completion: @escaping (_ getObject: () throws -> T) -> Void) -> (request: Request<T>, ongoing: Bool) {
+    func request(forKey key: String) -> (request: Request<T>, ongoing: Bool) {
         if let request = getCachedRequest(withIdentifier: key) {
             if request.completed {
                 setCached(request: nil, forIdentifier: key)
             } else {
-                return (request.proxy(completion: completion), true)
+                return (request, true)
             }
         }
         setCached(request: Request(), forIdentifier: key)
         let request = getCachedRequest(withIdentifier: key)!
-        return (request.proxy(completion: completion), false)
+        return (request, false)
     }
     
     @inline(__always)

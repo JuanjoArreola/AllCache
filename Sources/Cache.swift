@@ -23,11 +23,13 @@ public let Log = LoggerContainer(loggers: [ConsoleLogger(formatter: AllCacheForm
 /// internally has a memory cache and a disk cache
 open class Cache<T: AnyObject> {
     
-    private var requestCache = RequestingCache<T>()
+    private let requestCache = RequestingCache<T>()
+    private let lowMemoryHandler = LowMemoryHandler<T>()
+    
+    open let identifier: String
     
     open let memoryCache = MemoryCache<T>()
     open var diskCache: DiskCache<T>!
-    open let identifier: String
     
     open var responseQueue = DispatchQueue.main
     open var moveOriginalToMemoryCache = false
@@ -39,23 +41,9 @@ open class Cache<T: AnyObject> {
     /// - parameter maxCapacity: The maximum size of the disk cache in bytes. This is only a hint
     required public init(identifier: String, serializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
         self.identifier = identifier
-        self.diskCache = try DiskCache<T>(identifier: identifier, serializer: serializer, maxCapacity: maxCapacity)
-        registerForLowMemoryNotification()
+        diskCache = try DiskCache<T>(identifier: identifier, serializer: serializer, maxCapacity: maxCapacity)
+        lowMemoryHandler.cache = self
     }
-    
-    // MARK: - Configuration
-    
-    #if os(iOS) || os(tvOS)
-    func registerForLowMemoryNotification() {
-        let name = NSNotification.Name.UIApplicationDidReceiveMemoryWarning
-        let selector = #selector(self.handleMemoryWarning(notification:))
-        NotificationCenter.default.addObserver(self, selector: selector, name: name, object: nil)
-    }
-    #else
-    
-    func registerForLowMemoryNotification() {}
-    
-    #endif
     
     // MARK: - GET
     
@@ -68,7 +56,7 @@ open class Cache<T: AnyObject> {
         Log.debug("\(key) NOT found in memory")
         
         if let object = try diskCache?.object(forKey: key) {
-            Log.debug("-\(key) found in disk")
+            Log.debug("\(key) found in disk")
             memoryCache.set(object: object, forKey: key)
             diskQueue.async {
                 self.diskCache?.updateLastAccess(ofKey: key)
@@ -96,14 +84,15 @@ open class Cache<T: AnyObject> {
     /// - returns: An optional request
     open func object(for descriptor: CachableDescriptor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T> {
         let key = descriptor.resultKey ?? descriptor.key
-        let (request, ongoing) = requestCache.request(forKey: key, completion: completion)
-        if ongoing { return request }
+        let (request, ongoing) = requestCache.request(forKey: key)
+        let proxy = request.proxy(completion: completion)
+        if ongoing { return proxy }
         
         if let object = memoryCache.object(forKey: key) {
             Log.debug("\(key) found in memory")
             responseQueue.async { request.complete(with: object) }
             requestCache.setCached(request: nil, forIdentifier: key)
-            return request
+            return proxy
         }
         Log.debug("\(key) NOT found in memory")
         
@@ -131,7 +120,7 @@ open class Cache<T: AnyObject> {
                 self.fetchObject(for: descriptor, request: request)
             }
         }
-        return request
+        return proxy
     }
     
     private func searchOriginal(key: String, descriptor: CachableDescriptor<T>, request: Request<T>) {
@@ -146,11 +135,7 @@ open class Cache<T: AnyObject> {
                     if let rawObject = try self.diskCache?.object(forKey: key) {
                         Log.debug("\(descriptor.key) found in disk")
                         self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
-                        if self.moveOriginalToMemoryCache {
-                            self.responseQueue.async {
-                                self.memoryCache.set(object: rawObject, forKey: key)
-                            }
-                        }
+                        self.saveToMemory(original: rawObject, forKey: key)
                         self.diskCache?.updateLastAccess(ofKey: descriptor.key)
                     } else if request.completed {
                         self.requestCache.setCached(request: nil, forIdentifier: descriptor.key)
@@ -163,7 +148,15 @@ open class Cache<T: AnyObject> {
                 }
             }
         }
-        
+    }
+    
+    @inline(__always)
+    private func saveToMemory(original object: T, forKey key: String) {
+        if moveOriginalToMemoryCache {
+            responseQueue.async {
+                self.memoryCache.set(object: object, forKey: key)
+            }
+        }
     }
     
     private func fetchObject(for descriptor: CachableDescriptor<T>, request: Request<T>) {
@@ -175,11 +168,7 @@ open class Cache<T: AnyObject> {
                 
                 if let _ = descriptor.processor {
                     self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
-                    if self.moveOriginalToMemoryCache {
-                        self.responseQueue.async {
-                            self.memoryCache.set(object: rawObject, forKey: descriptor.key)
-                        }
-                    }
+                    self.saveToMemory(original: rawObject, forKey: descriptor.key)
                     if self.moveOriginalToDiskCache {
                         self.persist(object: rawObject, data: result.data, key: descriptor.key)
                     }
@@ -187,7 +176,7 @@ open class Cache<T: AnyObject> {
                     self.responseQueue.async {
                         request.complete(with: result.object)
                         self.memoryCache.set(object: result.object, forKey: descriptor.key)
-//                        self.requestCache.setCached(request: nil, forIdentifier: descriptor.key)
+                        self.requestCache.setCached(request: nil, forIdentifier: descriptor.key)
                     }
                     self.persist(object: result.object, data: result.data, key: descriptor.key)
                 }
@@ -275,17 +264,9 @@ open class Cache<T: AnyObject> {
     
     // MARK: -
     
-    @objc func handleMemoryWarning(notification: Notification) {
-        memoryCache.clear()
-    }
-    
     var description: String {
         let disk: String = diskCache?.identifier ?? "-"
         return "Cache<\(T.self)>(\(identifier)) disk cache: \(disk)"
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
     }
     
 }

@@ -25,12 +25,6 @@ class RequestingCacheTests: XCTestCase {
         
         super.tearDown()
     }
-
-    func testCachedRequest() {
-        let request = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { _ in }
-        let request2 = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { _ in }
-        XCTAssertTrue(request === request2)
-    }
     
     func testOtherRequest() {
         let request = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { _ in }

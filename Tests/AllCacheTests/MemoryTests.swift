@@ -59,6 +59,22 @@ class MemoryTests: XCTestCase {
         waitForExpectations(timeout: 1.0, handler: nil)
     }
     
+    func testGetCached() {
+        let expectation: XCTestExpectation = self.expectation(description: "testGetCached")
+        
+        cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1")
+        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { (getIcecream) in
+            do {
+                let icecream = try getIcecream()
+                XCTAssertEqual(icecream.flavor, "Vanilla")
+                expectation.fulfill()
+            } catch {
+                XCTFail()
+            }
+        }
+        waitForExpectations(timeout: 1.0, handler: nil)
+    }
+    
     func testCacheFetchedObject() {
         let expectation: XCTestExpectation = self.expectation(description: "testCacheFetchedObject")
         

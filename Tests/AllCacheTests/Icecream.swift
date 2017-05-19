@@ -8,6 +8,7 @@
 
 import Foundation
 import AllCache
+import AsyncRequest
 
 class Icecream: NSObject, NSCoding {
     
@@ -52,9 +53,9 @@ class IcecreamFetcher: Fetcher<Icecream> {
         queue.asyncAfter(deadline: DispatchTime.now() + 0.3) {
             if let flavor = self.data[self.identifier] {
                 IcecreamFetcher.fetchedCount += 1
-                request.complete(withObject: FetcherResult<Icecream>(object: Icecream(id: self.identifier, flavor: flavor), data: nil))
+                request.complete(with: FetcherResult<Icecream>(object: Icecream(id: self.identifier, flavor: flavor), data: nil))
             } else {
-                request.complete(withError: FetchError.notFound)
+                request.complete(with: FetchError.notFound)
             }
         }
         return request
