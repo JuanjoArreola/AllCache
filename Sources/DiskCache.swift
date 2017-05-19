@@ -110,10 +110,9 @@ public final class DiskCache<T: AnyObject> {
             }
             for case let url as URL in enumerator {
                 guard let lastAccess = url.contentAccessDate, lastAccess < limit else { continue }
-                guard let size = url.totalFileAllocatedSize else { continue }
                 do {
                     try self.fileManager.removeItem(at: url)
-                    self.size -= size
+                    self.size -= url.totalFileAllocatedSize ?? 0
                 }
                 catch {
                     Log.error(error)
@@ -149,30 +148,33 @@ public final class DiskCache<T: AnyObject> {
             self.shrinking = true
             do {
                 Log.debug("original size: \(self.size)")
-                let sizeTarget = Int(Double(self.maxCapacity) * 0.8)
-                let resourceKeys: [URLResourceKey] = [.contentAccessDateKey, .totalFileAllocatedSizeKey]
-                var urls = try self.fileManager.contentsOfDirectory(at: self.cacheDirectory, includingPropertiesForKeys: resourceKeys, options: [])
-                urls.sort(by: {
-                    guard let first = $0.contentAccessDate, let second = $1.contentAccessDate else { return false }
-                    return first < second
-                })
-                for url in urls {
-                    do {
-                        guard let size = url.totalFileAllocatedSize else { continue }
-                        try self.fileManager.removeItem(at: url)
-                        self.size -= size
-                        if self.size <= sizeTarget {
-                            break
-                        }
-                    } catch {
-                        Log.error(error)
-                    }
-                }
+                try self.restrictSize(percent: 0.8)
                 Log.debug("final size: \(self.size)")
                 self.shrinking = false
             } catch {
                 Log.error(error)
                 self.shrinking = false
+            }
+        }
+    }
+    
+    private func restrictSize(percent: Double) throws {
+        let target = Int(Double(maxCapacity) * 0.8)
+        let keys: [URLResourceKey] = [.contentAccessDateKey, .totalFileAllocatedSizeKey]
+        var urls = try fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: keys, options: [])
+        urls.sort(by: {
+            guard let first = $0.contentAccessDate, let second = $1.contentAccessDate else { return false }
+            return first < second
+        })
+        for url in urls {
+            do {
+                try self.fileManager.removeItem(at: url)
+                self.size -= url.totalFileAllocatedSize ?? 0
+                if self.size <= target {
+                    break
+                }
+            } catch {
+                Log.error(error)
             }
         }
     }
