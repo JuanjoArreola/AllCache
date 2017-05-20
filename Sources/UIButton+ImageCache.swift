@@ -9,6 +9,7 @@
 #if os(iOS) || os(tvOS)
 
 import UIKit
+import AsyncRequest
 
 public extension UIButton {
     
@@ -16,42 +17,28 @@ public extension UIButton {
                             for controlState: UIControlState,
                             placeholder: UIImage? = nil,
                             processor: Processor<UIImage>? = nil,
-                            completion: ((_ image: UIImage) -> Void)? = nil,
-                            errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage>? {
+                            completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
         self.setImage(placeholder, for: controlState)
         guard let url = url else { return nil }
 
         let mode = imageView?.contentMode ?? contentMode
-        let descriptor = ImageCachableDescriptor(url: url, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: mode, imageProcessor: processor)
-        return requestImage(with: descriptor, for: controlState, placeholder: placeholder, completion: completion, errorHandler: errorHandler)
-    }
-    
-    final func requestImage(with descriptor: ImageCachableDescriptor,
-                            for controlState: UIControlState,
-                            placeholder: UIImage? = nil,
-                            completion: ((_ image: UIImage) -> Void)? = nil,
-                            errorHandler: ((_ error: Error) -> Void)? = nil) -> Request<UIImage> {
-        self.setImage(placeholder, for: controlState)
-        return ImageCache.shared.object(for: descriptor) { [weak self] getImage in
+        let originalSize = bounds.size
+        let resizer = DefaultImageResizer(size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: mode)
+        resizer.next = processor
+        let descriptor = CachableDescriptor<Image>(key: url.path, fetcher: ImageFetcher(url: url), processor: resizer)
+        
+        return ImageCache.shared.object(for: descriptor, completion: { [weak self] getImage in
             do {
                 let image = try getImage()
                 self?.setImage(image, for: controlState)
-                if let size = self?.bounds.size, descriptor.size != size {
-                    Log.warn("Size mismatch, requested: \(descriptor.size) ≠ bounds: \(size) - \(self!.description)")
+                if let size = self?.bounds.size, originalSize != size {
+                    Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(self!.description)")
                 }
-                completion?(image)
+                completion?(getImage)
             } catch {
-                errorHandler?(error)
+                completion?(getImage)
             }
-        }
-    }
-    
-    var hintColor: UIColor {
-        var color = backgroundColor ?? UIColor.clear
-        if color != UIColor.clear && (contentMode == .scaleAspectFill || contentMode == .scaleToFill) {
-            color = UIColor.black
-        }
-        return color
+        })
     }
 }
 

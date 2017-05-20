@@ -19,25 +19,6 @@
         var scale: CGFloat { get }
         func scaleImage(_ image: Image) -> Image?
     }
-
-//    public class ImageContentModeConverter {
-//        
-//        final func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
-//            let newSize = size.ratio > imageSize.ratio ?
-//                CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height) :
-//                CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width))
-//            
-//            return CGRect(origin: (size - newSize).mid, size: newSize)
-//        }
-//        
-//        final func aspectFill(size: CGSize, imageSize: CGSize) -> CGRect {
-//            let newSize = size.ratio > imageSize.ratio ?
-//                CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width)) :
-//                CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height)
-//            
-//            return CGRect(origin: (size - newSize).mid, size: newSize)
-//        }
-//    }
     
     func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
         let newSize = size.ratio > imageSize.ratio ?
@@ -78,7 +59,7 @@ public final class DefaultImageResizer: Processor<Image>, ImageResizer {
         super.init(identifier: "\(size.width)x\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)")
     }
     
-    override func process(object: Image, respondIn queue: DispatchQueue, completion: @escaping (() throws -> Image) -> Void) {
+    override public func process(object: Image, respondIn queue: DispatchQueue, completion: @escaping (() throws -> Image) -> Void) {
         var image = object
         let scale = self.scale != 0.0 ? self.scale : UIScreen.main.scale
         if image.size != size || image.scale != scale {
@@ -125,43 +106,5 @@ public final class DefaultImageResizer: Processor<Image>, ImageResizer {
         return scaledImage
     }
 }
-
-//public final class AdaptiveImageResizer: ImageResizer {
-//    
-//    var width: CGFloat?
-//    var height: CGFloat?
-//    public var size: CGSize {
-//        return CGSize(width: width ?? 0, height: height ?? 0)
-//    }
-//    public var scale: CGFloat
-//    
-//    public required init(width: CGFloat, scale: CGFloat) {
-//        self.width = width
-//        self.scale = scale
-//    }
-//    
-//    public required init(height: CGFloat, scale: CGFloat) {
-//        self.height = height
-//        self.scale = scale
-//    }
-//    
-//    public func scaleImage(_ image: UIImage) -> UIImage? {
-//        let rect = CGRect(origin: CGPoint.zero, size: getSizeForImageSize(image.size))
-//        UIGraphicsBeginImageContextWithOptions(rect.size, true, scale)
-//        
-//        image.draw(in: rect)
-//        
-//        let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
-//        UIGraphicsEndImageContext()
-//        return scaledImage!
-//    }
-//    
-//    fileprivate func getSizeForImageSize(_ imageSize: CGSize) -> CGSize {
-//        if let width = width {
-//            return CGSize(width: width, height: (width * imageSize.height) / imageSize.width)
-//        }
-//        return CGSize(width: (height! * imageSize.width) / imageSize.height, height: height!)
-//    }
-//}
 
 #endif

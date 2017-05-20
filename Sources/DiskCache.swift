@@ -18,14 +18,13 @@ public final class DiskCache<T: AnyObject> {
     
     public let identifier: String
     public let serializer: DataSerializer<T>
+    public let cacheDirectory: URL
+    
     public var maxCapacity = 0
-    
     public internal(set) var size = 0
+    
     private var shrinking = false
-    
-    let fileManager = FileManager.default
-    public var cacheDirectory: URL
-    
+    private let fileManager = FileManager.default
     
     required public init(identifier: String, serializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
         self.identifier = identifier
@@ -48,7 +47,7 @@ public final class DiskCache<T: AnyObject> {
     }
     
     public func object(forKey key: String) throws -> T? {
-        let url = cacheDirectory.appendingPathComponent("c\(key)")
+        let url = cacheDirectory.appendingPathComponent(validkey(from: key))
         if !objectExists(at: url) {
             return nil
         }
@@ -59,14 +58,15 @@ public final class DiskCache<T: AnyObject> {
     }
     
     public func fileURL(forKey key: String) -> URL? {
-        let url = cacheDirectory.appendingPathComponent("c\(key)")
+        let url = cacheDirectory.appendingPathComponent(validkey(from: key))
         if objectExists(at: url) {
             return url
         }
         return nil
     }
     
-    @inline(__always) private func objectExists(at url: URL) -> Bool {
+    @inline(__always)
+    private func objectExists(at url: URL) -> Bool {
         return fileManager.fileExists(atPath: url.path)
     }
     
@@ -76,7 +76,7 @@ public final class DiskCache<T: AnyObject> {
     }
     
     public func set(data: Data, forKey key: String) throws {
-        let url = cacheDirectory.appendingPathComponent("c\(key)")
+        let url = cacheDirectory.appendingPathComponent(validkey(from: key))
         try data.write(to: url, options: .atomicWrite)
         Log.debug("Saved (\(key)): \(data.formattedSize)")
         size += data.count
@@ -84,7 +84,7 @@ public final class DiskCache<T: AnyObject> {
     }
     
     func updateLastAccess(ofKey key: String) {
-        let path = cacheDirectory.appendingPathComponent("c\(key)").path
+        let path = cacheDirectory.appendingPathComponent(validkey(from: key)).path
         do {
             try fileManager.setAttributes([.modificationDate: Date()], ofItemAtPath: path)
         } catch {
@@ -93,7 +93,7 @@ public final class DiskCache<T: AnyObject> {
     }
     
     public func removeObject(forKey key: String) throws {
-        let url = cacheDirectory.appendingPathComponent("c\(key)")
+        let url = cacheDirectory.appendingPathComponent(validkey(from: key))
         let attributes = try? fileManager.attributesOfItem(atPath: url.path)
         if let fileSize = attributes?[FileAttributeKey.size] as? NSNumber {
             size -= fileSize.intValue
@@ -178,6 +178,12 @@ public final class DiskCache<T: AnyObject> {
             }
         }
     }
+}
+
+private let fileNameRegex = try! NSRegularExpression(pattern: "[/:;?*|']", options: [])
+
+private func validkey(from key: String) -> String {
+    return "c" + fileNameRegex.stringByReplacingMatches(in: key, options: [], range: key.wholeNSRange, withTemplate: "")
 }
 
 extension Data {

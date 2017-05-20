@@ -9,53 +9,45 @@
 #if os(iOS) || os(tvOS)
 
 import UIKit
+import AsyncRequest
 
 public extension UIImageView {
     
     final func requestImage(with url: URL?,
                             placeholder: UIImage? = nil,
-                            imageProcessor: Processor<Image>? = nil,
+                            processor: Processor<Image>? = nil,
                             completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
         image = placeholder
         guard let url = url else { return nil }
-        let descriptor = ImageCachableDescriptor(url: url, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: contentMode, imageProcessor: imageProcessor)
-        return requestImage(with: descriptor, placeholder: placeholder, completion: completion)
-    }
-    
-    final func requestImage(withKey key: String,
-                            url: URL?,
-                            placeholder: UIImage? = nil,
-                            imageProcessor: Processor<Image>? = nil,
-                            completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
-        image = placeholder
-        guard let url = url else { return nil }
-        let descriptor = ImageCachableDescriptor(key: key, url: url, size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: contentMode, imageProcessor: imageProcessor)
-        return requestImage(with: descriptor, placeholder: placeholder, completion: completion)
-    }
-    
-    final func requestImage(with descriptor: ImageCachableDescriptor,
-                            placeholder: UIImage? = nil,
-                            completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage> {
-        image = placeholder
-        return ImageCache.shared.object(for: descriptor) { [weak self] getImage in
+        
+        let originalSize = bounds.size
+        let resizer = DefaultImageResizer(size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: contentMode)
+        resizer.next = processor
+        let descriptor = CachableDescriptor<Image>(key: url.path, fetcher: ImageFetcher(url: url), processor: resizer)
+        
+        return ImageCache.shared.object(for: descriptor, completion: { [weak self] getImage in
             do {
                 let image = try getImage()
                 self?.image = image
-                if let size = self?.bounds.size, descriptor.size != size {
-                    Log.warn("Size mismatch, requested: \(descriptor.size) ≠ bounds: \(size) - \(descriptor.key)")
+                if let size = self?.bounds.size, originalSize != size {
+                    Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(descriptor.key)")
                 }
-            } catch { }
-            completion?(getImage)
-        }
-    }
-    
-    var hintColor: UIColor {
-        var color = self.backgroundColor ?? UIColor.clear
-        if color != UIColor.clear && (self.contentMode == .scaleAspectFill || self.contentMode == .scaleToFill) {
-            color = UIColor.black
-        }
-        return color
+                completion?(getImage)
+            } catch {
+                completion?(getImage)
+            }
+        })
     }
 }
+    
+    extension UIView {
+        var hintColor: UIColor {
+            var color = self.backgroundColor ?? UIColor.clear
+            if color != UIColor.clear && (self.contentMode == .scaleAspectFill || self.contentMode == .scaleToFill) {
+                color = UIColor.black
+            }
+            return color
+        }
+    }
 
 #endif
