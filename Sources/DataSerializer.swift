@@ -14,7 +14,7 @@ public enum DataSerializerError: Error {
 }
 
 /// Abstract class that converts cachable objects of type T into Data and Data into objects of type T
-open class DataSerializer<T: Any> {
+open class DataSerializer<T> {
     
     public init() {}
     

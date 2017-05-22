@@ -46,31 +46,24 @@ public final class ImageFetcher: Fetcher<Image> {
     
     public override func fetch(respondIn queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
         let allRequest = URLSessionRequest<FetcherResult<Image>>(completionHandler: completion)
-        do {
-            allRequest.dataTask = try request(url: url) { (data: Data?, response: URLResponse?, error: Error?) -> Void in
-                do {
-                    if let error = error {
-                        throw error
-                    }
-                    guard let validData = data else {
-                        throw FetchError.invalidData
-                    }
-                    guard let image = Image(data: validData, scale: screenScale) else {
-                        throw FetchError.parseError
-                    }
-                    queue.async {
-                        allRequest.complete(with: FetcherResult(object: image, data: data))
-                    }
-                } catch {
-                    queue.async {
-                        allRequest.complete(with: error)
-                    }
+        allRequest.dataTask = request(url: url) { (data: Data?, response: URLResponse?, error: Error?) -> Void in
+            do {
+                if let error = error {
+                    throw error
                 }
-            }
-        }
-        catch {
-            queue.async {
-                allRequest.complete(with: error)
+                guard let validData = data else {
+                    throw FetchError.invalidData
+                }
+                guard let image = Image(data: validData, scale: screenScale) else {
+                    throw FetchError.parseError
+                }
+                queue.async {
+                    allRequest.complete(with: FetcherResult(object: image, data: data))
+                }
+            } catch {
+                queue.async {
+                    allRequest.complete(with: error)
+                }
             }
         }
         return allRequest
