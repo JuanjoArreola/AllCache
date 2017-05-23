@@ -43,24 +43,4 @@
         }
     }
     
-    public final class PNGImageSerializer: AbstractImageSerializer {
-        
-        override public func serialize(object: Image) throws -> Data {
-            if let data = UIImagePNGRepresentation(object) {
-                return data
-            }
-            throw DataSerializerError.serializationError
-        }
-    }
-    
-    public final class JPEGImageSerializer: AbstractImageSerializer {
-        
-        override public func serialize(object: UIImage) throws -> Data {
-            if let data = UIImagePNGRepresentation(object) {
-                return data
-            }
-            throw DataSerializerError.serializationError
-        }
-    }
-    
 #endif

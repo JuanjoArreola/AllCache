@@ -96,30 +96,29 @@ open class Cache<T: AnyObject> {
         Log.debug("\(key) NOT found in memory")
         
         diskQueue.async {
-            do {
-                if let object = try self.diskCache?.object(forKey: key) {
-                    Log.debug("\(descriptor.key) found in disk")
-                    self.responseQueue.async {
-                        request.complete(with: object)
-                        self.memoryCache.set(object: object, forKey: key)
-                        self.requestCache.setCached(request: nil, forIdentifier: key)
-                    }
-                    self.diskCache?.updateLastAccess(ofKey: key)
-                    return
+            self.searchOnDisk(key: key, descriptor: descriptor, request: request)
+        }
+        return proxy
+    }
+    
+    private func searchOnDisk(key: String, descriptor: CachableDescriptor<T>, request: Request<T>) {
+        do {
+            if let object = try diskCache?.object(forKey: key) {
+                Log.debug("\(key) found on disk")
+                self.responseQueue.async {
+                    request.complete(with: object)
+                    self.memoryCache.set(object: object, forKey: key)
+                    self.requestCache.setCached(request: nil, forIdentifier: key)
                 }
-            } catch {
-                self.responseQueue.async { request.complete(with: error) }
-                return
-            }
-            Log.debug("\(descriptor.key) NOT found in disk")
-            
-            if let _ = descriptor.processor {
+                self.diskCache?.updateLastAccess(ofKey: key)
+            } else if let _ = descriptor.processor {
                 self.searchOriginal(key: descriptor.key, descriptor: descriptor, request: request)
             } else {
                 self.fetchObject(for: descriptor, request: request)
             }
+        } catch {
+            self.responseQueue.async { request.complete(with: error) }
         }
-        return proxy
     }
     
     private func searchOriginal(key: String, descriptor: CachableDescriptor<T>, request: Request<T>) {
@@ -159,17 +158,16 @@ open class Cache<T: AnyObject> {
     }
     
     private func fetchObject(for descriptor: CachableDescriptor<T>, request: Request<T>) {
-        let completionHandler: (_ getObject: () throws -> FetcherResult<T>) -> Void = { getFetcherResult in
+        request.subrequest = requestCache.fetchingRequest(fetcher: descriptor.fetcher, completion: { getFetcherResult in
             do {
                 let result = try getFetcherResult()
-                let rawObject = result.object
                 Log.debug("\(descriptor.fetcher.identifier) fetched")
                 
                 if let _ = descriptor.processor {
-                    self.process(rawObject: rawObject, with: descriptor, request: request)
-                    self.saveToMemory(original: rawObject, forKey: descriptor.key)
+                    self.process(rawObject: result.object, with: descriptor, request: request)
+                    self.saveToMemory(original: result.object, forKey: descriptor.key)
                     if self.moveOriginalToDiskCache {
-                        self.persist(object: rawObject, data: result.data, key: descriptor.key)
+                        self.persist(object: result.object, data: result.data, key: descriptor.key)
                     }
                 } else {
                     self.responseQueue.async {
@@ -185,9 +183,7 @@ open class Cache<T: AnyObject> {
                 self.requestCache.setCached(request: nil, forIdentifier: descriptor.key)
             }
             self.requestCache.setCached(fetching: nil, forIdentifier: descriptor.fetcher.identifier)
-        }
-        
-        request.subrequest = requestCache.fetchingRequest(fetcher: descriptor.fetcher, completion: completionHandler)
+        })
     }
     
     @inline(__always)
@@ -259,14 +255,6 @@ open class Cache<T: AnyObject> {
             self.diskCache?.clear()
         }
     }
-    
-    // MARK: -
-    
-    var description: String {
-        let disk: String = diskCache?.identifier ?? "-"
-        return "Cache<\(T.self)>(\(identifier)) disk cache: \(disk)"
-    }
-    
 }
 
 public extension Cache where T: NSCoding {

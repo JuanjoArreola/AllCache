@@ -1,0 +1,23 @@
+//
+//  PNGImageSerializer.swift
+//  AllCache
+//
+//  Created by Juan Jose Arreola Simon on 5/22/17.
+//
+//
+
+#if os(iOS) || os(tvOS)
+
+import Foundation
+
+public final class PNGImageSerializer: AbstractImageSerializer {
+    
+    override public func serialize(object: Image) throws -> Data {
+        if let data = UIImagePNGRepresentation(object) {
+            return data
+        }
+        throw DataSerializerError.serializationError
+    }
+}
+
+#endif
