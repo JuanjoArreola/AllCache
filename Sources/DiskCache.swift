@@ -51,9 +51,7 @@ public final class DiskCache<T: AnyObject> {
         if !objectExists(at: url) {
             return nil
         }
-        guard let data = try? Data(contentsOf: url) else {
-            throw DiskCacheError.invalidData
-        }
+        let data = try Data(contentsOf: url)
         return try serializer.deserialize(data: data)
     }
     

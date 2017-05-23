@@ -16,7 +16,6 @@ private let diskWriteQueue = DispatchQueue(label: "com.allcache.DiskWriteQueue",
 private let fetchQueue = DispatchQueue(label: "com.allcache.FetchQueue", attributes: [])
 private let processQueue = DispatchQueue(label: "com.allcache.ProcessQueue", attributes: .concurrent)
 
-
 public let Log = LoggerContainer(loggers: [ConsoleLogger(formatter: AllCacheFormatter(), level: .all)])
 
 /// The Cache class is a generic container that stores key-value pairs, 
@@ -127,14 +126,14 @@ open class Cache<T: AnyObject> {
         self.responseQueue.async {
             if let rawObject = self.memoryCache.object(forKey: key) {
                 Log.debug("\(key) found in memory")
-                self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
+                self.process(rawObject: rawObject, with: descriptor, request: request)
                 return
             }
             diskQueue.async {
                 do {
                     if let rawObject = try self.diskCache?.object(forKey: key) {
                         Log.debug("\(descriptor.key) found in disk")
-                        self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
+                        self.process(rawObject: rawObject, with: descriptor, request: request)
                         self.saveToMemory(original: rawObject, forKey: key)
                         self.diskCache?.updateLastAccess(ofKey: descriptor.key)
                     } else if request.completed {
@@ -167,7 +166,7 @@ open class Cache<T: AnyObject> {
                 Log.debug("\(descriptor.fetcher.identifier) fetched")
                 
                 if let _ = descriptor.processor {
-                    self.process(rawObject: rawObject, withDescriptor: descriptor, request: request)
+                    self.process(rawObject: rawObject, with: descriptor, request: request)
                     self.saveToMemory(original: rawObject, forKey: descriptor.key)
                     if self.moveOriginalToDiskCache {
                         self.persist(object: rawObject, data: result.data, key: descriptor.key)
@@ -192,24 +191,23 @@ open class Cache<T: AnyObject> {
     }
     
     @inline(__always)
-    private func process(rawObject: T, withDescriptor descriptor: CachableDescriptor<T>, request: Request<T>) {
-        guard let processor = descriptor.processor, let resultKey = descriptor.resultKey, !request.completed else {
-            return
-        }
+    private func process(rawObject: T, with descriptor: CachableDescriptor<T>, request: Request<T>) {
+        if request.completed { return }
+        let key = descriptor.resultKey ?? ""
         processQueue.async {
-            Log.debug("processing \(resultKey)")
-            processor.process(object: rawObject, respondIn: self.responseQueue) { (getObject) in
+            Log.debug("processing \(key)")
+            descriptor.processor?.process(object: rawObject, respondIn: self.responseQueue) { (getObject) in
                 do {
                     let object = try getObject()
                     self.responseQueue.async {
                         request.complete(with: object)
-                        self.memoryCache.set(object: object, forKey: resultKey)
+                        self.memoryCache.set(object: object, forKey: key)
                     }
-                    self.persist(object: object, data: nil, key: resultKey)
+                    self.persist(object: object, data: nil, key: key)
                 } catch {
                     request.complete(with: error)
                 }
-                self.requestCache.setCached(request: nil, forIdentifier: resultKey)
+                self.requestCache.setCached(request: nil, forIdentifier: key)
             }
         }
     }

@@ -87,5 +87,36 @@ class DiskTests: XCTestCase {
         
         wait(for: [expectation], timeout: 1.0)
     }
+    
+    func testInvalidSerializer() {
+        let expectation: XCTestExpectation = self.expectation(description: "testFetchObject")
+        
+        let cache = try! Cache<Icecream>(identifier: "icecream", serializer: InvalidSerializer())
+        cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1", errorHandler: { error in
+            XCTFail()
+        })
+        cache.memoryCache.removeObject(forKey: "1")
+        
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
+            do {
+                _ = try cache.object(forKey: "1")
+                XCTFail()
+            } catch {
+                expectation.fulfill()
+            }
+        }
+        
+        waitForExpectations(timeout: 1.0, handler: nil)
+    }
+}
 
+enum IcecreamError: Error {
+    case test
+}
+
+class InvalidSerializer: DataSerializer<Icecream> {
+    
+    override func deserialize(data: Data) throws -> Icecream {
+        throw IcecreamError.test
+    }
 }
