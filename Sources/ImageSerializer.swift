@@ -8,7 +8,7 @@
 
 #if os(OSX)
     import AppKit
-#elseif os(iOS) || os(tvOS)
+#elseif os(iOS) || os(tvOS) || os(watchOS)
     import UIKit
 #endif
 
@@ -31,7 +31,7 @@
         }
     }
     
-#elseif os(iOS) || os(tvOS)
+#elseif os(iOS) || os(tvOS) || os(watchOS)
     
     open class AbstractImageSerializer: DataSerializer<UIImage> {
         

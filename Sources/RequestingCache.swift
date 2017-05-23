@@ -27,6 +27,9 @@ class RequestingCache<T: AnyObject> {
         }
         setCached(request: Request(), forIdentifier: key)
         let request = getCachedRequest(withIdentifier: key)!
+        request.finished {
+            self.setCached(request: nil, forIdentifier: key)
+        }
         return (request, false)
     }
     
@@ -56,6 +59,9 @@ class RequestingCache<T: AnyObject> {
         }
         let request = fetcher.fetch(respondIn: diskQueue, completion: completion)
         setCached(fetching: request, forIdentifier: fetcher.identifier)
+        request.finished {
+            self.setCached(fetching: nil, forIdentifier: fetcher.identifier)
+        }
         return request
     }
     

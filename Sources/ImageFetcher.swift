@@ -9,6 +9,7 @@
 import Foundation
 
 #if os(OSX)
+    
     import AppKit
     let screenScale = NSScreen.main()?.backingScaleFactor ?? 1.0
     
@@ -17,14 +18,20 @@ import Foundation
             self.init(data: data)
         }
     }
+    
 #elseif os(iOS) || os(tvOS)
+    
     import UIKit
     let screenScale = UIScreen.main.scale
+    
+#elseif os(watchOS)
+    
+    import WatchKit
+    let screenScale = WKInterfaceDevice.current().screenScale
+    
 #endif
 
 
-#if os(OSX) || os(iOS) || os(tvOS)
-    
 import AsyncRequest
 
 enum ImageFetcherError: Error {
@@ -68,7 +75,4 @@ public final class ImageFetcher: Fetcher<Image> {
         }
         return allRequest
     }
-    
 }
-
-#endif

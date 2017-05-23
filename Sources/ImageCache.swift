@@ -7,22 +7,24 @@
 //
 
 #if os(OSX)
+    
     import AppKit
     public typealias Image = NSImage
     public typealias Color = NSColor
-#elseif os(iOS) || os(tvOS)
+    
+#elseif os(iOS) || os(tvOS) || os(watchOS)
+    
     import UIKit
     public typealias Image = UIImage
     public typealias Color = UIColor
+    
 #endif
 
-#if os(OSX) || os(iOS) || os(tvOS)
-    
 import AsyncRequest
 
 open class ImageCache: Cache<Image> {
     
-    #if os(iOS) || os(tvOS)
+    #if os(iOS) || os(tvOS) || os(watchOS)
     open static let shared = try! ImageCache(identifier: "sharedImage", serializer: PNGImageSerializer())
     #else
     open static let shared = try! ImageCache(identifier: "sharedImage", serializer: ImageSerializer())
@@ -37,5 +39,3 @@ open class ImageCache: Cache<Image> {
         return object(forKey: url.absoluteString, fetcher: fetcher, processor: nil, completion: completion)
     }
 }
-    
-#endif

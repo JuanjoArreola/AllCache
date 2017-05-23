@@ -6,37 +6,33 @@
 //  Copyright © 2016 Juanjo. All rights reserved.
 //
 
-#if os(iOS) || os(OSX) || os(tvOS)
-    
-    import CoreGraphics
-    
-    public enum ImageProcessError: Error {
-        case resizeError
-    }
+import CoreGraphics
 
-    public protocol ImageResizer {
-        var size: CGSize { get }
-        var scale: CGFloat { get }
-        func scaleImage(_ image: Image) -> Image?
-    }
+public enum ImageProcessError: Error {
+    case resizeError
+}
+
+public protocol ImageResizer {
+    var size: CGSize { get }
+    var scale: CGFloat { get }
+    func scaleImage(_ image: Image) -> Image?
+}
+
+func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
+    let newSize = size.ratio > imageSize.ratio ?
+        CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height) :
+        CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width))
     
-    func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
-        let newSize = size.ratio > imageSize.ratio ?
-            CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height) :
-            CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width))
-        
-        return CGRect(origin: (size - newSize).mid, size: newSize)
-    }
+    return CGRect(origin: (size - newSize).mid, size: newSize)
+}
+
+func aspectFill(size: CGSize, imageSize: CGSize) -> CGRect {
+    let newSize = size.ratio > imageSize.ratio ?
+        CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width)) :
+        CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height)
     
-    func aspectFill(size: CGSize, imageSize: CGSize) -> CGRect {
-        let newSize = size.ratio > imageSize.ratio ?
-            CGSize(width: size.width, height: imageSize.height * (size.width / imageSize.width)) :
-            CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height)
-        
-        return CGRect(origin: (size - newSize).mid, size: newSize)
-    }
-    
-#endif
+    return CGRect(origin: (size - newSize).mid, size: newSize)
+}
 
 
 #if os(iOS) || os(tvOS)

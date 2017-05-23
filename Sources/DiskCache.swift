@@ -48,7 +48,7 @@ public final class DiskCache<T: AnyObject> {
     
     public func object(forKey key: String) throws -> T? {
         let url = cacheDirectory.appendingPathComponent(validkey(from: key))
-        if !objectExists(at: url) {
+        if !fileManager.fileExists(at: url) {
             return nil
         }
         let data = try Data(contentsOf: url)
@@ -57,15 +57,10 @@ public final class DiskCache<T: AnyObject> {
     
     public func fileURL(forKey key: String) -> URL? {
         let url = cacheDirectory.appendingPathComponent(validkey(from: key))
-        if objectExists(at: url) {
+        if fileManager.fileExists(at: url) {
             return url
         }
         return nil
-    }
-    
-    @inline(__always)
-    private func objectExists(at url: URL) -> Bool {
-        return fileManager.fileExists(atPath: url.path)
     }
     
     public func set(object: T, forKey key: String) throws {
@@ -76,7 +71,7 @@ public final class DiskCache<T: AnyObject> {
     public func set(data: Data, forKey key: String) throws {
         let url = cacheDirectory.appendingPathComponent(validkey(from: key))
         try data.write(to: url, options: .atomicWrite)
-        Log.debug("Saved (\(key)): \(data.formattedSize)")
+        Log.debug("💽 Saved (\(key)): \(data.formattedSize)")
         size += data.count
         restrictSize()
     }
@@ -121,9 +116,10 @@ public final class DiskCache<T: AnyObject> {
     
     public func clear() {
         guard let enumerator = cacheEnumerator(includingPropertiesForKeys: nil) else { return }
-        for case let fileURL as URL in enumerator {
+        for case let url as URL in enumerator {
             do {
-                try fileManager.removeItem(at: fileURL)
+                Log.debug("💽 Deleting (\(url.lastPathComponent))")
+                try fileManager.removeItem(at: url)
             } catch {
                 Log.error(error)
             }
@@ -145,9 +141,9 @@ public final class DiskCache<T: AnyObject> {
             if self.shrinking { return }
             self.shrinking = true
             do {
-                Log.debug("original size: \(self.size)")
+                Log.debug("💽 Original size: \(self.size)")
                 try self.restrictSize(percent: 0.8)
-                Log.debug("final size: \(self.size)")
+                Log.debug("💽 Final size: \(self.size)")
                 self.shrinking = false
             } catch {
                 Log.error(error)
@@ -193,5 +189,11 @@ extension Data {
             return "\(Double(count) / 1024.0) Kb"
         }
         return "\(Double(count) / (1024 * 1024)) Mb"
+    }
+}
+
+extension FileManager {
+    func fileExists(at url: URL) -> Bool {
+        return fileExists(atPath: url.path)
     }
 }

@@ -19,11 +19,13 @@ class LowMemoryHandler<T: AnyObject> {
     init() {}
     
     #if os(iOS) || os(tvOS)
+    
     func registerForLowMemoryNotification() {
         let name = NSNotification.Name.UIApplicationDidReceiveMemoryWarning
         let selector = #selector(self.handleMemoryWarning(notification:))
         NotificationCenter.default.addObserver(self, selector: selector, name: name, object: nil)
     }
+    
     #else
     
     func registerForLowMemoryNotification() {}

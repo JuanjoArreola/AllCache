@@ -6,22 +6,18 @@
 //
 //
 
-#if os(iOS) || os(OSX) || os(tvOS)
-    
-    import CoreGraphics
-    
-    public func -(first: CGSize, second: CGSize) -> CGSize {
-        return CGSize(width: first.width - second.width, height: first.height - second.height)
+import CoreGraphics
+
+public func -(first: CGSize, second: CGSize) -> CGSize {
+    return CGSize(width: first.width - second.width, height: first.height - second.height)
+}
+
+extension CGSize {
+    var mid: CGPoint {
+        return CGPoint(x: width / 2.0, y: height / 2.0)
     }
     
-    extension CGSize {
-        var mid: CGPoint {
-            return CGPoint(x: width / 2.0, y: height / 2.0)
-        }
-        
-        var ratio: CGFloat {
-            return width / height
-        }
+    var ratio: CGFloat {
+        return width / height
     }
-    
-#endif
+}
