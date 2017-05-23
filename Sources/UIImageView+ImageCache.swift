@@ -32,10 +32,8 @@ public extension UIImageView {
                 if let size = self?.bounds.size, originalSize != size {
                     Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(descriptor.key)")
                 }
-                completion?(getImage)
-            } catch {
-                completion?(getImage)
-            }
+            } catch {}
+            completion?(getImage)
         })
     }
 }

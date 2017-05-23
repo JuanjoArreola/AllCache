@@ -12,12 +12,6 @@ public enum ImageProcessError: Error {
     case resizeError
 }
 
-public protocol ImageResizer {
-    var size: CGSize { get }
-    var scale: CGFloat { get }
-    func scaleImage(_ image: Image) -> Image?
-}
-
 func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
     let newSize = size.ratio > imageSize.ratio ?
         CGSize(width: imageSize.width * (size.height / imageSize.height), height: size.height) :
@@ -39,7 +33,7 @@ func aspectFill(size: CGSize, imageSize: CGSize) -> CGRect {
     
     import UIKit
 
-public final class DefaultImageResizer: Processor<Image>, ImageResizer {
+public final class DefaultImageResizer: Processor<Image> {
     
     public var size: CGSize
     public var scale: CGFloat
@@ -57,9 +51,8 @@ public final class DefaultImageResizer: Processor<Image>, ImageResizer {
     
     override public func process(object: Image, respondIn queue: DispatchQueue, completion: @escaping (() throws -> Image) -> Void) {
         var image = object
-        let scale = self.scale != 0.0 ? self.scale : UIScreen.main.scale
-        if image.size != size || image.scale != scale {
-            if let scaledImage = scaleImage(object) {
+        if shouldScale(image: image) {
+            if let scaledImage = self.scale(image: object) {
                 image = scaledImage
             } else {
                 queue.async { completion({ throw ImageProcessError.resizeError }) }
@@ -72,17 +65,13 @@ public final class DefaultImageResizer: Processor<Image>, ImageResizer {
         }
     }
     
-    public func scaleImage(_ image: UIImage) -> UIImage? {
-        var rect = CGRect(origin: CGPoint.zero, size: size)
-        
-        switch mode {
-        case .scaleAspectFit:
-            rect = aspectFit(size: size, imageSize: image.size)
-        case .scaleAspectFill:
-            rect = aspectFill(size: size, imageSize: image.size)
-        default:
-            break
-        }
+    func shouldScale(image: Image) -> Bool {
+        let scale = self.scale != 0.0 ? self.scale : UIScreen.main.scale
+        return image.size != size || image.scale != scale
+    }
+    
+    public func scale(image: UIImage) -> UIImage? {
+        let rect = drawRect(for: image)
         var alpha: CGFloat = 0.0
         var white: CGFloat = 0.0
         backgroundColor.getWhite(&white, alpha: &alpha)
@@ -92,7 +81,7 @@ public final class DefaultImageResizer: Processor<Image>, ImageResizer {
         
         if backgroundColor != UIColor.clear && mode != .scaleAspectFill && mode != .scaleToFill {
             backgroundColor.set()
-            UIRectFill(CGRect(x: 0, y: 0, width: size.width, height: size.height))
+            UIRectFill(CGRect(origin: CGPoint.zero, size: size))
         }
         
         image.draw(in: rect)
@@ -100,6 +89,17 @@ public final class DefaultImageResizer: Processor<Image>, ImageResizer {
         let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return scaledImage
+    }
+    
+    open func drawRect(for image: Image) -> CGRect {
+        switch mode {
+        case .scaleAspectFit:
+            return aspectFit(size: size, imageSize: image.size)
+        case .scaleAspectFill:
+            return aspectFill(size: size, imageSize: image.size)
+        default:
+            return CGRect(origin: CGPoint.zero, size: size)
+        }
     }
 }
 

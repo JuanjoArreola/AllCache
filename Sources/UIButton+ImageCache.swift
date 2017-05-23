@@ -34,10 +34,8 @@ public extension UIButton {
                 if let size = self?.bounds.size, originalSize != size {
                     Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(self!.description)")
                 }
-                completion?(getImage)
-            } catch {
-                completion?(getImage)
-            }
+            } catch {}
+            completion?(getImage)
         })
     }
 }
