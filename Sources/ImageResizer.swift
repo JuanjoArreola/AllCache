@@ -28,6 +28,53 @@ func aspectFill(size: CGSize, imageSize: CGSize) -> CGRect {
     return CGRect(origin: (size - newSize).mid, size: newSize)
 }
 
+func center(size: CGSize, imageSize: CGSize) -> CGRect {
+    let origin = CGPoint(x: (size.width - imageSize.width) / 2.0,
+                         y: (size.height - imageSize.height) / 2.0)
+    return CGRect(origin: origin, size: imageSize)
+}
+
+func top(size: CGSize, imageSize: CGSize) -> CGRect {
+    let origin = CGPoint(x: (size.width - imageSize.width) / 2.0, y: 0.0)
+    return CGRect(origin: origin, size: imageSize)
+}
+
+func bottom(size: CGSize, imageSize: CGSize) -> CGRect {
+    let origin = CGPoint(x: (size.width - imageSize.width) / 2.0,
+                         y: size.height - imageSize.height)
+    return CGRect(origin: origin, size: imageSize)
+}
+
+func left(size: CGSize, imageSize: CGSize) -> CGRect {
+    let origin = CGPoint(x: 0, y: (size.height - imageSize.height) / 2.0)
+    return CGRect(origin: origin, size: imageSize)
+}
+
+func right(size: CGSize, imageSize: CGSize) -> CGRect {
+    let origin = CGPoint(x: size.width - imageSize.width,
+                         y: (size.height - imageSize.height) / 2.0)
+    return CGRect(origin: origin, size: imageSize)
+}
+
+func topLeft(size: CGSize, imageSize: CGSize) -> CGRect {
+    return CGRect(origin: CGPoint.zero, size: imageSize)
+}
+
+func topRight(size: CGSize, imageSize: CGSize) -> CGRect {
+    let origin = CGPoint(x: size.width - imageSize.width, y: 0)
+    return CGRect(origin: origin, size: imageSize)
+}
+
+func bottomLeft(size: CGSize, imageSize: CGSize) -> CGRect {
+    let origin = CGPoint(x: 0, y: size.height - imageSize.height)
+    return CGRect(origin: origin, size: imageSize)
+}
+
+func bottomRight(size: CGSize, imageSize: CGSize) -> CGRect {
+    let origin = CGPoint(x: size.width - imageSize.width,
+                         y: size.height - imageSize.height)
+    return CGRect(origin: origin, size: imageSize)
+}
 
 #if os(iOS) || os(tvOS)
     
@@ -71,7 +118,6 @@ public final class DefaultImageResizer: Processor<Image> {
     }
     
     public func scale(image: UIImage) -> UIImage? {
-        let rect = drawRect(for: image)
         var alpha: CGFloat = 0.0
         var white: CGFloat = 0.0
         backgroundColor.getWhite(&white, alpha: &alpha)
@@ -84,7 +130,7 @@ public final class DefaultImageResizer: Processor<Image> {
             UIRectFill(CGRect(origin: CGPoint.zero, size: size))
         }
         
-        image.draw(in: rect)
+        image.draw(in: drawRect(for: image))
         
         let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
@@ -97,8 +143,28 @@ public final class DefaultImageResizer: Processor<Image> {
             return aspectFit(size: size, imageSize: image.size)
         case .scaleAspectFill:
             return aspectFill(size: size, imageSize: image.size)
-        default:
+        case .scaleToFill:
             return CGRect(origin: CGPoint.zero, size: size)
+        case .redraw:
+            return CGRect(origin: CGPoint.zero, size: size)
+        case .center:
+            return center(size: size, imageSize: image.size)
+        case .top:
+            return top(size: size, imageSize: image.size)
+        case .bottom:
+            return bottom(size: size, imageSize: image.size)
+        case .left:
+            return left(size: size, imageSize: image.size)
+        case .right:
+            return right(size: size, imageSize: image.size)
+        case .topLeft:
+            return topLeft(size: size, imageSize: image.size)
+        case .topRight:
+            return topRight(size: size, imageSize: image.size)
+        case .bottomLeft:
+            return bottomLeft(size: size, imageSize: image.size)
+        case .bottomRight:
+            return bottomRight(size: size, imageSize: image.size)
         }
     }
 }
