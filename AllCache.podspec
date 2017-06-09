@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "AllCache"
-  s.version      = "2.4.0"
+  s.version      = "2.4.1"
   s.summary      = "AllCache is a swift 3 generic cache"
 
   s.homepage     = "https://github.com/JuanjoArreola/AllCache"

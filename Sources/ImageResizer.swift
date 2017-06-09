@@ -76,6 +76,20 @@ func bottomRight(size: CGSize, imageSize: CGSize) -> CGRect {
     return CGRect(origin: origin, size: imageSize)
 }
 
+let resizeMethods: [UIViewContentMode: (CGSize, CGSize) -> CGRect] = [
+    .scaleAspectFit: aspectFit,
+    .scaleAspectFill: aspectFill,
+    .center: center,
+    .top: top,
+    .bottom: bottom,
+    .left: left,
+    .right: right,
+    .topLeft: topLeft,
+    .topRight: topRight,
+    .bottomLeft: bottomLeft,
+    .bottomRight: bottomRight,
+]
+
 #if os(iOS) || os(tvOS)
     
     import UIKit
@@ -99,11 +113,11 @@ public final class DefaultImageResizer: Processor<Image> {
     override public func process(object: Image, respondIn queue: DispatchQueue, completion: @escaping (() throws -> Image) -> Void) {
         var image = object
         if shouldScale(image: image) {
-            if let scaledImage = self.scale(image: object) {
-                image = scaledImage
-            } else {
+            guard let scaledImage = self.scale(image: object) else {
                 queue.async { completion({ throw ImageProcessError.resizeError }) }
+                return
             }
+            image = scaledImage
         }
         if let nextProcessor = next {
             nextProcessor.process(object: image, respondIn: queue, completion: completion)
@@ -138,34 +152,10 @@ public final class DefaultImageResizer: Processor<Image> {
     }
     
     open func drawRect(for image: Image) -> CGRect {
-        switch mode {
-        case .scaleAspectFit:
-            return aspectFit(size: size, imageSize: image.size)
-        case .scaleAspectFill:
-            return aspectFill(size: size, imageSize: image.size)
-        case .scaleToFill:
-            return CGRect(origin: CGPoint.zero, size: size)
-        case .redraw:
-            return CGRect(origin: CGPoint.zero, size: size)
-        case .center:
-            return center(size: size, imageSize: image.size)
-        case .top:
-            return top(size: size, imageSize: image.size)
-        case .bottom:
-            return bottom(size: size, imageSize: image.size)
-        case .left:
-            return left(size: size, imageSize: image.size)
-        case .right:
-            return right(size: size, imageSize: image.size)
-        case .topLeft:
-            return topLeft(size: size, imageSize: image.size)
-        case .topRight:
-            return topRight(size: size, imageSize: image.size)
-        case .bottomLeft:
-            return bottomLeft(size: size, imageSize: image.size)
-        case .bottomRight:
-            return bottomRight(size: size, imageSize: image.size)
+        if let method = resizeMethods[mode] {
+            return method(size, image.size)
         }
+        return CGRect(origin: CGPoint.zero, size: size)
     }
 }
 
