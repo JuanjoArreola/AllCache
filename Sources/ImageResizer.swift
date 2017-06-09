@@ -76,6 +76,10 @@ func bottomRight(size: CGSize, imageSize: CGSize) -> CGRect {
     return CGRect(origin: origin, size: imageSize)
 }
 
+#if os(iOS) || os(tvOS)
+    
+    import UIKit
+    
 let resizeMethods: [UIViewContentMode: (CGSize, CGSize) -> CGRect] = [
     .scaleAspectFit: aspectFit,
     .scaleAspectFill: aspectFill,
@@ -89,10 +93,6 @@ let resizeMethods: [UIViewContentMode: (CGSize, CGSize) -> CGRect] = [
     .bottomLeft: bottomLeft,
     .bottomRight: bottomRight,
 ]
-
-#if os(iOS) || os(tvOS)
-    
-    import UIKit
 
 public final class DefaultImageResizer: Processor<Image> {
     
