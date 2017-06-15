@@ -8,7 +8,7 @@
 
 import Foundation
 
-public extension String {
+extension String {
     
     func range(from nsRange: NSRange) -> Range<String.Index>? {
         guard let from16 = utf16.index(utf16.startIndex, offsetBy: nsRange.location, limitedBy: utf16.endIndex),
