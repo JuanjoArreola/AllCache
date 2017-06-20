@@ -18,7 +18,9 @@ public extension UIButton {
                             placeholder: UIImage? = nil,
                             processor: Processor<UIImage>? = nil,
                             completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
-        self.setImage(placeholder, for: controlState)
+        if let placeholder = placeholder {
+            setImage(placeholder, for: controlState)
+        }
         guard let url = url else { return nil }
 
         let mode = imageView?.contentMode ?? contentMode

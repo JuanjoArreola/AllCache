@@ -17,7 +17,9 @@ public extension UIImageView {
                             placeholder: UIImage? = nil,
                             processor: Processor<Image>? = nil,
                             completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
-        image = placeholder
+        if let placeholder = placeholder {
+            image = placeholder
+        }
         guard let url = url else { return nil }
         
         let originalSize = bounds.size
