@@ -52,14 +52,12 @@ class DiskTests: XCTestCase {
         })
         cache.memoryCache.removeObject(forKey: "1")
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
-            _ = self.cache.object(forKey: "1", fetcher: Fetcher<Icecream>(identifier: "1"), completion: { getResult in
-                do {
-                    let vanilla = try getResult()
-                    XCTAssertEqual(vanilla.flavor, "Vanilla")
-                    expectation.fulfill()
-                } catch {
-                    XCTFail()
-                }
+            _ = self.cache.object(forKey: "1", fetcher: Fetcher<Icecream>(identifier: "1"), completion: { icecream in
+                XCTAssertEqual(icecream.flavor, "Vanilla")
+            }).fail(handler: { error in
+                XCTFail()
+            }).finished(handler: { 
+                expectation.fulfill()
             })
         }
         
@@ -74,15 +72,13 @@ class DiskTests: XCTestCase {
         })
         cache.memoryCache.removeObject(forKey: "1")
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
-            _ = self.cache.object(forKey: "1", fetcher: Fetcher<Icecream>(identifier: "2"), processor: ToppingProcessor(identifier: "Oreo"), completion: { getResult in
-                do {
-                    let vanilla = try getResult()
-                    XCTAssertEqual(vanilla.flavor, "Vanilla")
-                    expectation.fulfill()
-                } catch {
-                    XCTFail()
-                }
-            })
+            _ = self.cache.object(forKey: "1", fetcher: Fetcher<Icecream>(identifier: "2"), processor: ToppingProcessor(identifier: "Oreo"), completion: { icecream in
+                XCTAssertEqual(icecream.flavor, "Vanilla")
+            }).fail(handler: { error in
+                XCTFail()
+            }).finished {
+                expectation.fulfill()
+            }
         }
         
         wait(for: [expectation], timeout: 1.0)

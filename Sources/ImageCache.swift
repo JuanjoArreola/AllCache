@@ -34,7 +34,7 @@ open class ImageCache: Cache<Image> {
         try super.init(identifier: identifier, serializer: serializer, maxCapacity: maxCapacity)
     }
     
-    open func image(for url: URL, completion: @escaping (_ getImage: () throws -> Image) -> Void) -> Request<Image>? {
+    open func image(for url: URL, completion: @escaping (Image) -> Void) -> Request<Image>? {
         let fetcher = ImageFetcher(url: url)
         return object(forKey: url.absoluteString, fetcher: fetcher, processor: nil, completion: completion)
     }

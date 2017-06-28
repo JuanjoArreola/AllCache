@@ -44,26 +44,19 @@ class RequestingCacheTests: XCTestCase {
             }
         }
         
-        let _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1"), processor: ToppingProcessor(identifier: "Oreo")) { getIcecream in
-            do {
-                let icecream = try getIcecream()
+        let _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1"), processor: ToppingProcessor(identifier: "Oreo")) { icecream in
                 XCTAssertEqual(icecream.flavor, "Vanilla")
                 completed += 1
-                
-            } catch {
-                XCTFail()
-            }
+        }.fail { error in
+            XCTFail()
         }
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.1) { 
-            let _ = self.cache.object(forKey: "2", fetcher: IcecreamFetcher(identifier: "1"), processor: ToppingProcessor(identifier: "Oreo")) { getIcecream in
-                do {
-                    let icecream = try getIcecream()
+            let _ = self.cache.object(forKey: "2", fetcher: IcecreamFetcher(identifier: "1"), processor: ToppingProcessor(identifier: "Oreo")) { icecream in
                     XCTAssertEqual(icecream.flavor, "Vanilla")
                     completed += 1
-                } catch {
-                    XCTFail()
-                }
-            }
+            }.fail(handler: { error in
+                XCTFail()
+            })
         }
         
         waitForExpectations(timeout: 1.0, handler: nil)
@@ -78,14 +71,13 @@ class RequestingCacheTests: XCTestCase {
         }
         
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.1) {
-            let _ = self.cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { getIcecream in
-                do {
-                    let icecream = try getIcecream()
-                    XCTAssertEqual(icecream.flavor, "Vanilla")
-                    expectation.fulfill()
-                } catch {
-                    XCTFail()
-                }
+            let _ = self.cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { icecream in
+                XCTAssertEqual(icecream.flavor, "Vanilla")
+            }.fail(handler: { error in
+                Log.error(error)
+                XCTFail()
+            }).finished {
+                expectation.fulfill()
             }
         }
         

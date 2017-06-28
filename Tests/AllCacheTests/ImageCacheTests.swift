@@ -24,15 +24,13 @@ class ImageCacheTests: XCTestCase {
     func testGetImage() {
         let expectation = self.expectation(description: "get image")
         let fetcher = ImageFetcher(url: URL(string: "https://placeholdit.imgix.net/~text?txtsize=33&txt=Placeholder&w=400&h=200&bg=0000ff")!)
-        _ = ImageCache.shared.object(forKey: "test", fetcher: fetcher, completion: { (getObject) in
-            do {
-                _ = try getObject()
-                expectation.fulfill()
-            } catch {
-                Log.error(error)
-                XCTFail()
-            }
-        })
+        _ = ImageCache.shared.object(forKey: "test", fetcher: fetcher, completion: { _ in
+        }).fail(handler: { error in
+            Log.error(error)
+            XCTFail()
+        }).finished {
+            expectation.fulfill()
+        }
         waitForExpectations(timeout: 4, handler: nil)
     }
     
@@ -40,23 +38,19 @@ class ImageCacheTests: XCTestCase {
         let expectation = self.expectation(description: "get image")
         let expectation2 = self.expectation(description: "get image 2")
         let fetcher = ImageFetcher(url: URL(string: "https://placeholdit.imgix.net/~text?txtsize=33&txt=Placeholder&w=400&h=200&bg=0000ff")!)
-        _ = ImageCache.shared.object(forKey: fetcher.identifier, fetcher: fetcher) { (getObject) -> Void in
-            do {
-                _ = try getObject()
-                expectation.fulfill()
-            } catch {
-                Log.error(error)
-                XCTFail()
-            }
+        _ = ImageCache.shared.object(forKey: fetcher.identifier, fetcher: fetcher) { _ in
+        }.fail(handler: { error in
+            Log.error(error)
+            XCTFail()
+        }).finished {
+            expectation.fulfill()
         }
         _ = ImageCache.shared.object(forKey: fetcher.identifier, fetcher: fetcher) { (getObject) -> Void in
-            do {
-                _ = try getObject()
-                expectation2.fulfill()
-            } catch {
-                Log.error(error)
-                XCTFail()
-            }
+        }.fail(handler: { error in
+            Log.error(error)
+            XCTFail()
+        }).finished {
+            expectation2.fulfill()
         }
         
         waitForExpectations(timeout: 4, handler: nil)

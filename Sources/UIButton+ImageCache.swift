@@ -16,11 +16,8 @@ public extension UIButton {
     final func requestImage(with url: URL?,
                             for controlState: UIControlState,
                             placeholder: UIImage? = nil,
-                            processor: Processor<UIImage>? = nil,
-                            completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
-        if let placeholder = placeholder {
-            setImage(placeholder, for: controlState)
-        }
+                            processor: Processor<UIImage>? = nil) -> Request<UIImage>? {
+        setImage(placeholder ?? image(for: controlState), for: controlState)
         guard let url = url else { return nil }
 
         let mode = imageView?.contentMode ?? contentMode
@@ -29,15 +26,11 @@ public extension UIButton {
         resizer.next = processor
         let descriptor = CachableDescriptor<Image>(key: url.path, fetcher: ImageFetcher(url: url), processor: resizer)
         
-        return ImageCache.shared.object(for: descriptor, completion: { [weak self] getImage in
-            do {
-                let image = try getImage()
-                self?.setImage(image, for: controlState)
-                if let size = self?.bounds.size, originalSize != size {
-                    Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(self!.description)")
-                }
-            } catch {}
-            completion?(getImage)
+        return ImageCache.shared.object(for: descriptor, completion: { [weak self] image in
+            self?.setImage(image, for: controlState)
+            if let size = self?.bounds.size, originalSize != size {
+                Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(self!.description)")
+            }
         })
     }
 }

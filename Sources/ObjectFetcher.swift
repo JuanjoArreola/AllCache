@@ -35,7 +35,7 @@ open class Fetcher<T> {
         self.identifier = identifier
     }
     
-    open func fetch(respondIn queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
+    open func fetch(respondIn queue: DispatchQueue, completion: @escaping (FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
         fatalError("Not implemented")
     }
 }

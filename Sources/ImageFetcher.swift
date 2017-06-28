@@ -51,8 +51,8 @@ public final class ImageFetcher: Fetcher<Image> {
         fatalError("init(identifier:) has not been implemented")
     }
     
-    public override func fetch(respondIn queue: DispatchQueue, completion: @escaping (_ getFetcherResult: () throws -> FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
-        let allRequest = URLSessionRequest<FetcherResult<Image>>(completionHandler: completion)
+    public override func fetch(respondIn queue: DispatchQueue, completion: @escaping (FetcherResult<Image>) -> Void) -> Request<FetcherResult<Image>> {
+        let allRequest = URLSessionRequest<FetcherResult<Image>>(successHandler: completion)
         allRequest.dataTask = request(url: url) { (data: Data?, response: URLResponse?, error: Error?) -> Void in
             do {
                 if let error = error {
