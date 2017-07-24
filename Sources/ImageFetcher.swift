@@ -11,7 +11,7 @@ import Foundation
 #if os(OSX)
     
     import AppKit
-    let screenScale = NSScreen.main()?.backingScaleFactor ?? 1.0
+    let screenScale = NSScreen.main?.backingScaleFactor ?? 1.0
     
     extension Image {
         convenience init?(data: Data, scale: CGFloat) {

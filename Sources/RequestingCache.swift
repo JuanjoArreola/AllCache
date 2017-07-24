@@ -11,7 +11,7 @@ import AsyncRequest
 
 internal let syncQueue = DispatchQueue(label: "com.allcache.SyncQueue", attributes: .concurrent)
 
-class RequestingCache<T: AnyObject> {
+class RequestingCache<T> {
     
     var fetching: [String: Request<FetcherResult<T>>] = [:]
     var requesting: [String: Request<T>] = [:]
