@@ -17,15 +17,13 @@ public extension UIImageView {
                             placeholder: UIImage? = nil,
                             processor: Processor<Image>? = nil,
                             completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
-        if let placeholder = placeholder {
-            image = placeholder
-        }
+        image = placeholder ?? image
         guard let url = url else { return nil }
         
         let originalSize = bounds.size
         let resizer = DefaultImageResizer(size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: contentMode)
         resizer.next = processor
-        let descriptor = CachableDescriptor<Image>(key: url.path, fetcher: ImageFetcher(url: url), processor: resizer)
+        let descriptor = CachableDescriptor<Image>(key: url.absoluteString, fetcher: ImageFetcher(url: url), processor: resizer)
         
         return ImageCache.shared.object(for: descriptor, completion: { [weak self] getImage in
             do {
