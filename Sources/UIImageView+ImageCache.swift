@@ -38,7 +38,7 @@ public extension UIImageView {
     }
 }
     
-    extension UIView {
+    public extension UIView {
         var hintColor: UIColor {
             var color = self.backgroundColor ?? UIColor.clear
             if color != UIColor.clear && (self.contentMode == .scaleAspectFill || self.contentMode == .scaleToFill) {

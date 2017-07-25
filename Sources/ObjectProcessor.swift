@@ -1,5 +1,5 @@
 //
-//  ObjectProcessor.swift
+//  Processor.swift
 //  AllCache
 //
 //  Created by Juan Jose Arreola on 2/5/16.
@@ -11,9 +11,9 @@ import Foundation
 open class Processor<T> {
     
     public var identifier: String
-    var next: Processor<T>?
+    public var next: Processor<T>?
     
-    var key: String {
+    public var key: String {
         if let processor = next {
             return "\(processor.key)__\(identifier)"
         }
