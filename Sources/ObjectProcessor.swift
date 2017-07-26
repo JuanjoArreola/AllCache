@@ -10,7 +10,7 @@ import Foundation
 
 open class Processor<T> {
     
-    public var identifier: String
+    public let identifier: String
     public var next: Processor<T>?
     
     public var key: String {
@@ -25,7 +25,7 @@ open class Processor<T> {
         self.next = next
     }
     
-    open func process(object: T, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> T) -> Void) {
+    open func process(object: T) throws -> T {
         fatalError("Not implemented")
     }
 }

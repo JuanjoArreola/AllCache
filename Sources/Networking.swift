@@ -15,7 +15,7 @@ public enum HTTPMethod: String {
     case PUT
 }
 
-public func request(url: URL, method: HTTPMethod = .GET, completion: @escaping ((data: Data?, response: URLResponse?, error: Error?)) -> Void) -> URLSessionDataTask {
+public func request(url: URL, method: HTTPMethod = .GET, completion: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
     
     var request = URLRequest(url: url)
     request.httpMethod = method.rawValue

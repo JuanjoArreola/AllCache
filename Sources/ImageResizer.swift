@@ -110,20 +110,18 @@ public final class DefaultImageResizer: Processor<Image> {
         super.init(identifier: "\(size.width)x\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)")
     }
     
-    override public func process(object: Image, respondIn queue: DispatchQueue, completion: @escaping (() throws -> Image) -> Void) {
+    override public func process(object: Image) throws -> Image {
         var image = object
         if shouldScale(image: image) {
             guard let scaledImage = self.scale(image: object) else {
-                queue.async { completion({ throw ImageProcessError.resizeError }) }
-                return
+                throw ImageProcessError.resizeError
             }
             image = scaledImage
         }
         if let nextProcessor = next {
-            nextProcessor.process(object: image, respondIn: queue, completion: completion)
-        } else {
-            queue.async { completion({ return image }) }
+            return try nextProcessor.process(object: image)
         }
+        return image
     }
     
     func shouldScale(image: Image) -> Bool {

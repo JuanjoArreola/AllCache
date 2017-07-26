@@ -70,7 +70,7 @@ open class Cache<T: AnyObject> {
     /// - parameter processor: The object that process the original object to obtain the final object
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: A request object
-    open func object(forKey key: String, fetcher: Fetcher<T>, processor: Processor<T>? = nil, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T> {
+    open func object(forKey key: String, fetcher: Fetcher<T>, processor: Processor<T>? = nil, completion: @escaping (T) -> Void) -> Request<T> {
         let descriptor = CachableDescriptor<T>(key: key, fetcher: fetcher, processor: processor)
         return object(for: descriptor, completion: completion)
     }
@@ -79,10 +79,10 @@ open class Cache<T: AnyObject> {
     /// - parameter descriptor: An object that encapsulates the key, origianlKey, objectFetcher and objectProcessor
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
-    open func object(for descriptor: CachableDescriptor<T>, completion: @escaping (_ getObject: () throws -> T) -> Void) -> Request<T> {
+    open func object(for descriptor: CachableDescriptor<T>, completion: @escaping (T) -> Void) -> Request<T> {
         let key = descriptor.resultKey ?? descriptor.key
         let (request, ongoing) = requestCache.request(forKey: key)
-        let proxy = request.proxy(completion: completion)
+        let proxy = request.proxy(success: completion)
         if ongoing { return proxy }
         
         if let object = memoryCache.object(forKey: key) {
@@ -149,45 +149,44 @@ open class Cache<T: AnyObject> {
     }
     
     private func fetchObject(for descriptor: CachableDescriptor<T>, request: Request<T>) {
-        request.subrequest = requestCache.fetchingRequest(fetcher: descriptor.fetcher, completion: { getFetcherResult in
-            do {
-                let result = try getFetcherResult()
-                Log.debug("(\(descriptor.fetcher.identifier)) fetched")
-                
-                if let _ = descriptor.processor {
-                    self.process(rawObject: result.object, with: descriptor, request: request)
-                    self.saveToMemory(original: result.object, forKey: descriptor.key)
-                    if self.moveOriginalToDiskCache {
-                        self.persist(object: result.object, data: result.data, key: descriptor.key)
-                    }
-                } else {
-                    self.responseQueue.async {
-                        request.complete(with: result.object)
-                        self.memoryCache.set(object: result.object, forKey: descriptor.key)
-                    }
+        let subrequest = requestCache.fetchingRequest(fetcher: descriptor.fetcher, completion: { result in
+            Log.debug("(\(descriptor.fetcher.identifier)) fetched")
+            
+            if let _ = descriptor.processor {
+                self.process(rawObject: result.object, with: descriptor, request: request)
+                self.saveToMemory(original: result.object, forKey: descriptor.key)
+                if self.moveOriginalToDiskCache {
                     self.persist(object: result.object, data: result.data, key: descriptor.key)
                 }
-            } catch {
-                self.responseQueue.async { request.complete(with: error) }
+            } else {
+                self.responseQueue.async {
+                    request.complete(with: result.object)
+                    self.memoryCache.set(object: result.object, forKey: descriptor.key)
+                }
+                self.persist(object: result.object, data: result.data, key: descriptor.key)
             }
         })
+        subrequest.fail { error in
+            self.responseQueue.async { request.complete(with: error) }
+        }
+        request.subrequest = subrequest
     }
     
     @inline(__always)
     private func process(rawObject: T, with descriptor: CachableDescriptor<T>, request: Request<T>) {
-        if request.completed { return }
+        guard let processor = descriptor.processor, !request.completed else { return }
         let key = descriptor.resultKey ?? ""
+        
         processQueue.async {
             Log.debug("processing (\(key))")
-            descriptor.processor?.process(object: rawObject, respondIn: self.responseQueue) { (getObject) in
-                do {
-                    let object = try getObject()
-                    self.responseQueue.async {
-                        request.complete(with: object)
-                        self.memoryCache.set(object: object, forKey: key)
-                    }
-                    self.persist(object: object, data: nil, key: key)
-                } catch {
+            do {
+                let object = try processor.process(object: rawObject)
+                self.responseQueue.async {
+                    request.complete(with: object)
+                    self.memoryCache.set(object: object, forKey: key)
+                }
+            } catch {
+                self.responseQueue.async {
                     request.complete(with: error)
                 }
             }

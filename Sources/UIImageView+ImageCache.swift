@@ -15,8 +15,7 @@ public extension UIImageView {
     
     final func requestImage(with url: URL?,
                             placeholder: UIImage? = nil,
-                            processor: Processor<Image>? = nil,
-                            completion: ((_ getImage: () throws -> UIImage) -> Void)? = nil) -> Request<UIImage>? {
+                            processor: Processor<Image>? = nil) -> Request<UIImage>? {
         image = placeholder ?? image
         guard let url = url else { return nil }
         
@@ -25,15 +24,11 @@ public extension UIImageView {
         resizer.next = processor
         let descriptor = CachableDescriptor<Image>(key: url.absoluteString, fetcher: ImageFetcher(url: url), processor: resizer)
         
-        return ImageCache.shared.object(for: descriptor, completion: { [weak self] getImage in
-            do {
-                let image = try getImage()
-                self?.image = image
-                if let size = self?.bounds.size, originalSize != size {
-                    Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(descriptor.key)")
-                }
-            } catch {}
-            completion?(getImage)
+        return ImageCache.shared.object(for: descriptor, completion: { [weak self] image in
+            self?.image = image
+            if let size = self?.bounds.size, originalSize != size {
+                Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(descriptor.key)")
+            }
         })
     }
 }

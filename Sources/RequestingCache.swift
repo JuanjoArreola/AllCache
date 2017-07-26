@@ -11,7 +11,7 @@ import AsyncRequest
 
 internal let syncQueue = DispatchQueue(label: "com.allcache.SyncQueue", attributes: .concurrent)
 
-class RequestingCache<T: AnyObject> {
+class RequestingCache<T> {
     
     var fetching: [String: Request<FetcherResult<T>>] = [:]
     var requesting: [String: Request<T>] = [:]
@@ -52,9 +52,9 @@ class RequestingCache<T: AnyObject> {
     // MARK: - Fetching
     
     @inline(__always)
-    func fetchingRequest(fetcher: Fetcher<T>, completion: @escaping (_ getObject: () throws -> FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
+    func fetchingRequest(fetcher: Fetcher<T>, completion: @escaping (FetcherResult<T>) -> Void) -> Request<FetcherResult<T>> {
         if let request = getCachedFetchingRequest(withIdentifier: fetcher.identifier) {
-            request.add(completionHandler: completion)
+            request.success(handler: completion)
             return request
         }
         let request = fetcher.fetch(respondIn: diskQueue, completion: completion)

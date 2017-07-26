@@ -48,8 +48,8 @@ class IcecreamFetcher: Fetcher<Icecream> {
     var data = ["1": "Vanilla", "2": "Chocolate", "3": "Mango"]
     static var fetchedCount = 0
     
-    override func fetch(respondIn queue: DispatchQueue, completion: @escaping (() throws -> FetcherResult<Icecream>) -> Void) -> Request<FetcherResult<Icecream>> {
-        let request = Request<FetcherResult<Icecream>>(completionHandler: completion)
+    override func fetch(respondIn queue: DispatchQueue, completion: @escaping (FetcherResult<Icecream>) -> Void) -> Request<FetcherResult<Icecream>> {
+        let request = Request<FetcherResult<Icecream>>(successHandler: completion)
         queue.asyncAfter(deadline: DispatchTime.now() + 0.3) {
             if let flavor = self.data[self.identifier] {
                 IcecreamFetcher.fetchedCount += 1
@@ -66,11 +66,9 @@ class ToppingProcessor: Processor<Icecream> {
     
     static var toppingsAdded = 0
     
-    override open func process(object: Icecream, respondIn queue: DispatchQueue, completion: @escaping (_ getObject: () throws -> Icecream) -> Void) {
-        queue.async {
-            object.topping = self.identifier
-            ToppingProcessor.toppingsAdded += 1
-            completion({ return object })
-        }
+    override open func process(object: Icecream) throws -> Icecream {
+        object.topping = self.identifier
+        ToppingProcessor.toppingsAdded += 1
+        return object
     }
 }

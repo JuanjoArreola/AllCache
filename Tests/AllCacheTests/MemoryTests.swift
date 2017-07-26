@@ -47,14 +47,12 @@ class MemoryTests: XCTestCase {
     func testFetchObject() {
         let expectation: XCTestExpectation = self.expectation(description: "testFetchObject")
         
-        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { (getIcecream) in
-            do {
-                let icecream = try getIcecream()
-                XCTAssertEqual(icecream.flavor, "Vanilla")
-                expectation.fulfill()
-            } catch {
-                XCTFail()
-            }
+        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { icecream in
+            XCTAssertEqual(icecream.flavor, "Vanilla")
+        }.fail(handler: { error in
+            XCTFail()
+        }).finished {
+            expectation.fulfill()
         }
         waitForExpectations(timeout: 1.0, handler: nil)
     }
@@ -63,14 +61,12 @@ class MemoryTests: XCTestCase {
         let expectation: XCTestExpectation = self.expectation(description: "testGetCached")
         
         cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1")
-        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { (getIcecream) in
-            do {
-                let icecream = try getIcecream()
-                XCTAssertEqual(icecream.flavor, "Vanilla")
-                expectation.fulfill()
-            } catch {
-                XCTFail()
-            }
+        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { icecream in
+            XCTAssertEqual(icecream.flavor, "Vanilla")
+        }.fail(handler: { error in
+            XCTFail()
+        }).finished {
+            expectation.fulfill()
         }
         waitForExpectations(timeout: 1.0, handler: nil)
     }
@@ -97,13 +93,10 @@ class MemoryTests: XCTestCase {
     func testNotFetch() {
         let expectation: XCTestExpectation = self.expectation(description: "testNotFetch")
         
-        _ = cache.object(forKey: "0", fetcher: IcecreamFetcher(identifier: "0")) { (getIcecream) in
-            do {
-                let _ = try getIcecream()
-                XCTFail()
-            } catch {
-                expectation.fulfill()
-            }
+        _ = cache.object(forKey: "0", fetcher: IcecreamFetcher(identifier: "0")) { icecream in
+            XCTFail()
+        }.finished {
+            expectation.fulfill()
         }
         waitForExpectations(timeout: 1.0, handler: nil)
     }
@@ -112,16 +105,18 @@ class MemoryTests: XCTestCase {
         let expectation: XCTestExpectation = self.expectation(description: "testNotFetchedNotCached")
         
         _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "0")) { _ in
+        }.fail(handler: { error in
             DispatchQueue.main.async {
                 do {
                     let vanilla = try self.cache.object(forKey: "0")
                     XCTAssertNil(vanilla)
-                    expectation.fulfill()
                 } catch {
+                    Log.error(error)
                     XCTFail()
                 }
+                expectation.fulfill()
             }
-        }
+        })
         
         waitForExpectations(timeout: 1.0, handler: nil)
     }
@@ -130,14 +125,12 @@ class MemoryTests: XCTestCase {
         let expectation: XCTestExpectation = self.expectation(description: "testGetProcess")
         
         cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1")
-        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "0"), processor: ToppingProcessor(identifier: "chocolate syrup")) { (getIcecream) in
-            do {
-                let vanilla = try getIcecream()
-                XCTAssertEqual(vanilla.topping, "chocolate syrup")
-                expectation.fulfill()
-            } catch {
-                XCTFail()
-            }
+        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "0"), processor: ToppingProcessor(identifier: "chocolate syrup")) { icecream in
+            XCTAssertEqual(icecream.topping, "chocolate syrup")
+        }.fail(handler: { error in
+            XCTFail()
+        }).finished {
+            expectation.fulfill()
         }
         
         waitForExpectations(timeout: 1.0, handler: nil)
@@ -146,14 +139,12 @@ class MemoryTests: XCTestCase {
     func testFetchProcess() {
         let expectation: XCTestExpectation = self.expectation(description: "testFetchProcess")
         
-        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1"), processor: ToppingProcessor(identifier: "chocolate syrup")) { (getIcecream) in
-            do {
-                let vanilla = try getIcecream()
-                XCTAssertEqual(vanilla.topping, "chocolate syrup")
-                expectation.fulfill()
-            } catch {
-                XCTFail()
-            }
+        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1"), processor: ToppingProcessor(identifier: "chocolate syrup")) { icecream in
+            XCTAssertEqual(icecream.topping, "chocolate syrup")
+        }.fail(handler: { error in
+            XCTFail()
+        }).finished {
+            expectation.fulfill()
         }
         
         waitForExpectations(timeout: 1.0, handler: nil)
