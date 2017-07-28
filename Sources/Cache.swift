@@ -149,7 +149,7 @@ open class Cache<T: AnyObject> {
     }
     
     private func fetchObject(for descriptor: CachableDescriptor<T>, request: Request<T>) {
-        let subrequest = requestCache.fetchingRequest(fetcher: descriptor.fetcher, completion: { result in
+        request.subrequest = requestCache.fetchingRequest(fetcher: descriptor.fetcher, completion: { result in
             Log.debug("(\(descriptor.fetcher.identifier)) fetched")
             
             if let _ = descriptor.processor {
@@ -165,11 +165,9 @@ open class Cache<T: AnyObject> {
                 }
                 self.persist(object: result.object, data: result.data, key: descriptor.key)
             }
-        })
-        subrequest.fail { error in
+        }).fail { error in
             self.responseQueue.async { request.complete(with: error) }
         }
-        request.subrequest = subrequest
     }
     
     @inline(__always)
@@ -185,6 +183,7 @@ open class Cache<T: AnyObject> {
                     request.complete(with: object)
                     self.memoryCache.set(object: object, forKey: key)
                 }
+                self.persist(object: object, data: nil, key: key)
             } catch {
                 self.responseQueue.async {
                     request.complete(with: error)
