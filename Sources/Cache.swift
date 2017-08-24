@@ -111,7 +111,7 @@ open class Cache<T: AnyObject> {
                 self.fetchObject(for: descriptor, request: request)
             }
         } catch {
-            self.responseQueue.async { request.complete(with: error) }
+            request.complete(with: error, in: self.responseQueue)
         }
     }
     
@@ -133,7 +133,7 @@ open class Cache<T: AnyObject> {
                         self.fetchObject(for: descriptor, request: request)
                     }
                 } catch {
-                    self.responseQueue.async { request.complete(with: error) }
+                    request.complete(with: error, in: self.responseQueue)
                 }
             }
         }
@@ -166,7 +166,7 @@ open class Cache<T: AnyObject> {
                 self.persist(object: result.object, data: result.data, key: descriptor.key)
             }
         }).fail { error in
-            self.responseQueue.async { request.complete(with: error) }
+            request.complete(with: error, in: self.responseQueue)
         }
     }
     
@@ -185,9 +185,7 @@ open class Cache<T: AnyObject> {
                 }
                 self.persist(object: object, data: nil, key: key)
             } catch {
-                self.responseQueue.async {
-                    request.complete(with: error)
-                }
+                request.complete(with: error, in: self.responseQueue)
             }
         }
     }

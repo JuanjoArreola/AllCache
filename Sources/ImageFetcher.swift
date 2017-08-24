@@ -64,13 +64,9 @@ public final class ImageFetcher: Fetcher<Image> {
                 guard let image = Image(data: validData, scale: screenScale) else {
                     throw FetchError.parseError
                 }
-                queue.async {
-                    allRequest.complete(with: FetcherResult(object: image, data: data))
-                }
+                allRequest.complete(with: FetcherResult(object: image, data: data), in: queue)
             } catch {
-                queue.async {
-                    allRequest.complete(with: error)
-                }
+                allRequest.complete(with: error, in: queue)
             }
         }
         return allRequest
