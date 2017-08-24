@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "AllCache"
-  s.version      = "2.4.5"
+  s.version      = "3.0.0"
   s.summary      = "AllCache is a swift 3 generic cache"
 
   s.homepage     = "https://github.com/JuanjoArreola/AllCache"
@@ -18,6 +18,6 @@ Pod::Spec.new do |s|
   s.requires_arc = true
 
   s.dependency "Logg", "~> 1.1.1"
-  s.dependency "AsyncRequest", "~> 1.0.3"
+  s.dependency "AsyncRequest", "~> 2.0.0"
 
 end

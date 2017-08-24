@@ -14,7 +14,7 @@ enum DiskCacheError: Error {
     case enumeratorError
 }
 
-public final class DiskCache<T: AnyObject> {
+public final class DiskCache<T> {
     
     public let identifier: String
     public let serializer: DataSerializer<T>
