@@ -16,7 +16,7 @@ class MemoryTests: XCTestCase {
     override func setUp() {
         super.setUp()
         
-        cache.diskCache = nil
+        cache.clear()
     }
     
     override func tearDown() {
