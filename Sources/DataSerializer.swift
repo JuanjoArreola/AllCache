@@ -19,18 +19,10 @@ open class DataSerializer<T> {
     public init() {}
     
     open func deserialize(data: Data) throws -> T {
-        if T.self is NSCoding {
-            if let object = NSKeyedUnarchiver.unarchiveObject(with: data) as? T {
-                return object
-            }
-        }
         throw DataSerializerError.notImplemented
     }
     
     open func serialize(object: T) throws -> Data {
-        if T.self is NSCoding {
-            return NSKeyedArchiver.archivedData(withRootObject: object)
-        }
         throw DataSerializerError.notImplemented
     }
 }

@@ -28,7 +28,7 @@ open class Cache<T: AnyObject> {
     open let identifier: String
     
     open let memoryCache = MemoryCache<T>()
-    open var diskCache: DiskCache<T>!
+    open let diskCache: DiskCache<T>
     
     open var responseQueue = DispatchQueue.main
     open var moveOriginalToMemoryCache = false
@@ -53,11 +53,11 @@ open class Cache<T: AnyObject> {
             return object
         }
         
-        if let object = try diskCache?.object(forKey: key) {
+        if let object = try diskCache.object(forKey: key) {
             Log.debug("🔑(\(key)) found on disk")
             memoryCache.set(object: object, forKey: key)
             diskQueue.async {
-                self.diskCache?.updateLastAccess(ofKey: key)
+                self.diskCache.updateLastAccess(ofKey: key)
             }
             return object
         }
@@ -98,13 +98,13 @@ open class Cache<T: AnyObject> {
     
     private func searchOnDisk(key: String, descriptor: CachableDescriptor<T>, request: Request<T>) {
         do {
-            if let object = try diskCache?.object(forKey: key) {
+            if let object = try diskCache.object(forKey: key) {
                 Log.debug("🔑(\(key)) found on disk")
                 self.responseQueue.async {
                     request.complete(with: object)
                     self.memoryCache.set(object: object, forKey: key)
                 }
-                self.diskCache?.updateLastAccess(ofKey: key)
+                self.diskCache.updateLastAccess(ofKey: key)
             } else if let _ = descriptor.processor {
                 self.searchOriginal(key: descriptor.key, descriptor: descriptor, request: request)
             } else {
@@ -124,11 +124,11 @@ open class Cache<T: AnyObject> {
             }
             diskQueue.async {
                 do {
-                    if let rawObject = try self.diskCache?.object(forKey: key) {
+                    if let rawObject = try self.diskCache.object(forKey: key) {
                         Log.debug("🔑(\(descriptor.key)) found on disk")
                         self.process(rawObject: rawObject, with: descriptor, request: request)
                         self.saveToMemory(original: rawObject, forKey: key)
-                        self.diskCache?.updateLastAccess(ofKey: descriptor.key)
+                        self.diskCache.updateLastAccess(ofKey: descriptor.key)
                     } else {
                         self.fetchObject(for: descriptor, request: request)
                     }
@@ -195,9 +195,9 @@ open class Cache<T: AnyObject> {
         diskWriteQueue.async {
             do {
                 if let data = data {
-                    try self.diskCache?.set(data: data, forKey: key)
+                    try self.diskCache.set(data: data, forKey: key)
                 } else if let object = object {
-                    try self.diskCache?.set(object: object, forKey: key)
+                    try self.diskCache.set(object: object, forKey: key)
                 }
             } catch {
                 Log.error(error)
@@ -211,7 +211,7 @@ open class Cache<T: AnyObject> {
         memoryCache.set(object: object, forKey: key)
         diskQueue.async(flags: .barrier, execute: {
             do {
-                try self.diskCache?.set(object: object, forKey: key)
+                try self.diskCache.set(object: object, forKey: key)
             } catch {
                 self.responseQueue.async { errorHandler?(error) }
             }
@@ -224,7 +224,7 @@ open class Cache<T: AnyObject> {
         memoryCache.removeObject(forKey: key)
         diskQueue.async(flags: .barrier, execute: {
             do {
-                try self.diskCache?.removeObject(forKey: key)
+                try self.diskCache.removeObject(forKey: key)
             } catch {
                 self.responseQueue.async { errorHandler?(error) }
             }
@@ -234,14 +234,14 @@ open class Cache<T: AnyObject> {
     open func clear() {
         memoryCache.clear()
         diskQueue.async {
-            self.diskCache?.clear()
+            self.diskCache.clear()
         }
     }
 }
 
-public extension Cache where T: NSCoding {
+public extension Cache where T: Codable {
     
     convenience public init(identifier: String, maxCapacity: Int = 0) throws {
-        try self.init(identifier: identifier, serializer: DataSerializer<T>(), maxCapacity: maxCapacity)
+        try self.init(identifier: identifier, serializer: CodableSerializer<T>(), maxCapacity: maxCapacity)
     }
 }

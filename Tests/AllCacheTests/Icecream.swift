@@ -10,7 +10,7 @@ import Foundation
 import AllCache
 import AsyncRequest
 
-class Icecream: NSObject, NSCoding {
+class Icecream: Codable {
     
     var id: String
     var flavor: String
@@ -20,27 +20,6 @@ class Icecream: NSObject, NSCoding {
         self.id = id
         self.flavor = flavor
     }
-    
-    // MARK: - NSCoding
-    
-    required init?(coder aDecoder: NSCoder) {
-        guard let id = aDecoder.decodeObject(forKey: "id") as? String,
-            let flavor = aDecoder.decodeObject(forKey: "flavor") as? String else {
-            return nil
-        }
-        self.id = id
-        self.flavor = flavor
-        self.topping = aDecoder.decodeObject(forKey: "topping") as? String
-    }
-    
-    func encode(with aCoder: NSCoder) {
-        aCoder.encode(id, forKey: "id")
-        aCoder.encode(flavor, forKey: "flavor")
-        if let topping = self.topping {
-            aCoder.encode(topping, forKey: "topping")
-        }
-    }
-    
 }
 
 class IcecreamFetcher: Fetcher<Icecream> {
