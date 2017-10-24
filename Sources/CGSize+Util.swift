@@ -8,7 +8,7 @@
 
 import CoreGraphics
 
-public func -(first: CGSize, second: CGSize) -> CGSize {
+func -(first: CGSize, second: CGSize) -> CGSize {
     return CGSize(width: first.width - second.width, height: first.height - second.height)
 }
 

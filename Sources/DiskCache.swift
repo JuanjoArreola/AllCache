@@ -88,7 +88,7 @@ public final class DiskCache<T> {
     public func removeObject(forKey key: String) throws {
         let url = cacheDirectory.appendingPathComponent(validkey(from: key))
         let attributes = try? fileManager.attributesOfItem(atPath: url.path)
-        if let fileSize = attributes?[FileAttributeKey.size] as? NSNumber {
+        if let fileSize = attributes?[.size] as? NSNumber {
             size -= fileSize.intValue
         }
         try fileManager.removeItem(at: url)
@@ -103,13 +103,7 @@ public final class DiskCache<T> {
             }
             for case let url as URL in enumerator {
                 guard let lastAccess = url.contentAccessDate, lastAccess < limit else { continue }
-                do {
-                    try self.fileManager.removeItem(at: url)
-                    self.size -= url.totalFileAllocatedSize ?? 0
-                }
-                catch {
-                    Log.error(error)
-                }
+                self.removeIfPossible(url: url)
             }
         }
     }
@@ -117,14 +111,20 @@ public final class DiskCache<T> {
     public func clear() {
         guard let enumerator = cacheEnumerator(includingPropertiesForKeys: nil) else { return }
         for case let url as URL in enumerator {
-            do {
-                Log.debug("💽 Deleting (\(url.lastPathComponent))")
-                try fileManager.removeItem(at: url)
-            } catch {
-                Log.error(error)
-            }
+            removeIfPossible(url: url)
         }
         size = 0
+    }
+    
+    @inline(__always)
+    private func removeIfPossible(url: URL) {
+        do {
+            Log.debug("💽 Deleting (\(url.lastPathComponent))")
+            try fileManager.removeItem(at: url)
+            size -= url.totalFileAllocatedSize ?? 0
+        } catch {
+            Log.error(error)
+        }
     }
     
     private func cacheEnumerator(includingPropertiesForKeys keys: [URLResourceKey]?) -> FileManager.DirectoryEnumerator? {
@@ -161,14 +161,9 @@ public final class DiskCache<T> {
             return first < second
         })
         for url in urls {
-            do {
-                try self.fileManager.removeItem(at: url)
-                self.size -= url.totalFileAllocatedSize ?? 0
-                if self.size <= target {
-                    break
-                }
-            } catch {
-                Log.error(error)
+            removeIfPossible(url: url)
+            if self.size <= target {
+                break
             }
         }
     }

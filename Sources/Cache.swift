@@ -100,41 +100,41 @@ open class Cache<T: AnyObject> {
         do {
             if let object = try diskCache.object(forKey: key) {
                 Log.debug("🔑(\(key)) found on disk")
-                self.responseQueue.async {
+                responseQueue.async {
                     request.complete(with: object)
                     self.memoryCache.set(object: object, forKey: key)
                 }
-                self.diskCache.updateLastAccess(ofKey: key)
+                diskCache.updateLastAccess(ofKey: key)
             } else if let _ = descriptor.processor {
-                self.searchOriginal(key: descriptor.key, descriptor: descriptor, request: request)
+                responseQueue.async {
+                    self.searchOriginal(key: descriptor.key, descriptor: descriptor, request: request)
+                }
             } else {
-                self.fetchObject(for: descriptor, request: request)
+                fetchObject(for: descriptor, request: request)
             }
         } catch {
-            request.complete(with: error, in: self.responseQueue)
+            request.complete(with: error, in: responseQueue)
         }
     }
     
     private func searchOriginal(key: String, descriptor: CachableDescriptor<T>, request: Request<T>) {
-        self.responseQueue.async {
-            if let rawObject = self.memoryCache.object(forKey: key) {
-                Log.debug("🔑(\(key)) found in memory")
-                self.process(rawObject: rawObject, with: descriptor, request: request)
-                return
-            }
-            diskQueue.async {
-                do {
-                    if let rawObject = try self.diskCache.object(forKey: key) {
-                        Log.debug("🔑(\(descriptor.key)) found on disk")
-                        self.process(rawObject: rawObject, with: descriptor, request: request)
-                        self.saveToMemory(original: rawObject, forKey: key)
-                        self.diskCache.updateLastAccess(ofKey: descriptor.key)
-                    } else {
-                        self.fetchObject(for: descriptor, request: request)
-                    }
-                } catch {
-                    request.complete(with: error, in: self.responseQueue)
+        if let rawObject = memoryCache.object(forKey: key) {
+            Log.debug("🔑(\(key)) found in memory")
+            process(rawObject: rawObject, with: descriptor, request: request)
+            return
+        }
+        diskQueue.async {
+            do {
+                if let rawObject = try self.diskCache.object(forKey: key) {
+                    Log.debug("🔑(\(descriptor.key)) found on disk")
+                    self.process(rawObject: rawObject, with: descriptor, request: request)
+                    self.saveToMemory(original: rawObject, forKey: key)
+                    self.diskCache.updateLastAccess(ofKey: descriptor.key)
+                } else {
+                    self.fetchObject(for: descriptor, request: request)
                 }
+            } catch {
+                request.complete(with: error, in: self.responseQueue)
             }
         }
     }
