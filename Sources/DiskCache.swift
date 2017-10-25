@@ -51,8 +51,10 @@ public final class DiskCache<T> {
         if !fileManager.fileExists(at: url) {
             return nil
         }
-        let data = try Data(contentsOf: url)
-        return try serializer.deserialize(data: data)
+        Log.debug("🔑(\(key)) found on disk")
+        diskQueue.async { self.updateLastAccess(ofKey: key) }
+        
+        return try serializer.deserialize(data: Data(contentsOf: url))
     }
     
     public func fileURL(forKey key: String) -> URL? {

@@ -13,12 +13,23 @@ public final class MemoryCache<T: AnyObject> {
     private let cache = NSCache<NSString, T>()
     
     public func object(forKey key: String) -> T? {
-        return cache.object(forKey: key as NSString)
+        if let result = cache.object(forKey: key as NSString) {
+            Log.debug("🔑(\(key)) found in memory")
+            return result
+        }
+        return nil
     }
     
     public func set(object: T?, forKey key: String) {
         if let object = object {
             cache.setObject(object, forKey: key as NSString)
+        }
+    }
+    
+    func set(object: T?, forKey key: String, in queue: DispatchQueue) {
+        guard let object = object else { return }
+        queue.async {
+            self.cache.setObject(object, forKey: key as NSString)
         }
     }
     

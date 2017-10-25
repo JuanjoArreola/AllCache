@@ -49,19 +49,11 @@ open class Cache<T: AnyObject> {
     /// Search an object in caches, does not try to fetch it if not found
     open func object(forKey key: String) throws -> T? {
         if let object = memoryCache.object(forKey: key) {
-            Log.debug("🔑(\(key)) found in memory")
             return object
         }
-        
-        if let object = try diskCache.object(forKey: key) {
-            Log.debug("🔑(\(key)) found on disk")
-            memoryCache.set(object: object, forKey: key)
-            diskQueue.async {
-                self.diskCache.updateLastAccess(ofKey: key)
-            }
-            return object
-        }
-        return nil
+        let object = try diskCache.object(forKey: key)
+        memoryCache.set(object: object, forKey: key)
+        return object
     }
     
     /// Search an object in the caches, if the object is found the completion closure is called, if not, the cache search for the original object and apply the objectProcessor, if the origianl object wasn't found it uses the objectFetcher to try to get it.
@@ -86,8 +78,7 @@ open class Cache<T: AnyObject> {
         if ongoing { return proxy }
         
         if let object = memoryCache.object(forKey: key) {
-            Log.debug("🔑(\(key)) found in memory")
-            responseQueue.async { request.complete(with: object) }
+            request.complete(with: object, in: responseQueue)
             return proxy
         }
         diskQueue.async {
@@ -99,12 +90,10 @@ open class Cache<T: AnyObject> {
     private func searchOnDisk(key: String, descriptor: CachableDescriptor<T>, request: Request<T>) {
         do {
             if let object = try diskCache.object(forKey: key) {
-                Log.debug("🔑(\(key)) found on disk")
                 responseQueue.async {
                     request.complete(with: object)
                     self.memoryCache.set(object: object, forKey: key)
                 }
-                diskCache.updateLastAccess(ofKey: key)
             } else if let _ = descriptor.processor {
                 responseQueue.async {
                     self.searchOriginal(key: descriptor.key, descriptor: descriptor, request: request)
@@ -119,17 +108,14 @@ open class Cache<T: AnyObject> {
     
     private func searchOriginal(key: String, descriptor: CachableDescriptor<T>, request: Request<T>) {
         if let rawObject = memoryCache.object(forKey: key) {
-            Log.debug("🔑(\(key)) found in memory")
             process(rawObject: rawObject, with: descriptor, request: request)
             return
         }
         diskQueue.async {
             do {
                 if let rawObject = try self.diskCache.object(forKey: key) {
-                    Log.debug("🔑(\(descriptor.key)) found on disk")
                     self.process(rawObject: rawObject, with: descriptor, request: request)
                     self.saveToMemory(original: rawObject, forKey: key)
-                    self.diskCache.updateLastAccess(ofKey: descriptor.key)
                 } else {
                     self.fetchObject(for: descriptor, request: request)
                 }
@@ -142,9 +128,7 @@ open class Cache<T: AnyObject> {
     @inline(__always)
     private func saveToMemory(original object: T, forKey key: String) {
         if moveOriginalToMemoryCache {
-            responseQueue.async {
-                self.memoryCache.set(object: object, forKey: key)
-            }
+            memoryCache.set(object: object, forKey: key, in: responseQueue)
         }
     }
     
@@ -158,13 +142,13 @@ open class Cache<T: AnyObject> {
                 if self.moveOriginalToDiskCache {
                     self.persist(object: result.object, data: result.data, key: descriptor.key)
                 }
-            } else {
-                self.responseQueue.async {
-                    request.complete(with: result.object)
-                    self.memoryCache.set(object: result.object, forKey: descriptor.key)
-                }
-                self.persist(object: result.object, data: result.data, key: descriptor.key)
+                return
             }
+            self.responseQueue.async {
+                request.complete(with: result.object)
+                self.memoryCache.set(object: result.object, forKey: descriptor.key)
+            }
+            self.persist(object: result.object, data: result.data, key: descriptor.key)
         }).fail { error in
             request.complete(with: error, in: self.responseQueue)
         }
