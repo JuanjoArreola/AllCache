@@ -56,7 +56,9 @@ open class Cache<T: AnyObject> {
         return object
     }
     
-    /// Search an object in the caches, if the object is found the completion closure is called, if not, the cache search for the original object and apply the objectProcessor, if the origianl object wasn't found it uses the objectFetcher to try to get it.
+    /// Search an object in the caches, if the object is found the completion closure is called,
+    /// if not, the cache search for the original object and apply the objectProcessor,
+    /// if the origianl object wasn't found it uses the objectFetcher to try to get it.
     /// - parameter key: the key of the object to search
     /// - parameter fetcher: The object that fetches the object if is not currently in the cache
     /// - parameter processor: The object that process the original object to obtain the final object
@@ -67,7 +69,9 @@ open class Cache<T: AnyObject> {
         return object(for: descriptor, completion: completion)
     }
     
-    /// Search an object in the caches, if the object is found the completion closure is called, if not, the cache search for the original object and apply the objectProcessor, if the origianl object wasn't found it uses the objectFetcher to try to get it.
+    /// Search an object in the caches, if the object is found the completion closure is called,
+    /// if not, the cache search for the original object and apply the objectProcessor,
+    /// if the origianl object wasn't found it uses the objectFetcher to try to get it.
     /// - parameter descriptor: An object that encapsulates the key, origianlKey, objectFetcher and objectProcessor
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
@@ -136,19 +140,17 @@ open class Cache<T: AnyObject> {
         request.subrequest = requestCache.fetchingRequest(fetcher: descriptor.fetcher, completion: { result in
             Log.debug("(\(descriptor.fetcher.identifier)) fetched")
             
-            if let _ = descriptor.processor {
-                self.process(rawObject: result.object, with: descriptor, request: request)
-                self.saveToMemory(original: result.object, forKey: descriptor.key)
-                if self.moveOriginalToDiskCache {
-                    self.persist(object: result.object, data: result.data, key: descriptor.key)
-                }
+            if descriptor.processor == nil {
+                self.memoryCache.set(object: result.object, forKey: descriptor.key, in: self.responseQueue)
+                request.complete(with: result.object, in: self.responseQueue)
+                self.persist(object: result.object, data: result.data, key: descriptor.key)
                 return
             }
-            self.responseQueue.async {
-                request.complete(with: result.object)
-                self.memoryCache.set(object: result.object, forKey: descriptor.key)
+            self.process(rawObject: result.object, with: descriptor, request: request)
+            self.saveToMemory(original: result.object, forKey: descriptor.key)
+            if self.moveOriginalToDiskCache {
+                self.persist(object: result.object, data: result.data, key: descriptor.key)
             }
-            self.persist(object: result.object, data: result.data, key: descriptor.key)
         }).fail { error in
             request.complete(with: error, in: self.responseQueue)
         }
@@ -163,10 +165,8 @@ open class Cache<T: AnyObject> {
             Log.debug("processing (\(key))")
             do {
                 let object = try processor.process(object: rawObject)
-                self.responseQueue.async {
-                    request.complete(with: object)
-                    self.memoryCache.set(object: object, forKey: key)
-                }
+                self.memoryCache.set(object: object, forKey: key, in: self.responseQueue)
+                request.complete(with: object, in: self.responseQueue)
                 self.persist(object: object, data: nil, key: key)
             } catch {
                 request.complete(with: error, in: self.responseQueue)

@@ -42,7 +42,9 @@ public final class DiskCache<T> {
     }
     
     func getCacheSize() -> Int {
-        guard let enumerator = cacheEnumerator(includingPropertiesForKeys: [.totalFileAllocatedSizeKey]) else { return 0 }
+        guard let enumerator = cacheEnumerator(includingPropertiesForKeys: [.totalFileAllocatedSizeKey]) else {
+            return 0
+        }
         return enumerator.flatMap { ($0 as? URL)?.totalFileAllocatedSize }.reduce(0, +)
     }
     
@@ -130,7 +132,8 @@ public final class DiskCache<T> {
     }
     
     private func cacheEnumerator(includingPropertiesForKeys keys: [URLResourceKey]?) -> FileManager.DirectoryEnumerator? {
-        return fileManager.enumerator(at: cacheDirectory, includingPropertiesForKeys: keys, options: [], errorHandler: { (url, error) -> Bool in
+        return fileManager.enumerator(at: cacheDirectory, includingPropertiesForKeys: keys, options: [], errorHandler: {
+            (_, error) -> Bool in
             Log.error(error)
             return true
         })
