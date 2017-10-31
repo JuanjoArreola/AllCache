@@ -61,6 +61,7 @@ class RequestingCache<T> {
         setCached(fetching: request, forIdentifier: fetcher.identifier)
         request.finished {
             self.setCached(fetching: nil, forIdentifier: fetcher.identifier)
+            Log.debug("(\(fetcher.identifier)) fetch completed")
         }
         return request
     }

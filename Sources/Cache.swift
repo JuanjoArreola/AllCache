@@ -137,9 +137,7 @@ open class Cache<T: AnyObject> {
     }
     
     private func fetchObject(for descriptor: CachableDescriptor<T>, request: Request<T>) {
-        request.subrequest = requestCache.fetchingRequest(fetcher: descriptor.fetcher, completion: { result in
-            Log.debug("(\(descriptor.fetcher.identifier)) fetched")
-            
+        request.subrequest = requestCache.fetchingRequest(fetcher: descriptor.fetcher, completion: { result in            
             if descriptor.processor == nil {
                 self.memoryCache.set(object: result.object, forKey: descriptor.key, in: self.responseQueue)
                 request.complete(with: result.object, in: self.responseQueue)

@@ -11,7 +11,7 @@ import AllCache
 
 class MemoryTests: XCTestCase {
     
-    var cache = try! Cache<Icecream>(identifier: "icecream")
+    var cache = try! Cache<Icecream>(identifier: "icecream_mem")
 
     override func setUp() {
         super.setUp()

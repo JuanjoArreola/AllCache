@@ -44,9 +44,9 @@ class RequestingCacheTests: XCTestCase {
             }
         }
         
-        let _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1"), processor: ToppingProcessor(identifier: "Oreo")) { icecream in
-                XCTAssertEqual(icecream.flavor, "Vanilla")
-                completed += 1
+        _ = cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1"), processor: ToppingProcessor(identifier: "Oreo")) { icecream in
+            XCTAssertEqual(icecream.flavor, "Vanilla")
+            completed += 1
         }.fail { error in
             XCTFail()
         }
