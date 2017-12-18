@@ -1,9 +1,27 @@
+// swift-tools-version:4.0
 import PackageDescription
 
 let package = Package(
     name: "AllCache",
+    products: [
+        .library(
+            name: "AllCache",
+            targets: ["AllCache"]),
+        ],
     dependencies: [
-        .Package(url: "../Logg", Version(2, 0, 0, prereleaseIdentifiers: ["beta"])),
-        .Package(url: "../AsyncRequest", Version(2, 0, 1, prereleaseIdentifiers: ["beta"]))
+        .package(url: "https://github.com/JuanjoArreola/Logg.git", from: "2.0.0"),
+        .package(url: "https://github.com/JuanjoArreola/AsyncRequest.git", from: "2.1.0")
+    ],
+    targets: [
+        .target(
+            name: "AllCache",
+            dependencies: ["Logg"],
+            path: "Sources"
+        ),
+        .testTarget(
+            name: "AllCacheTests",
+            dependencies: ["AllCache"],
+            path: "Tests"
+        )
     ]
 )
