@@ -40,7 +40,8 @@ open class Cache<T: AnyObject> {
     /// - parameter maxCapacity: The maximum size of the disk cache in bytes. This is only a hint
     required public init(identifier: String, serializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
         self.identifier = identifier
-        diskCache = try DiskCache<T>(identifier: identifier, serializer: serializer, maxCapacity: maxCapacity)
+        diskCache = try DiskCache<T>(identifier: identifier, serializer: serializer)
+        diskCache.maxCapacity = maxCapacity
         lowMemoryHandler.cache = self
     }
     

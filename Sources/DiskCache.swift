@@ -26,12 +26,11 @@ public final class DiskCache<T> {
     private var shrinking = false
     private let fileManager = FileManager.default
     
-    required public init(identifier: String, serializer: DataSerializer<T>, maxCapacity: Int = 0) throws {
+    required public init(identifier: String, serializer: DataSerializer<T>, directory: FileManager.SearchPathDirectory = .cachesDirectory) throws {
         self.identifier = identifier
         self.serializer = serializer
-        self.maxCapacity = maxCapacity
         
-        let cacheURL = try fileManager.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+        let cacheURL = try fileManager.url(for: directory, in: .userDomainMask, appropriateFor: nil, create: false)
         cacheDirectory = cacheURL.appendingPathComponent(identifier, isDirectory: true)
         
         if !fileManager.fileExists(atPath: cacheDirectory.path) {
@@ -65,6 +64,14 @@ public final class DiskCache<T> {
             return url
         }
         return nil
+    }
+    
+    public func allKeys() -> [String] {
+        guard let enumerator = cacheEnumerator(includingPropertiesForKeys: nil) else { return [] }
+        return enumerator.flatMap({
+            guard let name = ($0 as? URL)?.lastPathComponent else { return nil }
+            return String(name[name.index(name.startIndex, offsetBy: 1)...])
+        })
     }
     
     public func set(object: T, forKey key: String) throws {
@@ -182,13 +189,14 @@ private func validkey(from key: String) -> String {
 
 extension Data {
     var formattedSize: String {
-        if count < 1024 {
+        switch count {
+        case ..<1024:
             return "\(count) bytes"
-        }
-        if count < 1024 * 1024 {
+        case ..<(1024 * 1024):
             return "\(Double(count) / 1024.0) Kb"
+        default:
+            return "\(Double(count) / (1024 * 1024)) Mb"
         }
-        return "\(Double(count) / (1024 * 1024)) Mb"
     }
 }
 

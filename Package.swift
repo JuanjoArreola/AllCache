@@ -15,7 +15,7 @@ let package = Package(
     targets: [
         .target(
             name: "AllCache",
-            dependencies: ["Logg"],
+            dependencies: ["Logg", "AsyncRequest"],
             path: "Sources"
         ),
         .testTarget(
