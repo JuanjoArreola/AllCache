@@ -41,7 +41,7 @@ public final class DiskCache<T> {
     }
     
     func getCacheSize() -> Int {
-        guard let enumerator = cacheEnumerator(includingPropertiesForKeys: [.totalFileAllocatedSizeKey]) else {
+        guard let enumerator = cacheDirectory.enumerator(includingPropertiesForKeys: [.totalFileAllocatedSizeKey]) else {
             return 0
         }
         return enumerator.flatMap { ($0 as? URL)?.totalFileAllocatedSize }.reduce(0, +)
@@ -67,7 +67,7 @@ public final class DiskCache<T> {
     }
     
     public func allKeys() -> [String] {
-        guard let enumerator = cacheEnumerator(includingPropertiesForKeys: nil) else { return [] }
+        guard let enumerator = cacheDirectory.enumerator(includingPropertiesForKeys: nil) else { return [] }
         return enumerator.flatMap({
             guard let name = ($0 as? URL)?.lastPathComponent else { return nil }
             return String(name[name.index(name.startIndex, offsetBy: 1)...])
@@ -108,7 +108,7 @@ public final class DiskCache<T> {
     public func remove(olderThan limit: Date) {
         diskQueue.async {
             let resourceKeys: [URLResourceKey] = [.contentAccessDateKey, .totalFileAllocatedSizeKey]
-            guard let enumerator = self.cacheEnumerator(includingPropertiesForKeys: resourceKeys) else {
+            guard let enumerator = self.cacheDirectory.enumerator(includingPropertiesForKeys: resourceKeys) else {
                 Log.error(DiskCacheError.enumeratorError)
                 return
             }
@@ -120,7 +120,7 @@ public final class DiskCache<T> {
     }
     
     public func clear() {
-        guard let enumerator = cacheEnumerator(includingPropertiesForKeys: nil) else { return }
+        guard let enumerator = cacheDirectory.enumerator(includingPropertiesForKeys: nil) else { return }
         for case let url as URL in enumerator {
             removeIfPossible(url: url)
         }
@@ -136,14 +136,6 @@ public final class DiskCache<T> {
         } catch {
             Log.error(error)
         }
-    }
-    
-    private func cacheEnumerator(includingPropertiesForKeys keys: [URLResourceKey]?) -> FileManager.DirectoryEnumerator? {
-        return fileManager.enumerator(at: cacheDirectory, includingPropertiesForKeys: keys, options: [], errorHandler: {
-            (_, error) -> Bool in
-            Log.error(error)
-            return true
-        })
     }
     
     func restrictSize() {
@@ -185,6 +177,16 @@ private let fileNameRegex = try! NSRegularExpression(pattern: "[/:;?*|']", optio
 
 private func validkey(from key: String) -> String {
     return "c" + fileNameRegex.stringByReplacingMatches(in: key, options: [], range: key.wholeNSRange, withTemplate: "")
+}
+
+private extension URL {
+    func enumerator(includingPropertiesForKeys keys: [URLResourceKey]?) -> FileManager.DirectoryEnumerator? {
+        return FileManager.default.enumerator(at: self, includingPropertiesForKeys: keys, options: [], errorHandler: {
+            (_, error) -> Bool in
+            Log.error(error)
+            return true
+        })
+    }
 }
 
 extension Data {

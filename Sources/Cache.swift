@@ -77,17 +77,16 @@ open class Cache<T: AnyObject> {
     /// - parameter completion: The clusure to call when the cache finds the object
     /// - returns: An optional request
     open func object(for descriptor: CachableDescriptor<T>, completion: @escaping (T) -> Void) -> Request<T> {
-        let key = descriptor.resultKey ?? descriptor.key
-        let (request, ongoing) = requestCache.request(forKey: key)
+        let (request, ongoing) = requestCache.request(forKey: descriptor.resultKey)
         let proxy = request.proxy(success: completion)
         if ongoing { return proxy }
         
-        if let object = memoryCache.object(forKey: key) {
+        if let object = memoryCache.object(forKey: descriptor.resultKey) {
             request.complete(with: object, in: responseQueue)
             return proxy
         }
         diskQueue.async {
-            self.searchOnDisk(key: key, descriptor: descriptor, request: request)
+            self.searchOnDisk(key: descriptor.resultKey, descriptor: descriptor, request: request)
         }
         return proxy
     }
@@ -158,15 +157,14 @@ open class Cache<T: AnyObject> {
     @inline(__always)
     private func process(rawObject: T, with descriptor: CachableDescriptor<T>, request: Request<T>) {
         guard let processor = descriptor.processor, !request.completed else { return }
-        let key = descriptor.resultKey ?? ""
         
         processQueue.async {
-            Log.debug("processing (\(key))")
+            Log.debug("processing (\(descriptor.resultKey))")
             do {
                 let object = try processor.process(object: rawObject)
-                self.memoryCache.set(object: object, forKey: key, in: self.responseQueue)
+                self.memoryCache.set(object: object, forKey: descriptor.resultKey, in: self.responseQueue)
                 request.complete(with: object, in: self.responseQueue)
-                self.persist(object: object, data: nil, key: key)
+                self.persist(object: object, data: nil, key: descriptor.resultKey)
             } catch {
                 request.complete(with: error, in: self.responseQueue)
             }

@@ -12,11 +12,11 @@ import Foundation
 open class CachableDescriptor<T: Any> {
     open let key: String
     
-    open var resultKey: String? {
+    open var resultKey: String {
         if let processor = processor {
             return "\(key)__\(processor.key)"
         }
-        return nil
+        return key
     }
     
     let fetcher: Fetcher<T>

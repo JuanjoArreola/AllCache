@@ -91,10 +91,10 @@ class DiskTests: XCTestCase {
         let processor = ToppingProcessor(identifier: "Oreo")
         let descriptor = CachableDescriptor(key: "1", fetcher: IcecreamFetcher(identifier: "1"), processor: processor)
         _ = cache.object(for: descriptor, completion: { _ in
-            self.cache.memoryCache.removeObject(forKey: descriptor.resultKey!)
+            self.cache.memoryCache.removeObject(forKey: descriptor.resultKey)
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
                 do {
-                    let result = try self.cache.diskCache.object(forKey: descriptor.resultKey!)
+                    let result = try self.cache.diskCache.object(forKey: descriptor.resultKey)
                     XCTAssertEqual(result?.topping, "Oreo")
                 } catch {
                     Log.error(error)
