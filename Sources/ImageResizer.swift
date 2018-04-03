@@ -99,15 +99,13 @@ public final class DefaultImageResizer: Processor<Image> {
     public var size: CGSize
     public var scale: CGFloat
     
-    var backgroundColor: UIColor
     var mode: UIViewContentMode
     
-    public init(size: CGSize, scale: CGFloat, backgroundColor: UIColor, mode: UIViewContentMode) {
+    public init(size: CGSize, scale: CGFloat, mode: UIViewContentMode) {
         self.size = size
         self.scale = scale
-        self.backgroundColor = backgroundColor
         self.mode = mode
-        super.init(identifier: "\(size.width)x\(size.height),\(scale),\(mode.rawValue),\(backgroundColor.hash)")
+        super.init(identifier: "\(size.width)x\(size.height),\(scale),\(mode.rawValue)")
     }
     
     override public func process(object: Image) throws -> Image {
@@ -130,18 +128,7 @@ public final class DefaultImageResizer: Processor<Image> {
     }
     
     public func scale(image: UIImage) -> UIImage? {
-        var alpha: CGFloat = 0.0
-        var white: CGFloat = 0.0
-        backgroundColor.getWhite(&white, alpha: &alpha)
-        let hasAlpha = alpha < 1.0
-        
-        UIGraphicsBeginImageContextWithOptions(size, !hasAlpha, scale)
-        
-        if backgroundColor != UIColor.clear && mode != .scaleAspectFill && mode != .scaleToFill {
-            backgroundColor.set()
-            UIRectFill(CGRect(origin: CGPoint.zero, size: size))
-        }
-        
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
         image.draw(in: drawRect(for: image))
         
         let scaledImage = UIGraphicsGetImageFromCurrentImageContext()

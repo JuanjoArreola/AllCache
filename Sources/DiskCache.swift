@@ -44,7 +44,7 @@ public final class DiskCache<T> {
         guard let enumerator = cacheDirectory.enumerator(includingPropertiesForKeys: [.totalFileAllocatedSizeKey]) else {
             return 0
         }
-        return enumerator.flatMap { ($0 as? URL)?.totalFileAllocatedSize }.reduce(0, +)
+        return enumerator.compactMap { ($0 as? URL)?.totalFileAllocatedSize }.reduce(0, +)
     }
     
     public func object(forKey key: String) throws -> T? {
@@ -68,7 +68,7 @@ public final class DiskCache<T> {
     
     public func allKeys() -> [String] {
         guard let enumerator = cacheDirectory.enumerator(includingPropertiesForKeys: nil) else { return [] }
-        return enumerator.flatMap({
+        return enumerator.compactMap({
             guard let name = ($0 as? URL)?.lastPathComponent else { return nil }
             return String(name[name.index(name.startIndex, offsetBy: 1)...])
         })
@@ -112,10 +112,8 @@ public final class DiskCache<T> {
                 Log.error(DiskCacheError.enumeratorError)
                 return
             }
-            for case let url as URL in enumerator {
-                guard let lastAccess = url.contentAccessDate, lastAccess < limit else { continue }
-                self.removeIfPossible(url: url)
-            }
+            let urls = enumerator.compactMap({ $0 as? URL }).filter({ ($0.contentAccessDate ?? limit) < limit })
+            urls.forEach({ self.removeIfPossible(url: $0) })
         }
     }
     

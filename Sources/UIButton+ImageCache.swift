@@ -22,7 +22,7 @@ public extension UIButton {
 
         let mode = imageView?.contentMode ?? contentMode
         let originalSize = bounds.size
-        let resizer = DefaultImageResizer(size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: mode)
+        let resizer = DefaultImageResizer(size: bounds.size, scale: UIScreen.main.scale, mode: mode)
         resizer.next = processor
         let descriptor = CachableDescriptor<Image>(key: url.absoluteString, fetcher: ImageFetcher(url: url), processor: resizer)
         

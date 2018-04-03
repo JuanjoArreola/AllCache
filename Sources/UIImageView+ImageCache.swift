@@ -20,7 +20,7 @@ public extension UIImageView {
         guard let url = url else { return nil }
         
         let originalSize = bounds.size
-        let resizer = DefaultImageResizer(size: bounds.size, scale: UIScreen.main.scale, backgroundColor: hintColor, mode: contentMode)
+        let resizer = DefaultImageResizer(size: bounds.size, scale: UIScreen.main.scale, mode: contentMode)
         resizer.next = processor
         let descriptor = CachableDescriptor<Image>(key: url.absoluteString, fetcher: ImageFetcher(url: url), processor: resizer)
         
@@ -32,15 +32,5 @@ public extension UIImageView {
         })
     }
 }
-    
-    public extension UIView {
-        var hintColor: UIColor {
-            var color = self.backgroundColor ?? UIColor.clear
-            if color != UIColor.clear && (self.contentMode == .scaleAspectFill || self.contentMode == .scaleToFill) {
-                color = UIColor.black
-            }
-            return color
-        }
-    }
 
 #endif
