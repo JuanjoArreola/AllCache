@@ -27,7 +27,7 @@ open class ImageCache: Cache<Image> {
     #if os(iOS) || os(tvOS) || os(watchOS)
     open static let shared = try! ImageCache(identifier: "sharedImage", serializer: PNGImageSerializer())
     #else
-    open static let shared = try! ImageCache(identifier: "sharedImage", serializer: ImageSerializer())
+    public static let shared = try! ImageCache(identifier: "sharedImage", serializer: ImageSerializer())
     #endif
     
     required public init(identifier: String, serializer: DataSerializer<Image>, maxCapacity: Int = 0) throws {

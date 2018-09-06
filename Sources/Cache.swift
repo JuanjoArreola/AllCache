@@ -25,10 +25,10 @@ open class Cache<T: AnyObject> {
     private let requestCache = RequestingCache<T>()
     private let lowMemoryHandler = LowMemoryHandler<T>()
     
-    open let identifier: String
+    public let identifier: String
     
-    open let memoryCache = MemoryCache<T>()
-    open let diskCache: DiskCache<T>
+    public let memoryCache = MemoryCache<T>()
+    public let diskCache: DiskCache<T>
     
     open var responseQueue = DispatchQueue.main
     open var moveOriginalToMemoryCache = false
