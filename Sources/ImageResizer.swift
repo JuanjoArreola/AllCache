@@ -136,7 +136,7 @@ public final class DefaultImageResizer: Processor<Image> {
         return scaledImage
     }
     
-    open func drawRect(for image: Image) -> CGRect {
+    public func drawRect(for image: Image) -> CGRect {
         if let method = resizeMethods[mode] {
             return method(size, image.size)
         }

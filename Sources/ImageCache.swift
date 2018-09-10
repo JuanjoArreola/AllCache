@@ -25,7 +25,7 @@ import AsyncRequest
 open class ImageCache: Cache<Image> {
     
     #if os(iOS) || os(tvOS) || os(watchOS)
-    open static let shared = try! ImageCache(identifier: "sharedImage", serializer: PNGImageSerializer())
+    public static let shared = try! ImageCache(identifier: "sharedImage", serializer: PNGImageSerializer())
     #else
     public static let shared = try! ImageCache(identifier: "sharedImage", serializer: ImageSerializer())
     #endif
