@@ -13,7 +13,7 @@ import UIKit
 public final class PNGImageSerializer: AbstractImageSerializer {
     
     override public func serialize(object: Image) throws -> Data {
-        if let data = UIImagePNGRepresentation(object) {
+        if let data = object.pngData() {
             return data
         }
         throw DataSerializerError.serializationError

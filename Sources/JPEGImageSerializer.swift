@@ -13,7 +13,7 @@
     public final class JPEGImageSerializer: AbstractImageSerializer {
         
         override public func serialize(object: UIImage) throws -> Data {
-            if let data = UIImageJPEGRepresentation(object, 0.9) {
+            if let data = object.jpegData(compressionQuality: 0.9) {
                 return data
             }
             throw DataSerializerError.serializationError

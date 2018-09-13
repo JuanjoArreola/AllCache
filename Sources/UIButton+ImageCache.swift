@@ -14,7 +14,7 @@ import AsyncRequest
 public extension UIButton {
     
     final func requestImage(with url: URL?,
-                            for controlState: UIControlState,
+                            for controlState: UIControl.State,
                             placeholder: UIImage? = nil,
                             processor: Processor<UIImage>? = nil) -> Request<UIImage>? {
         setImage(placeholder ?? image(for: controlState), for: controlState)
