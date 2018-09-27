@@ -20,4 +20,6 @@ Pod::Spec.new do |s|
   s.dependency "Logg", "~> 2.0.0"
   s.dependency "AsyncRequest", "~> 2.1.0"
 
+  s.swift_version = '4.2'
+
 end
