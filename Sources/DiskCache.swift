@@ -52,7 +52,7 @@ public final class DiskCache<T> {
         if !fileManager.fileExists(at: url) {
             return nil
         }
-        Log.debug("🔑(\(key)) found on disk")
+        log.debug("🔑(\(key)) found on disk")
         diskQueue.async { self.updateLastAccess(ofKey: key) }
         
         return try serializer.deserialize(data: Data(contentsOf: url))
@@ -82,7 +82,7 @@ public final class DiskCache<T> {
     public func set(data: Data, forKey key: String) throws {
         let url = cacheDirectory.appendingPathComponent(validkey(from: key))
         try data.write(to: url, options: .atomicWrite)
-        Log.debug("💽 Saved (\(key)): \(data.formattedSize)")
+        log.debug("💽 Saved (\(key)): \(data.formattedSize)")
         size += data.count
         restrictSize()
     }
@@ -92,7 +92,7 @@ public final class DiskCache<T> {
         do {
             try fileManager.setAttributes([.modificationDate: Date()], ofItemAtPath: path)
         } catch {
-            Log.error(error)
+            log.error(error)
         }
     }
     
@@ -109,7 +109,7 @@ public final class DiskCache<T> {
         diskQueue.async {
             let resourceKeys: [URLResourceKey] = [.contentAccessDateKey, .totalFileAllocatedSizeKey]
             guard let enumerator = self.cacheDirectory.enumerator(includingPropertiesForKeys: resourceKeys) else {
-                Log.error(DiskCacheError.enumeratorError)
+                log.error(DiskCacheError.enumeratorError)
                 return
             }
             let urls = enumerator.compactMap({ $0 as? URL }).filter({ ($0.contentAccessDate ?? limit) < limit })
@@ -128,11 +128,11 @@ public final class DiskCache<T> {
     @inline(__always)
     private func removeIfPossible(url: URL) {
         do {
-            Log.debug("💽 Deleting (\(url.lastPathComponent))")
+            log.debug("💽 Deleting (\(url.lastPathComponent))")
             try fileManager.removeItem(at: url)
             size -= url.totalFileAllocatedSize ?? 0
         } catch {
-            Log.error(error)
+            log.error(error)
         }
     }
     
@@ -143,12 +143,12 @@ public final class DiskCache<T> {
             if self.shrinking { return }
             self.shrinking = true
             do {
-                Log.debug("💽 Original size: \(self.size)")
+                log.debug("💽 Original size: \(self.size)")
                 try self.restrictSize(percent: 0.8)
-                Log.debug("💽 Final size: \(self.size)")
+                log.debug("💽 Final size: \(self.size)")
                 self.shrinking = false
             } catch {
-                Log.error(error)
+                log.error(error)
                 self.shrinking = false
             }
         }
@@ -181,7 +181,7 @@ private extension URL {
     func enumerator(includingPropertiesForKeys keys: [URLResourceKey]?) -> FileManager.DirectoryEnumerator? {
         return FileManager.default.enumerator(at: self, includingPropertiesForKeys: keys, options: [], errorHandler: {
             (_, error) -> Bool in
-            Log.error(error)
+            log.error(error)
             return true
         })
     }

@@ -97,13 +97,13 @@ class DiskTests: XCTestCase {
                     let result = try self.cache.diskCache.object(forKey: descriptor.resultKey)
                     XCTAssertEqual(result?.topping, "Oreo")
                 } catch {
-                    Log.error(error)
+                    log.error(error)
                     XCTFail()
                 }
                 expectation.fulfill()
             }
         }).fail(handler: { error in
-            Log.error(error)
+            log.error(error)
             XCTFail()
             expectation.fulfill()
         })

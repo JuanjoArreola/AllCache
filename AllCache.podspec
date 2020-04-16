@@ -1,8 +1,8 @@
 Pod::Spec.new do |s|
 
   s.name         = "AllCache"
-  s.version      = "3.4.0"
-  s.summary      = "AllCache is a swift 4 generic cache"
+  s.version      = "3.5.0"
+  s.summary      = "AllCache is a swift 5 generic cache"
 
   s.homepage     = "https://github.com/JuanjoArreola/AllCache"
   s.license      = { :type => "MIT", :file => "LICENSE" }
@@ -17,9 +17,9 @@ Pod::Spec.new do |s|
   s.source_files = "Sources/*.swift"
   s.requires_arc = true
 
-  s.dependency "Logg", "~> 2.0.0"
-  s.dependency "AsyncRequest", "~> 2.1.0"
+  s.dependency "Logg", "~> 2.1.0"
+  s.dependency "AsyncRequest", "~> 2.2.0"
 
-  s.swift_version = '4.2'
+  s.swift_version = '5.0'
 
 end

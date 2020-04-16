@@ -29,7 +29,7 @@ public extension UIButton {
         return ImageCache.shared.object(for: descriptor, completion: { [weak self] image in
             self?.setImage(image, for: controlState)
             if let size = self?.bounds.size, originalSize != size {
-                Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(self!.description)")
+                log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(self!.description)")
             }
         })
     }

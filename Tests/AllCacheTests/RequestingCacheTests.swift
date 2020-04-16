@@ -74,7 +74,7 @@ class RequestingCacheTests: XCTestCase {
             let _ = self.cache.object(forKey: "1", fetcher: IcecreamFetcher(identifier: "1")) { icecream in
                 XCTAssertEqual(icecream.flavor, "Vanilla")
             }.fail(handler: { error in
-                Log.error(error)
+                log.error(error)
                 XCTFail()
             }).finished {
                 expectation.fulfill()

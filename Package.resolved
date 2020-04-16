@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "AsyncRequest",
+        "repositoryURL": "/Users/juanjo/Devel/AsyncRequest",
+        "state": {
+          "branch": null,
+          "revision": "d40ec59cf50ec3855029526b1073bf03e65f22e0",
+          "version": "2.2.0"
+        }
+      },
+      {
+        "package": "Logg",
+        "repositoryURL": "/Users/juanjo/Devel/Logg",
+        "state": {
+          "branch": null,
+          "revision": "61b69c2831fea3ff996d8bca8ccbe24425cb8bd4",
+          "version": "2.1.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -16,7 +16,7 @@ private let diskWriteQueue = DispatchQueue(label: "com.allcache.DiskWriteQueue",
 private let fetchQueue = DispatchQueue(label: "com.allcache.FetchQueue", attributes: [])
 private let processQueue = DispatchQueue(label: "com.allcache.ProcessQueue", attributes: .concurrent)
 
-public let Log = LoggerContainer(loggers: [ConsoleLogger(formatter: AllCacheFormatter(), level: [.warning, .error, .severe])])
+public let log = CompositeLogger(loggers: [ConsoleLogger(formatter: AllCacheFormatter(), level: [.warning, .error, .severe])])
 
 /// The Cache class is a generic container that stores key-value pairs, 
 /// internally has a memory cache and a disk cache
@@ -159,7 +159,7 @@ open class Cache<T: AnyObject> {
         guard let processor = descriptor.processor, !request.completed else { return }
         
         processQueue.async {
-            Log.debug("processing (\(descriptor.resultKey))")
+            log.debug("processing (\(descriptor.resultKey))")
             do {
                 let object = try processor.process(object: rawObject)
                 self.memoryCache.set(object: object, forKey: descriptor.resultKey, in: self.responseQueue)
@@ -181,7 +181,7 @@ open class Cache<T: AnyObject> {
                     try self.diskCache.set(object: object, forKey: key)
                 }
             } catch {
-                Log.error(error)
+                log.error(error)
             }
         }
     }
@@ -222,7 +222,7 @@ open class Cache<T: AnyObject> {
 
 public extension Cache where T: Codable {
     
-    convenience public init(identifier: String, maxCapacity: Int = 0) throws {
+    convenience init(identifier: String, maxCapacity: Int = 0) throws {
         try self.init(identifier: identifier, serializer: CodableSerializer<T>(), maxCapacity: maxCapacity)
     }
 }

@@ -26,7 +26,7 @@ class ImageCacheTests: XCTestCase {
         let fetcher = ImageFetcher(url: URL(string: "https://placeholdit.imgix.net/~text?txtsize=33&txt=Placeholder&w=400&h=200&bg=0000ff")!)
         _ = ImageCache.shared.object(forKey: "test", fetcher: fetcher, completion: { _ in
         }).fail(handler: { error in
-            Log.error(error)
+            log.error(error)
             XCTFail()
         }).finished {
             expectation.fulfill()
@@ -40,14 +40,14 @@ class ImageCacheTests: XCTestCase {
         let fetcher = ImageFetcher(url: URL(string: "https://placeholdit.imgix.net/~text?txtsize=33&txt=Placeholder&w=400&h=200&bg=0000ff")!)
         _ = ImageCache.shared.object(forKey: fetcher.identifier, fetcher: fetcher) { _ in
         }.fail(handler: { error in
-            Log.error(error)
+            log.error(error)
             XCTFail()
         }).finished {
             expectation.fulfill()
         }
         _ = ImageCache.shared.object(forKey: fetcher.identifier, fetcher: fetcher) { (getObject) -> Void in
         }.fail(handler: { error in
-            Log.error(error)
+            log.error(error)
             XCTFail()
         }).finished {
             expectation2.fulfill()

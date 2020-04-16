@@ -14,7 +14,7 @@ public final class MemoryCache<T: AnyObject> {
     
     public func object(forKey key: String) -> T? {
         if let result = cache.object(forKey: key as NSString) {
-            Log.debug("🔑(\(key)) found in memory")
+            log.debug("🔑(\(key)) found in memory")
             return result
         }
         return nil

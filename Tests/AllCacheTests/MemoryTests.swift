@@ -111,7 +111,7 @@ class MemoryTests: XCTestCase {
                     let vanilla = try self.cache.object(forKey: "0")
                     XCTAssertNil(vanilla)
                 } catch {
-                    Log.error(error)
+                    log.error(error)
                     XCTFail()
                 }
                 expectation.fulfill()

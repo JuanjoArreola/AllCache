@@ -27,7 +27,7 @@ public extension UIImageView {
         return ImageCache.shared.object(for: descriptor, completion: { [weak self] image in
             self?.image = image
             if let size = self?.bounds.size, originalSize != size {
-                Log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(descriptor.key)")
+                log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(descriptor.key)")
             }
         })
     }
