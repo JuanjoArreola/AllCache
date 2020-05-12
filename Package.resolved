@@ -3,20 +3,20 @@
     "pins": [
       {
         "package": "AsyncRequest",
-        "repositoryURL": "/Users/juanjo/Devel/AsyncRequest",
+        "repositoryURL": "https://github.com/JuanjoArreola/AsyncRequest.git",
         "state": {
           "branch": null,
-          "revision": "d40ec59cf50ec3855029526b1073bf03e65f22e0",
-          "version": "2.2.0"
+          "revision": "79ff3093749d325465bed47e6553e630d9020020",
+          "version": "2.3.0"
         }
       },
       {
         "package": "Logg",
-        "repositoryURL": "/Users/juanjo/Devel/Logg",
+        "repositoryURL": "https://github.com/JuanjoArreola/Logg.git",
         "state": {
           "branch": null,
-          "revision": "61b69c2831fea3ff996d8bca8ccbe24425cb8bd4",
-          "version": "2.1.0"
+          "revision": "a09a60f540e1947bff2aeaf9b0510a59e88f130d",
+          "version": "2.2.0"
         }
       }
     ]
