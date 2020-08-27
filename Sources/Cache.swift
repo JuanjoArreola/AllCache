@@ -16,7 +16,7 @@ private let diskWriteQueue = DispatchQueue(label: "com.allcache.DiskWriteQueue",
 private let fetchQueue = DispatchQueue(label: "com.allcache.FetchQueue", attributes: [])
 private let processQueue = DispatchQueue(label: "com.allcache.ProcessQueue", attributes: .concurrent)
 
-public let log = CompositeLogger(loggers: [ConsoleLogger(formatter: AllCacheFormatter(), level: [.warning, .error, .severe])])
+public let log = CompositeLogger(loggers: [ConsoleLogger(formatter: AllCacheFormatter(), level: [.error, .fault])])
 
 /// The Cache class is a generic container that stores key-value pairs, 
 /// internally has a memory cache and a disk cache
