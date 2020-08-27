@@ -15,8 +15,17 @@
         "repositoryURL": "https://github.com/JuanjoArreola/Logg.git",
         "state": {
           "branch": null,
-          "revision": "a09a60f540e1947bff2aeaf9b0510a59e88f130d",
-          "version": "2.2.0"
+          "revision": "df6783ef685bd97ae9bb56723cfcf238e85cfbb1",
+          "version": "2.3.0"
+        }
+      },
+      {
+        "package": "ShallowPromises",
+        "repositoryURL": "https://github.com/JuanjoArreola/ShallowPromises.git",
+        "state": {
+          "branch": null,
+          "revision": "9fbd4ff04904c6631405145ecd8a7c6d0d9daf72",
+          "version": "0.7.1"
         }
       }
     ]

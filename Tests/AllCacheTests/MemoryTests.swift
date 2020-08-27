@@ -35,6 +35,21 @@ class MemoryTests: XCTestCase {
         }
     }
     
+    func testCacheObjectConcurrent() {
+        do {
+            let m = MemoryCache<Icecream>()
+            DispatchQueue.global().async {
+                m.set(object: Icecream(id: "1", flavor: "Vanilla"), forKey: "1")
+            }
+            m.set(object: Icecream(id: "1", flavor: "Vanilla"), forKey: "1")
+//            cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1")
+            let vanilla = m.object(forKey: "1")
+            XCTAssertNotNil(vanilla)
+        } catch {
+            XCTFail()
+        }
+    }
+    
     func testNotCached() {
         do {
             let vanilla = try cache.object(forKey: "1")

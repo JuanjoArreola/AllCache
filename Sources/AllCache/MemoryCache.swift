@@ -12,6 +12,10 @@ public final class MemoryCache<T: AnyObject> {
     
     private let cache = NSCache<NSString, T>()
     
+    public init() {
+        
+    }
+    
     public func object(forKey key: String) -> T? {
         if let result = cache.object(forKey: key as NSString) {
             log.debug("🔑(\(key)) found in memory")
