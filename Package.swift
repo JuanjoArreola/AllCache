@@ -10,7 +10,7 @@ let package = Package(
             targets: ["AllCache"]),
         ],
     dependencies: [
-        .package(url: "https://github.com/JuanjoArreola/Logg.git", from: "2.3.0"),
+        .package(url: "https://github.com/JuanjoArreola/Logg.git", "2.3.0"..<"2.4.0"),
         .package(url: "https://github.com/JuanjoArreola/AsyncRequest.git", from: "2.3.0")
     ],
     targets: [
