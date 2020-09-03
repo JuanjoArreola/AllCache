@@ -32,8 +32,6 @@ public extension UIButton {
             if let size = self?.bounds.size, originalSize != size {
                 logger.error("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(self!.description)")
             }
-        }.onError { [weak self] error in
-            self?.setImage(placeholder, for: controlState)
         }
     }
 }

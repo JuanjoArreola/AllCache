@@ -36,11 +36,12 @@ public final class DiskCache<T, S: Serializer> where S.T == T {
         var result: T?
         try diskQueue.sync {
             let url = cacheDirectory.appendingPathComponent(validkey(from: key))
-            if fileManager.fileExists(atPath: url.path) {
-                result = try serializer.deserialize(Data(contentsOf: url))
-                diskQueue.async(flags: .barrier) {
-                    self.updateLastAccess(ofKey: key)
-                }
+            guard fileManager.fileExists(atPath: url.path) else {
+                return
+            }
+            result = try serializer.deserialize(Data(contentsOf: url))
+            diskQueue.async(flags: .barrier) {
+                self.updateLastAccess(ofKey: key)
             }
         }
         return result

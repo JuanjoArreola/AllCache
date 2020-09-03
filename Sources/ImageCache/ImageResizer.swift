@@ -39,7 +39,8 @@ private let resizeFunctions: [DefaultImageResizer.ContentMode: (CGSize, CGSize) 
 public final class DefaultImageResizer: Processor<Image> {
     
     public enum ContentMode: Int {
-        case scaleAspectFit, scaleAspectFill
+        case scaleToFill, scaleAspectFit, scaleAspectFill
+        case redraw
         case center, top, bottom, left, right
         case topLeft, topRight, bottomLeft, bottomRight
     }
@@ -83,18 +84,18 @@ public final class DefaultImageResizer: Processor<Image> {
         #endif
     }
     
+    #if os(iOS) || os(tvOS) || os(watchOS)
     public func scale(image: Image) -> Image? {
-        #if os(iOS) || os(tvOS) || os(watchOS)
-        
         UIGraphicsBeginImageContextWithOptions(size, false, scale)
         image.draw(in: drawRect(for: image))
         
         let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return scaledImage
+    }
         
-        #else
-        
+    #else
+    public func scale(image: Image) -> Image? {
         let scaledImage = Image(size: size)
         scaledImage.lockFocus()
         guard let context = NSGraphicsContext.current else {
@@ -104,9 +105,8 @@ public final class DefaultImageResizer: Processor<Image> {
         image.draw(in: drawRect(for: image), from: NSRect(origin: .zero, size: image.size), operation: .copy, fraction: 1)
         scaledImage.unlockFocus()
         return scaledImage
-        
-        #endif
     }
+    #endif
     
     public func drawRect(for image: Image) -> CGRect {
         if let method = resizeFunctions[mode] {

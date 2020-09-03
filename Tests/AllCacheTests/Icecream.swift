@@ -47,6 +47,14 @@ struct IcecreamFetcher: Fetcher {
     }
 }
 
+struct IcecreamCreator: Fetcher {
+    
+    func fetch() -> Promise<FetcherResult<Icecream>> {
+        let icecream = Icecream(id: "1", flavor: "Vanilla")
+        return Promise().fulfill(with: FetcherResult(instance: icecream))
+    }
+}
+
 class ToppingProcessor: Processor<Icecream> {
     
     static var toppingsAdded = 0

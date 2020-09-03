@@ -12,7 +12,7 @@ public struct FetcherResult<T> {
     var instance: T
     var data: Data?
     
-    public init(instance: T, data: Data?) {
+    public init(instance: T, data: Data? = nil) {
         self.instance = instance
         self.data = data
     }
