@@ -47,13 +47,19 @@ open class Cache<T, S: Serializer> where S.T == T {
         } else if let promise = promiseCache.instance(forKey: descriptor.descriptorKey) {
             return promise.proxy()
         }
+        let promise = createPromise(for: descriptor)
+        workingQueue.async {
+            self.searchOnDisk(descriptor: descriptor, promise: promise)
+        }
+        
+        return promise
+    }
+    
+    private func createPromise<F: Fetcher>(for descriptor: ElementDescriptor<T, F>) -> Promise<T> {
         let promise = Promise<T>().finally(in: workingQueue) {
             self.promiseCache.removeInstance(forKey: descriptor.descriptorKey)
         }
         promiseCache.set(promise, forKey: descriptor.descriptorKey)
-        workingQueue.async {
-            self.searchOnDisk(descriptor: descriptor, promise: promise)
-        }
         
         return promise
     }
