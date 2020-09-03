@@ -7,22 +7,28 @@ let package = Package(
     products: [
         .library(
             name: "AllCache",
-            targets: ["AllCache"]),
+            targets: ["AllCache", "ImageCache"]),
         ],
     dependencies: [
-        .package(url: "https://github.com/JuanjoArreola/Logg.git", "2.4.0"..<"2.5.0"),
-        .package(url: "https://github.com/JuanjoArreola/AsyncRequest.git", from: "2.3.0")
+        .package(url: "https://github.com/JuanjoArreola/ShallowPromises.git", from: "0.7.1"),
+        .package(url: "https://github.com/JuanjoArreola/Logg.git", from: "2.4.0")
     ],
     targets: [
         .target(
             name: "AllCache",
-            dependencies: ["Logg", "AsyncRequest"],
-            path: "Sources"
+            dependencies: ["ShallowPromises", "Logg"]
+        ),
+        .target(
+            name: "ImageCache",
+            dependencies: ["AllCache"]
         ),
         .testTarget(
             name: "AllCacheTests",
-            dependencies: ["AllCache"],
-            path: "Tests"
+            dependencies: ["AllCache"]
+        ),
+        .testTarget(
+            name: "ImageCacheTests",
+            dependencies: ["ImageCache"]
         )
     ]
 )

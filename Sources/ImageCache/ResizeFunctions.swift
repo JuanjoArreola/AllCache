@@ -1,15 +1,25 @@
 //
-//  ImageResizer.swift
-//  AllCache
+//  ResizeFunctions.swift
+//  ImageCache
 //
-//  Created by Juan Jose Arreola Simon on 2/8/16.
-//  Copyright © 2016 Juanjo. All rights reserved.
+//  Created by JuanJo on 02/09/20.
 //
 
+import Foundation
 import CoreGraphics
 
-public enum ImageProcessError: Error {
-    case resizeError
+func -(first: CGSize, second: CGSize) -> CGSize {
+    return CGSize(width: first.width - second.width, height: first.height - second.height)
+}
+
+extension CGSize {
+    var mid: CGPoint {
+        return CGPoint(x: width / 2.0, y: height / 2.0)
+    }
+    
+    var ratio: CGFloat {
+        return width / height
+    }
 }
 
 func aspectFit(size: CGSize, imageSize: CGSize) -> CGRect {
@@ -75,73 +85,3 @@ func bottomRight(size: CGSize, imageSize: CGSize) -> CGRect {
                          y: size.height - imageSize.height)
     return CGRect(origin: origin, size: imageSize)
 }
-
-#if os(iOS) || os(tvOS)
-    
-    import UIKit
-    
-let resizeMethods: [UIView.ContentMode: (CGSize, CGSize) -> CGRect] = [
-    .scaleAspectFit: aspectFit,
-    .scaleAspectFill: aspectFill,
-    .center: center,
-    .top: top,
-    .bottom: bottom,
-    .left: left,
-    .right: right,
-    .topLeft: topLeft,
-    .topRight: topRight,
-    .bottomLeft: bottomLeft,
-    .bottomRight: bottomRight,
-]
-
-public final class DefaultImageResizer: Processor<Image> {
-    
-    public var size: CGSize
-    public var scale: CGFloat
-    
-    var mode: UIView.ContentMode
-    
-    public init(size: CGSize, scale: CGFloat, mode: UIView.ContentMode) {
-        self.size = size
-        self.scale = scale
-        self.mode = mode
-        super.init(identifier: "\(size.width)x\(size.height),\(scale),\(mode.rawValue)")
-    }
-    
-    override public func process(object: Image) throws -> Image {
-        var image = object
-        if shouldScale(image: image) {
-            guard let scaledImage = self.scale(image: object) else {
-                throw ImageProcessError.resizeError
-            }
-            image = scaledImage
-        }
-        if let nextProcessor = next {
-            return try nextProcessor.process(object: image)
-        }
-        return image
-    }
-    
-    func shouldScale(image: Image) -> Bool {
-        let scale = self.scale != 0.0 ? self.scale : UIScreen.main.scale
-        return image.size != size || image.scale != scale
-    }
-    
-    public func scale(image: UIImage) -> UIImage? {
-        UIGraphicsBeginImageContextWithOptions(size, false, scale)
-        image.draw(in: drawRect(for: image))
-        
-        let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return scaledImage
-    }
-    
-    public func drawRect(for image: Image) -> CGRect {
-        if let method = resizeMethods[mode] {
-            return method(size, image.size)
-        }
-        return CGRect(origin: CGPoint.zero, size: size)
-    }
-}
-
-#endif

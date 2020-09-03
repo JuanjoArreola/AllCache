@@ -1,9 +1,8 @@
 //
 //  Networking.swift
-//  AllCache
+//  ImageCache
 //
-//  Created by Juan Jose Arreola on 2/5/16.
-//  Copyright © 2016 Juanjo. All rights reserved.
+//  Created by JuanJo on 31/08/20.
 //
 
 import Foundation

@@ -2,21 +2,21 @@
   "object": {
     "pins": [
       {
-        "package": "AsyncRequest",
-        "repositoryURL": "https://github.com/JuanjoArreola/AsyncRequest.git",
-        "state": {
-          "branch": null,
-          "revision": "79ff3093749d325465bed47e6553e630d9020020",
-          "version": "2.3.0"
-        }
-      },
-      {
         "package": "Logg",
         "repositoryURL": "https://github.com/JuanjoArreola/Logg.git",
         "state": {
           "branch": null,
           "revision": "2c4ac9935170b6af1d5e6243e5d3fa085f482070",
           "version": "2.4.0"
+        }
+      },
+      {
+        "package": "ShallowPromises",
+        "repositoryURL": "https://github.com/JuanjoArreola/ShallowPromises.git",
+        "state": {
+          "branch": null,
+          "revision": "9fbd4ff04904c6631405145ecd8a7c6d0d9daf72",
+          "version": "0.7.1"
         }
       }
     ]

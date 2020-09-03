@@ -2,8 +2,7 @@
 //  Processor.swift
 //  AllCache
 //
-//  Created by Juan Jose Arreola on 2/5/16.
-//  Copyright © 2016 Juanjo. All rights reserved.
+//  Created by JuanJo on 13/05/20.
 //
 
 import Foundation
@@ -13,9 +12,9 @@ open class Processor<T> {
     public let identifier: String
     public var next: Processor<T>?
     
-    public var key: String {
+    open var key: String {
         if let processor = next {
-            return "\(processor.key)__\(identifier)"
+            return "\(processor.key)-\(identifier)"
         }
         return identifier
     }
@@ -25,7 +24,7 @@ open class Processor<T> {
         self.next = next
     }
     
-    open func process(object: T) throws -> T {
-        fatalError("Not implemented")
+    open func process(_ instance: T) throws -> T {
+        return instance
     }
 }
