@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import NewCache
+import AllCache
 import ShallowPromises
 
 #if os(OSX)

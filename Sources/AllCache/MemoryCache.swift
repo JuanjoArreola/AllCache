@@ -2,47 +2,37 @@
 //  MemoryCache.swift
 //  AllCache
 //
-//  Created by Juan Jose Arreola on 2/5/16.
-//  Copyright © 2016 Juanjo. All rights reserved.
+//  Created by JuanJo on 13/05/20.
 //
 
 import Foundation
 
-public final class MemoryCache<T: AnyObject> {
+class Box<T> {
+    var instance: T
     
-    private let cache = NSCache<NSString, T>()
+    init(_ instance: T) {
+        self.instance = instance
+    }
+}
+
+/// You can add, remove, and query items in the cache from different threads without having to lock the cache yourself.
+public final class MemoryCache<T> {
     
-    public init() {
-        
+    private let cache = NSCache<NSString, Box<T>>()
+    
+    func instance(forKey key: String) -> T? {
+        return cache.object(forKey: key as NSString)?.instance
     }
     
-    public func object(forKey key: String) -> T? {
-        if let result = cache.object(forKey: key as NSString) {
-            log.debug("🔑(\(key)) found in memory")
-            return result
-        }
-        return nil
+    func set(_ instance: T, forKey key: String) {
+        self.cache.setObject(Box(instance), forKey: key as NSString)
     }
     
-    public func set(object: T?, forKey key: String) {
-        if let object = object {
-            cache.setObject(object, forKey: key as NSString)
-        }
-    }
-    
-    func set(object: T?, forKey key: String, in queue: DispatchQueue) {
-        guard let object = object else { return }
-        queue.async {
-            self.cache.setObject(object, forKey: key as NSString)
-        }
-    }
-    
-    public func removeObject(forKey key: String) {
+    public func removeInstance(forKey key: String) {
         cache.removeObject(forKey: key as NSString)
     }
     
     public func clear() {
         cache.removeAllObjects()
     }
-    
 }

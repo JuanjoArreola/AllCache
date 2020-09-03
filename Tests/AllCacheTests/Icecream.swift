@@ -1,17 +1,15 @@
 //
 //  Icecream.swift
-//  AllCache
+//  AllCacheTests
 //
-//  Created by Juan Jose Arreola on 17/05/17.
-//
+//  Created by JuanJo on 02/09/20.
 //
 
 import Foundation
 import AllCache
-import AsyncRequest
+import ShallowPromises
 
-class Icecream: Codable {
-    
+class Icecream: Codable, Equatable {
     var id: String
     var flavor: String
     var topping: String?
@@ -20,24 +18,32 @@ class Icecream: Codable {
         self.id = id
         self.flavor = flavor
     }
+    
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
-class IcecreamFetcher: Fetcher<Icecream> {
+struct IcecreamFetcher: Fetcher {
     
     var data = ["1": "Vanilla", "2": "Chocolate", "3": "Mango"]
     static var fetchedCount = 0
     
-    override func fetch(respondIn queue: DispatchQueue, completion: @escaping (FetcherResult<Icecream>) -> Void) -> Request<FetcherResult<Icecream>> {
-        let request = Request<FetcherResult<Icecream>>(successHandler: completion)
-        queue.asyncAfter(deadline: DispatchTime.now() + 0.3) {
+    var identifier: String
+    
+    func fetch() -> Promise<FetcherResult<Icecream>> {
+        let promise = Promise<FetcherResult<Icecream>>()
+        
+        DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + 0.3) {
             if let flavor = self.data[self.identifier] {
                 IcecreamFetcher.fetchedCount += 1
-                request.complete(with: FetcherResult<Icecream>(object: Icecream(id: self.identifier, flavor: flavor), data: nil))
+                let result = Icecream(id: self.identifier, flavor: flavor)
+                promise.fulfill(with: FetcherResult(instance: result, data: nil))
             } else {
-                request.complete(with: FetchError.notFound)
+                promise.complete(with: FetchError.notFound)
             }
         }
-        return request
+        return promise
     }
 }
 
@@ -45,9 +51,9 @@ class ToppingProcessor: Processor<Icecream> {
     
     static var toppingsAdded = 0
     
-    override open func process(object: Icecream) throws -> Icecream {
-        object.topping = self.identifier
+    override func process(_ instance: Icecream) throws -> Icecream {
+        instance.topping = self.identifier
         ToppingProcessor.toppingsAdded += 1
-        return object
+        return instance
     }
 }

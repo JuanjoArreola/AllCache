@@ -2,7 +2,7 @@
 //  ResizeFunctions.swift
 //  ImageCache
 //
-//  Created by Juan Jose Arreola Simon on 02/09/20.
+//  Created by JuanJo on 02/09/20.
 //
 
 import Foundation

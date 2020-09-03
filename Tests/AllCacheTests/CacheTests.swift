@@ -6,7 +6,7 @@
 //
 
 import XCTest
-import NewCache
+import AllCache
 
 class CacheTests: XCTestCase {
     

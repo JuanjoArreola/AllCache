@@ -8,7 +8,7 @@
 #if os(iOS) || os(tvOS) || os(watchOS)
     
 import UIKit
-import NewCache
+import AllCache
     
     public final class JPEGImageSerializer: ImageSerializer {
         

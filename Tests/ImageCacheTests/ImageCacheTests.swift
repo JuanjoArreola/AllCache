@@ -1,6 +1,6 @@
 //
 //  ImageCacheTests.swift
-//  NewCacheTests
+//  AllCacheTests
 //
 //  Created by JuanJo on 02/09/20.
 //

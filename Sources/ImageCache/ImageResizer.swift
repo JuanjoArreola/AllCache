@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import NewCache
+import AllCache
 
 #if os(OSX)
 

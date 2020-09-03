@@ -9,7 +9,7 @@
 
 import UIKit
 import ShallowPromises
-import NewCache
+import AllCache
 
 public extension UIImageView {
     
@@ -28,7 +28,7 @@ public extension UIImageView {
         return ImageCache.shared.instance(for: descriptor).onSuccess { [weak self] image in
             self?.image = image
             if let size = self?.bounds.size, originalSize != size {
-//                log.warn("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(descriptor.key)")
+                logger.error("Size mismatch, requested: \(originalSize) ≠ bounds: \(size) - \(descriptor.key)")
             }
         }.onError { [weak self] error in
             self?.image = placeholder

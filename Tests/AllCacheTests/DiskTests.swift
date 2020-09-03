@@ -2,38 +2,34 @@
 //  DiskTests.swift
 //  AllCache
 //
-//  Created by Juan Jose Arreola on 19/05/17.
-//
+//  Created by JuanJo on 30/08/20.
 //
 
 import XCTest
 import AllCache
 
+private let concurrentQueue = DispatchQueue(label: "com.allcache.TestConcurrentQueue", attributes: .concurrent)
+
 class DiskTests: XCTestCase {
     
-    var cache = try! Cache<Icecream>(identifier: "icecream_disk")
+    var cache = try! DiskCache(identifier: "new_icecream_disk", serializer: JSONSerializer<Icecream>())
 
-    override func setUp() {
-        super.setUp()
-        
+    override func setUpWithError() throws {
         cache.clear()
     }
-    
-    override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-        super.tearDown()
-    }
 
-    func testCacheObject() {
-        let expectation: XCTestExpectation = self.expectation(description: "testFetchObject")
+    override func tearDownWithError() throws {
+        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    }
+    
+    func testCacheObject() throws {
+        let expectation: XCTestExpectation = self.expectation(description: "testFetch")
         
-        cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1", errorHandler: { error in
-            XCTFail()
-        })
-        cache.memoryCache.removeObject(forKey: "1")
+        try cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1")
+        
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
             do {
-                let vanilla = try self.cache.object(forKey: "1")
+                let vanilla = try self.cache.instance(forKey: "1")
                 XCTAssertNotNil(vanilla)
                 expectation.fulfill()
             } catch {
@@ -44,102 +40,41 @@ class DiskTests: XCTestCase {
         waitForExpectations(timeout: 1.0, handler: nil)
     }
     
-    func testGetCached() {
-        let expectation: XCTestExpectation = self.expectation(description: "testFetchObject")
+    func testConcurrentRead() throws {
+        let expectation = self.expectation(description: "concurrentRead")
         
-        cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1", errorHandler: { error in
-            XCTFail()
-        })
-        cache.memoryCache.removeObject(forKey: "1")
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
-            _ = self.cache.object(forKey: "1", fetcher: Fetcher<Icecream>(identifier: "1"), completion: { icecream in
-                XCTAssertEqual(icecream.flavor, "Vanilla")
-            }).fail(handler: { error in
-                XCTFail()
-            }).finished(handler: { 
+        var result1: Icecream?
+        var result2: Icecream?
+        
+        try! cache.set(Icecream(id: "1", flavor: "vanilla"), forKey: "default")
+        
+        print("write:  \(DispatchTime.now())")
+        concurrentQueue.async {
+            result1 = try? self.cache.instance(forKey: "default")
+            print("read 1: \(DispatchTime.now())")
+            if let result = result2 {
+                XCTAssertEqual(result1, result)
+                print("equal 1")
                 expectation.fulfill()
-            })
+            }
         }
-        
-        wait(for: [expectation], timeout: 1.0)
-    }
-    
-    func testCachedOriginal() {
-        let expectation: XCTestExpectation = self.expectation(description: "testCachedOriginal")
-        
-        cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1", errorHandler: { error in
-            XCTFail()
-        })
-        cache.memoryCache.removeObject(forKey: "1")
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
-            let fetcher = Fetcher<Icecream>(identifier: "2")
-            let processor = ToppingProcessor(identifier: "Oreo")
-            _ = self.cache.object(forKey: "1", fetcher: fetcher, processor: processor, completion: { icecream in
-                XCTAssertEqual(icecream.flavor, "Vanilla")
-            }).fail(handler: { error in
-                XCTFail()
-            }).finished {
+        concurrentQueue.async {
+            result2 = try? self.cache.instance(forKey: "default")
+            print("read 2: \(DispatchTime.now())")
+            if let result = result1 {
+                XCTAssertEqual(result2, result)
+                print("equal 2")
                 expectation.fulfill()
             }
         }
         
         wait(for: [expectation], timeout: 1.0)
     }
-    
-    func testFetchProcessCache() {
-        let expectation: XCTestExpectation = self.expectation(description: "testFetchProcessCache")
-        let processor = ToppingProcessor(identifier: "Oreo")
-        let descriptor = CachableDescriptor(key: "1", fetcher: IcecreamFetcher(identifier: "1"), processor: processor)
-        _ = cache.object(for: descriptor, completion: { _ in
-            self.cache.memoryCache.removeObject(forKey: descriptor.resultKey)
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
-                do {
-                    let result = try self.cache.diskCache.object(forKey: descriptor.resultKey)
-                    XCTAssertEqual(result?.topping, "Oreo")
-                } catch {
-                    log.error(error)
-                    XCTFail()
-                }
-                expectation.fulfill()
-            }
-        }).fail(handler: { error in
-            log.error(error)
-            XCTFail()
-            expectation.fulfill()
-        })
-        
-        wait(for: [expectation], timeout: 11.0)
-    }
-    
-    func testInvalidSerializer() {
-        let expectation: XCTestExpectation = self.expectation(description: "testInvalidSerializer")
-        
-        let cache = try! Cache<Icecream>(identifier: "icecream", serializer: InvalidSerializer())
-        cache.set(Icecream(id: "1", flavor: "Vanilla"), forKey: "1", errorHandler: { error in
-            XCTFail()
-        })
-        cache.memoryCache.removeObject(forKey: "1")
-        
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
-            do {
-                let _ = try cache.object(forKey: "1")
-                XCTFail()
-            } catch {
-            }
-            expectation.fulfill()
+
+    func testPerformanceRead() throws {
+        self.measure {
+            _ = try? self.cache.instance(forKey: "default")
         }
-        
-        waitForExpectations(timeout: 1.0, handler: nil)
     }
-}
 
-enum IcecreamError: Error {
-    case test
-}
-
-class InvalidSerializer: CodableSerializer<Icecream> {
-    
-    override func deserialize(data: Data) throws -> Icecream {
-        throw IcecreamError.test
-    }
 }

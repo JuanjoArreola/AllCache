@@ -1,6 +1,6 @@
 //
 //  JSONSerializer.swift
-//  NewCache
+//  AllCache
 //
 //  Created by JuanJo on 13/05/20.
 //

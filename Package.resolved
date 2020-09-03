@@ -2,15 +2,6 @@
   "object": {
     "pins": [
       {
-        "package": "AsyncRequest",
-        "repositoryURL": "https://github.com/JuanjoArreola/AsyncRequest.git",
-        "state": {
-          "branch": null,
-          "revision": "79ff3093749d325465bed47e6553e630d9020020",
-          "version": "2.3.0"
-        }
-      },
-      {
         "package": "Logg",
         "repositoryURL": "https://github.com/JuanjoArreola/Logg.git",
         "state": {

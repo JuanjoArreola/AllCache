@@ -8,7 +8,7 @@
 #if os(iOS) || os(tvOS)
 
 import UIKit
-import NewCache
+import AllCache
 
 extension UIView.ContentMode {
     var resizerMode: DefaultImageResizer.ContentMode {
