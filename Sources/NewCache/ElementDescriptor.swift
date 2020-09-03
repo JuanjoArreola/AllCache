@@ -7,15 +7,21 @@
 
 import Foundation
 
-struct ElementDescriptor<T, F: Fetcher, P: Processor> where F.T == T, P.T == T {
-    var key: String
-    var fetcher: F?
-    var processor: P?
+public struct ElementDescriptor<T, F: Fetcher> where F.T == T {
+    public var key: String
+    public var fetcher: F?
+    public var processor: Processor<T>?
     
-    var descriptorKey: String {
+    public var descriptorKey: String {
         if let processor = processor {
             return [key, processor.key].joined(separator: "-")
         }
         return key
+    }
+    
+    public init(key: String, fetcher: F?, processor: Processor<T>?) {
+        self.key = key
+        self.fetcher = fetcher
+        self.processor = processor
     }
 }

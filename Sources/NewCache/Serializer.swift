@@ -6,3 +6,9 @@ public protocol Serializer {
     func serialize(_ instance: T) throws -> Data
     func deserialize(_ data: Data) throws -> T
 }
+
+public enum SerializationError: Error {
+    case cannotSerialize
+    case cannotDeserialize
+    case notImplemented
+}

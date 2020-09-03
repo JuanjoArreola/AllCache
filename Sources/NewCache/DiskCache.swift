@@ -7,7 +7,7 @@
 
 import Foundation
 
-internal let diskQueue = DispatchQueue(label: "com.allcache.DiskQueue", attributes: .concurrent)
+private let diskQueue = DispatchQueue(label: "com.allcache.DiskQueue", attributes: .concurrent)
 
 public final class DiskCache<T, S: Serializer> where S.T == T {
     
@@ -32,27 +32,33 @@ public final class DiskCache<T, S: Serializer> where S.T == T {
         }
     }
     
-    // TODO: Synchronize
     public func instance(forKey key: String) throws -> T? {
-        let url = cacheDirectory.appendingPathComponent(validkey(from: key))
-        if fileManager.fileExists(atPath: url.path) {
-            diskQueue.async { self.updateLastAccess(ofKey: key) }
-            return try serializer.deserialize(Data(contentsOf: url))
+        var result: T?
+        try diskQueue.sync {
+            let url = cacheDirectory.appendingPathComponent(validkey(from: key))
+            if fileManager.fileExists(atPath: url.path) {
+                result = try serializer.deserialize(Data(contentsOf: url))
+                diskQueue.async(flags: .barrier) {
+                    self.updateLastAccess(ofKey: key)
+                }
+            }
         }
-        return nil
+        return result
     }
     
     public func removeInstance(forKey key: String) throws {
-        let url = cacheDirectory.appendingPathComponent(validkey(from: key))
-        let attributes = try? fileManager.attributesOfItem(atPath: url.path)
-        if let fileSize = attributes?[.size] as? NSNumber {
-            size -= fileSize.intValue
+        diskQueue.async(flags: .barrier) {
+            let url = self.cacheDirectory.appendingPathComponent(validkey(from: key))
+            let attributes = try? self.fileManager.attributesOfItem(atPath: url.path)
+            try? self.fileManager.removeItem(at: url)
+            if let fileSize = attributes?[.size] as? NSNumber {
+                self.size -= fileSize.intValue
+            }
         }
-        try fileManager.removeItem(at: url)
     }
     
     public func remove(olderThan limit: Date) {
-        diskQueue.async {
+        diskQueue.async(flags: .barrier) {
             let resourceKeys: [URLResourceKey] = [.contentAccessDateKey, .totalFileAllocatedSizeKey]
             guard let enumerator = self.cacheDirectory.enumerator(includingPropertiesForKeys: resourceKeys) else {
                 return
@@ -75,18 +81,22 @@ public final class DiskCache<T, S: Serializer> where S.T == T {
     }
     
     public func set(data: Data, forKey key: String) throws {
-        let url = cacheDirectory.appendingPathComponent(validkey(from: key))
-        try data.write(to: url, options: .atomicWrite)
-        size += data.count
-        restrictSize()
+        diskQueue.async(flags: .barrier) {
+            let url = self.cacheDirectory.appendingPathComponent(validkey(from: key))
+            try? data.write(to: url, options: .atomicWrite)
+            self.size += data.count
+            self.restrictSize()
+        }
     }
     
     public func clear() {
-        guard let enumerator = cacheDirectory.enumerator(includingPropertiesForKeys: nil) else { return }
-        for case let url as URL in enumerator {
-            removeIfPossible(url: url)
+        diskQueue.async(flags: .barrier) {
+            guard let enumerator = self.cacheDirectory.enumerator(includingPropertiesForKeys: nil) else { return }
+            for case let url as URL in enumerator {
+                self.removeIfPossible(url: url)
+            }
+            self.size = 0
         }
-        size = 0
     }
     
     func getCacheSize() -> Int {
@@ -143,8 +153,10 @@ public final class DiskCache<T, S: Serializer> where S.T == T {
 
 private let fileNameRegex = try! NSRegularExpression(pattern: "[/:;?*|']", options: [])
 
+@inline(__always)
 private func validkey(from key: String) -> String {
-    return "_" + fileNameRegex.stringByReplacingMatches(in: key, options: [], range: key.wholeNSRange, withTemplate: "")
+    let range = NSRange(location: 0, length: key.count)
+    return "_" + fileNameRegex.stringByReplacingMatches(in: key, options: [], range: range, withTemplate: "")
 }
 
 private extension URL {
@@ -153,32 +165,21 @@ private extension URL {
     }
 }
 
-private extension String {
-    
-    var wholeRange: Range<String.Index> {
-        return startIndex..<endIndex
-    }
-    
-    var wholeNSRange: NSRange {
-        return NSRange(location: 0, length: count)
-    }
-}
-
 extension URL {
     var contentAccessDate: Date? {
         return resource(forKey: .contentAccessDateKey) as? Date
     }
     
-    // bytes
+    /// In bytes
     var totalFileAllocatedSize: Int? {
-        return (resource(forKey: .contentAccessDateKey) as? NSNumber)?.intValue
+        return (resource(forKey: .totalFileAllocatedSizeKey) as? NSNumber)?.intValue
     }
     
+    @inline(__always)
     func resource(forKey key: URLResourceKey) -> Any? {
         if let values = try? resourceValues(forKeys: Set([key])) {
-            return values.allValues[.totalFileAllocatedSizeKey]
+            return values.allValues[key]
         }
         return nil
     }
-    
 }

@@ -16,7 +16,6 @@ class Box<T> {
 }
 
 /// You can add, remove, and query items in the cache from different threads without having to lock the cache yourself.
-
 public final class MemoryCache<T> {
     
     private let cache = NSCache<NSString, Box<T>>()

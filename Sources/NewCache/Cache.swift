@@ -1,13 +1,19 @@
 import Foundation
 import ShallowPromises
 
-internal let workingQueue = DispatchQueue(label: "com.allcache.WorkingQueue", attributes: .concurrent)
+private let workingQueue = DispatchQueue(label: "com.allcache.WorkingQueue", attributes: .concurrent)
 
-public class Cache<T, S: Serializer> where S.T == T {
+public enum CacheError: Error {
+    case notFound
+}
+
+open class Cache<T, S: Serializer> where S.T == T {
     public let memoryCache = MemoryCache<T>()
     public let diskCache: DiskCache<T, S>
     
     open var responseQueue = DispatchQueue.main
+    
+    private let promiseCache = MemoryCache<Promise<T>>()
     
     public init(diskCache: DiskCache<T, S>) {
         self.diskCache = diskCache
@@ -29,17 +35,21 @@ public class Cache<T, S: Serializer> where S.T == T {
         return nil
     }
     
-    func instance<F: Fetcher, P: Processor>(forKey key: String, fetcher: F?, processor: P? = nil) -> Promise<T> where F.T == T, P.T == T {
+    public func instance<F: Fetcher>(forKey key: String, fetcher: F?, processor: Processor<T>? = nil) -> Promise<T> where F.T == T {
         let descriptor = ElementDescriptor(key: key, fetcher: fetcher, processor: processor)
-        return instance(descriptor: descriptor)
+        return instance(for: descriptor)
     }
     
-    func instance<F: Fetcher, P: Processor>(descriptor: ElementDescriptor<T, F, P>) -> Promise<T> where F.T == T {
+    public func instance<F: Fetcher>(for descriptor: ElementDescriptor<T, F>) -> Promise<T> where F.T == T {
         if let result = memoryCache.instance(forKey: descriptor.descriptorKey) {
             return Promise().fulfill(with: result)
+        } else if let promise = promiseCache.instance(forKey: descriptor.descriptorKey) {
+            return promise.proxy()
         }
-        // TODO: fetching
-        let promise = Promise<T>()
+        let promise = Promise<T>().finally(in: workingQueue) {
+            self.promiseCache.removeInstance(forKey: descriptor.descriptorKey)
+        }
+        promiseCache.set(promise, forKey: descriptor.descriptorKey)
         workingQueue.async {
             self.searchOnDisk(descriptor: descriptor, promise: promise)
         }
@@ -47,7 +57,7 @@ public class Cache<T, S: Serializer> where S.T == T {
         return promise
     }
     
-    private func searchOnDisk<F: Fetcher, P: Processor>(descriptor: ElementDescriptor<T, F, P>, promise: Promise<T>) {
+    private func searchOnDisk<F: Fetcher>(descriptor: ElementDescriptor<T, F>, promise: Promise<T>) {
         do {
             if let result = try diskCache.instance(forKey: descriptor.descriptorKey) {
                 promise.fulfill(with: result, in: responseQueue)
@@ -55,53 +65,53 @@ public class Cache<T, S: Serializer> where S.T == T {
             } else if let _ = descriptor.processor {
                 searchOriginal(descriptor: descriptor, promise: promise)
             } else {
-                fetchObject(descriptor: descriptor, promise: promise)
+                fetchInstance(descriptor: descriptor, promise: promise)
             }
         } catch {
             promise.complete(with: error, in: responseQueue)
         }
     }
     
-    private func searchOriginal<F: Fetcher, P: Processor>(descriptor: ElementDescriptor<T, F, P>, promise: Promise<T>) {
-        if let rawInstance = memoryCache.instance(forKey: descriptor.key) {
-            process(rawInstance: rawInstance, with: descriptor, promise: promise)
+    private func searchOriginal<F: Fetcher>(descriptor: ElementDescriptor<T, F>, promise: Promise<T>) {
+        if let originalInstance = memoryCache.instance(forKey: descriptor.key) {
+            process(originalInstance, with: descriptor, promise: promise)
             return
         }
-        diskQueue.async {
+//        diskQueue.async {
             do {
-                if let rawInstance = try self.diskCache.instance(forKey: descriptor.key) {
-                    self.process(rawInstance: rawInstance, with: descriptor, promise: promise)
-                    self.memoryCache.set(rawInstance, forKey: descriptor.key)
+                if let originalInstance = try self.diskCache.instance(forKey: descriptor.key) {
+                    self.process(originalInstance, with: descriptor, promise: promise)
+                    self.memoryCache.set(originalInstance, forKey: descriptor.key)
                 } else {
-                    self.fetchObject(descriptor: descriptor, promise: promise)
+                    self.fetchInstance(descriptor: descriptor, promise: promise)
                 }
             } catch {
                 promise.complete(with: error, in: self.responseQueue)
             }
-        }
+//        }
     }
     
-    private func process<F: Fetcher, P: Processor>(rawInstance: T, with descriptor: ElementDescriptor<T, F, P>, promise: Promise<T>) {
-        workingQueue.async {
+    private func process<F: Fetcher>(_ instance: T, with descriptor: ElementDescriptor<T, F>, promise: Promise<T>) {
+//        workingQueue.async {
             do {
-                let instance = try descriptor.processor!.process(rawInstance)
-                promise.fulfill(with: instance, in: self.responseQueue)
-                self.memoryCache.set(instance, forKey: descriptor.descriptorKey)
-                try? self.diskCache.set(instance, forKey: descriptor.descriptorKey)
+                let result = try descriptor.processor!.process(instance)
+                promise.fulfill(with: result, in: self.responseQueue)
+                self.memoryCache.set(result, forKey: descriptor.descriptorKey)
+                try? self.diskCache.set(result, forKey: descriptor.descriptorKey)
             } catch {
                 promise.complete(with: error, in: self.responseQueue)
             }
-        }
+//        }
     }
     
-    private func fetchObject<F: Fetcher, P: Processor>(descriptor: ElementDescriptor<T, F, P>, promise: Promise<T>) {
+    private func fetchInstance<F: Fetcher>(descriptor: ElementDescriptor<T, F>, promise: Promise<T>) {
         guard let fetcher = descriptor.fetcher else {
             promise.complete(with: CacheError.notFound, in: self.responseQueue)
             return
         }
-        promise.littlePromise = fetcher.fetch().onSuccess({ result in
+        promise.littlePromise = fetcher.fetch().onSuccess(in: workingQueue) { result in
             if let _ = descriptor.processor {
-                self.process(rawInstance: result.instance, with: descriptor, promise: promise)
+                self.process(result.instance, with: descriptor, promise: promise)
             } else {
                 promise.fulfill(with: result.instance, in: self.responseQueue)
             }
@@ -111,7 +121,7 @@ public class Cache<T, S: Serializer> where S.T == T {
             } else {
                 try? self.diskCache.set(result.instance, forKey: descriptor.key)
             }
-        })
+        }
     }
     
     // MARK: - Set
@@ -140,8 +150,3 @@ public class Cache<T, S: Serializer> where S.T == T {
     }
     
 }
-
-public enum CacheError: Error {
-    case notFound
-}
-

@@ -8,12 +8,23 @@
 import Foundation
 import ShallowPromises
 
-struct FetcherResult<T> {
+public struct FetcherResult<T> {
     var instance: T
     var data: Data?
+    
+    public init(instance: T, data: Data?) {
+        self.instance = instance
+        self.data = data
+    }
 }
 
-protocol Fetcher {
+public protocol Fetcher {
     associatedtype T
     func fetch() -> Promise<FetcherResult<T>>
+}
+
+public enum FetchError: Error {
+    case invalidData
+    case parseError
+    case notFound
 }

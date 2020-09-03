@@ -23,7 +23,7 @@ class ImageCacheTests: XCTestCase {
     
     func testGetImage() {
         let expectation = self.expectation(description: "get image")
-        let fetcher = ImageFetcher(url: URL(string: "https://placeholdit.imgix.net/~text?txtsize=33&txt=Placeholder&w=400&h=200&bg=0000ff")!)
+        let fetcher = ImageFetcher(url: URL(string: "https://picsum.photos/200/300")!)
         _ = ImageCache.shared.object(forKey: "test", fetcher: fetcher, completion: { _ in
         }).fail(handler: { error in
             log.error(error)
@@ -37,7 +37,7 @@ class ImageCacheTests: XCTestCase {
     func testGetSameImage() {
         let expectation = self.expectation(description: "get image")
         let expectation2 = self.expectation(description: "get image 2")
-        let fetcher = ImageFetcher(url: URL(string: "https://placeholdit.imgix.net/~text?txtsize=33&txt=Placeholder&w=400&h=200&bg=0000ff")!)
+        let fetcher = ImageFetcher(url: URL(string: "https://picsum.photos/200/300")!)
         _ = ImageCache.shared.object(forKey: fetcher.identifier, fetcher: fetcher) { _ in
         }.fail(handler: { error in
             log.error(error)

@@ -7,18 +7,20 @@
 
 import Foundation
 
-class JSONSerializer<T: Codable>: Serializer {
-    typealias T = T
+public class JSONSerializer<T: Codable>: Serializer {
+    public typealias T = T
     
     let encoder = JSONEncoder()
     let decoder = JSONDecoder()
     
-    func serialize(_ instance: T) throws -> Data {
+    public func serialize(_ instance: T) throws -> Data {
         return try encoder.encode(instance)
     }
     
-    func deserialize(_ data: Data) throws -> T {
+    public func deserialize(_ data: Data) throws -> T {
         return try decoder.decode(T.self, from: data)
     }
+    
+    public init() {}
     
 }

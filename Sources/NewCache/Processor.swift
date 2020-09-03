@@ -2,14 +2,29 @@
 //  Processor.swift
 //  NewCache
 //
-//  Created by Juan Jose Arreola Simon on 13/05/20.
+//  Created by JuanJo on 13/05/20.
 //
 
 import Foundation
 
-protocol Processor {
-    associatedtype T
+open class Processor<T> {
     
-    var key: String { get }
-    func process(_ instance: T) throws -> T
+    public let identifier: String
+    public var next: Processor<T>?
+    
+    open var key: String {
+        if let processor = next {
+            return "\(processor.key)-\(identifier)"
+        }
+        return identifier
+    }
+    
+    public init(identifier: String, next: Processor<T>? = nil) {
+        self.identifier = identifier
+        self.next = next
+    }
+    
+    open func process(_ instance: T) throws -> T {
+        return instance
+    }
 }
