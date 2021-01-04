@@ -22,6 +22,7 @@ public struct URLImage<Content: View>: View {
     
     public var body: some View {
         content
+            .onAppear(perform: { loader.load() })
     }
     
     private var content: some View {
