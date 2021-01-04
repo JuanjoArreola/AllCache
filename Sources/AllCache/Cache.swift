@@ -128,7 +128,9 @@ open class Cache<T, S: Serializer> where S.T == T {
             } else {
                 try? self.diskCache.set(result.instance, forKey: descriptor.key)
             }
-        }
+        }.onError({ error in
+            promise.complete(with: error, in: self.responseQueue)
+        })
     }
     
     // MARK: - Set
