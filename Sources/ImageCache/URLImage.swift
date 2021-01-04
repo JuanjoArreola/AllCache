@@ -54,8 +54,8 @@ public struct URLImage<Content: View>: View {
 @available(iOS 13.0, *)
 public class ImageLoader: ObservableObject {
     let url: URL
-    @State var uiImage: UIImage?
-    @State var error: Error?
+    @Published var uiImage: UIImage?
+    @Published var error: Error?
     
     private var promise: Promise<UIImage>?
     
