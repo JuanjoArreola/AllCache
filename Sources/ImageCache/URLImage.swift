@@ -12,13 +12,9 @@ import SwiftUI
 import AllCache
 import ShallowPromises
 
-@available(iOS 13.0.0, *)
-public final class URLImage<Content: View>: View {
-    let url: URL
-    @State var uiImage: UIImage?
-    @State var error: Error?
-    
-    private var promise: Promise<UIImage>?
+@available(iOS 14.0.0, *)
+public struct URLImage<Content: View>: View {
+    @StateObject public var loader: ImageLoader
     
     private var placeholder: Content?
     private var onSuccess: (SwiftUI.Image) -> SwiftUI.Image?
@@ -30,9 +26,9 @@ public final class URLImage<Content: View>: View {
     
     private var content: some View {
         Group {
-            if let error = error, let result = onError(error) {
+            if let error = loader.error, let result = onError(error) {
                 result
-            } else if let uiImage = uiImage {
+            } else if let uiImage = loader.uiImage {
                 let image = SwiftUI.Image(uiImage: uiImage)
                 onSuccess(image) ?? image
             } else if let placeholder = placeholder {
@@ -47,10 +43,23 @@ public final class URLImage<Content: View>: View {
          @ViewBuilder onSuccess: @escaping (_ image: SwiftUI.Image) -> SwiftUI.Image? = { _ in nil },
          @ViewBuilder onError: @escaping (_ error: Error) -> Content? = { _ in nil },
          @ViewBuilder placeholder: () -> Content? = { nil }) {
-        self.url = url
+        _loader = StateObject(wrappedValue: ImageLoader(url: url))
         self.onSuccess = onSuccess
         self.placeholder = placeholder()
         self.onError = onError
+    }
+}
+
+@available(iOS 13.0, *)
+public class ImageLoader: ObservableObject {
+    let url: URL
+    @State var uiImage: UIImage?
+    @State var error: Error?
+    
+    private var promise: Promise<UIImage>?
+    
+    init(url: URL) {
+        self.url = url
     }
     
     public func load() {
@@ -64,10 +73,6 @@ public final class URLImage<Content: View>: View {
     
     public func cancel() {
         promise?.cancel()
-    }
-    
-    deinit {
-        cancel()
     }
 }
 
