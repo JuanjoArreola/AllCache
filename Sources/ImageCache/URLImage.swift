@@ -65,6 +65,10 @@ public final class URLImage<Content: View>: View {
     public func cancel() {
         promise?.cancel()
     }
+    
+    deinit {
+        cancel()
+    }
 }
 
 #endif
