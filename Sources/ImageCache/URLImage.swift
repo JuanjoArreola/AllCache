@@ -13,12 +13,12 @@ import AllCache
 import ShallowPromises
 
 @available(iOS 14.0.0, *)
-public struct URLImage<Content: View>: View {
+public struct URLImage<Placeholder: View, ErrorView: View>: View {
     @StateObject public var loader: ImageLoader
     
-    private var placeholder: Content?
+    private var placeholder: Placeholder?
     private var onSuccess: (SwiftUI.Image) -> SwiftUI.Image?
-    private var onError: (Error) -> Content?
+    private var onError: (Error) -> ErrorView?
     
     public var body: some View {
         content
@@ -41,9 +41,9 @@ public struct URLImage<Content: View>: View {
     }
     
     public init(_ url: URL,
-         @ViewBuilder onSuccess: @escaping (_ image: SwiftUI.Image) -> SwiftUI.Image? = { _ in nil },
-         @ViewBuilder onError: @escaping (_ error: Error) -> Content? = { _ in nil },
-         @ViewBuilder placeholder: () -> Content? = { nil }) {
+                @ViewBuilder onError: @escaping (_ error: Error) -> ErrorView? = { _ in nil },
+                @ViewBuilder placeholder: () -> Placeholder? = { nil },
+                @ViewBuilder onSuccess: @escaping (_ image: SwiftUI.Image) -> SwiftUI.Image? = { _ in nil }) {
         _loader = StateObject(wrappedValue: ImageLoader(url: url))
         self.onSuccess = onSuccess
         self.placeholder = placeholder()

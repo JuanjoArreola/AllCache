@@ -1,22 +1,22 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.5
 
 import PackageDescription
 
 let package = Package(
     name: "AllCache",
+    platforms: [
+        .macOS(.v12), .iOS(.v15), .tvOS(.v15), .watchOS(.v8)
+    ],
     products: [
         .library(
             name: "AllCache",
             targets: ["AllCache", "ImageCache"]),
         ],
-    dependencies: [
-        .package(url: "https://github.com/JuanjoArreola/ShallowPromises.git", from: "0.7.1"),
-        .package(url: "https://github.com/JuanjoArreola/Logg.git", from: "2.4.0")
-    ],
+    dependencies: [],
     targets: [
         .target(
             name: "AllCache",
-            dependencies: ["ShallowPromises", "Logg"]
+            dependencies: []
         ),
         .target(
             name: "ImageCache",

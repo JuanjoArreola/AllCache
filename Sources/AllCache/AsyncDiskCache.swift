@@ -1,15 +1,27 @@
 //
-//  DiskCache.swift
-//  AllCache
+//  File.swift
+//  
 //
-//  Created by JuanJo on 13/05/20.
+//  Created by Juan Jose Arreola Simon on 06/10/21.
 //
 
 import Foundation
 
-private let diskQueue = DispatchQueue(label: "com.allcache.DiskQueue", attributes: .concurrent)
+actor DiskAccess {
+    public let directory: URL
+    private let fileManager = FileManager.default
+    
+    init(directory: URL) {
+        self.directory = directory
+    }
+    
+    func updateLastAccess(ofKey key: String) {
+        let path = directory.appendingPathComponent(validkey(from: key)).path
+        try? fileManager.setAttributes([.modificationDate: Date()], ofItemAtPath: path)
+    }
+}
 
-public final class DiskCache<T, S: Serializer> where S.T == T {
+public final class AsyncDiskCache<T, S: Serializer> where S.T == T {
     
     public let identifier: String
     public let serializer: S
@@ -19,6 +31,8 @@ public final class DiskCache<T, S: Serializer> where S.T == T {
     public var maxCapacity = 0
     public private(set) var size = 0
     private var shrinking = false
+    
+    private let diskAccess: DiskAccess
     
     required public init(identifier: String, serializer: S, directory: FileManager.SearchPathDirectory = .cachesDirectory) throws {
         self.identifier = identifier
@@ -30,22 +44,18 @@ public final class DiskCache<T, S: Serializer> where S.T == T {
         if !fileManager.fileExists(atPath: cacheDirectory.path) {
             try fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: false, attributes: nil)
         }
+        diskAccess = DiskAccess(directory: cacheDirectory)
     }
     
-    public func instance(forKey key: String) throws -> T? {
-        var result: T?
-        try diskQueue.sync {
-            let url = cacheDirectory.appendingPathComponent(validkey(from: key))
-            guard fileManager.fileExists(atPath: url.path) else {
-                return
-            }
-            
-            result = try serializer.deserialize(Data(contentsOf: url))
-            diskQueue.async(flags: .barrier) {
-                self.updateLastAccess(ofKey: key)
-            }
+    public func instance(forKey key: String) async throws -> T? {
+        let url = cacheDirectory.appendingPathComponent(validkey(from: key))
+        guard fileManager.fileExists(atPath: url.path) else {
+            return nil
         }
-        return result
+        Task.detached {
+            await self.diskAccess.updateLastAccess(ofKey: key)
+        }
+        return try serializer.deserialize(Data(contentsOf: url))
     }
     
     public func removeInstance(forKey key: String) throws {
@@ -164,24 +174,5 @@ private func validkey(from key: String) -> String {
 private extension URL {
     func enumerator(includingPropertiesForKeys keys: [URLResourceKey]?) -> FileManager.DirectoryEnumerator? {
         return FileManager.default.enumerator(at: self, includingPropertiesForKeys: keys)
-    }
-}
-
-extension URL {
-    var contentAccessDate: Date? {
-        return resource(forKey: .contentAccessDateKey) as? Date
-    }
-    
-    /// In bytes
-    var totalFileAllocatedSize: Int? {
-        return (resource(forKey: .totalFileAllocatedSizeKey) as? NSNumber)?.intValue
-    }
-    
-    @inline(__always)
-    func resource(forKey key: URLResourceKey) -> Any? {
-        if let values = try? resourceValues(forKeys: Set([key])) {
-            return values.allValues[key]
-        }
-        return nil
     }
 }

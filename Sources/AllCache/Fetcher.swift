@@ -20,7 +20,7 @@ public struct FetcherResult<T> {
 
 public protocol Fetcher {
     associatedtype T
-    func fetch() -> Promise<FetcherResult<T>>
+    func fetch() async throws -> FetcherResult<T>
 }
 
 public enum FetchError: Error {
